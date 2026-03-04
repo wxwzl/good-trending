@@ -31,9 +31,13 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "eslint src/",
+    "lint:staged": "eslint --fix",
+    "format:staged": "prettier --write",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo node_modules",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

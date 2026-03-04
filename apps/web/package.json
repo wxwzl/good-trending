@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:staged": "eslint --fix",
+    "format:staged": "prettier --write",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -17,26 +17,31 @@
 ## 主要特性
 
 ### 1. 项目结构
+
 - App Router 目录结构
 - 路由组织和布局嵌套
 - 私有文件夹和路由组
 
 ### 2. 组件策略
+
 - Server Components vs Client Components
 - 何时使用每种组件类型
 - 组合模式和最佳实践
 
 ### 3. 数据获取
+
 - Server Components 中的数据获取
 - 客户端数据获取策略
 - 并行和串行数据获取
 
 ### 4. 缓存和重新验证
+
 - fetch 缓存策略
 - 使用 cacheTag 和 revalidateTag
 - 路由级别的重新验证
 
 ### 5. 性能优化
+
 - 图片优化
 - 字体优化
 - 代码分割和懒加载

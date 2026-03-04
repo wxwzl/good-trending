@@ -64,7 +64,7 @@ export class UsersModule {}
 ### 2. 控制器（Controllers）
 
 ```typescript
-@Controller('users')
+@Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -82,7 +82,7 @@ export class UsersController {
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private usersRepository: Repository<User>
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -129,9 +129,9 @@ export class TransformInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((data) => ({
         code: 200,
-        message: 'Success',
+        message: "Success",
         data,
-      })),
+      }))
     );
   }
 }

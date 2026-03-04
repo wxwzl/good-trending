@@ -11,7 +11,10 @@
     "crawl:all": "tsx src/index.ts --source all",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
+    "lint:staged": "eslint --fix",
+    "format:staged": "prettier --write",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

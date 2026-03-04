@@ -22,6 +22,7 @@ description: NestJS 最佳实践指南。提供从项目初始化、模块化架
 ### 1. 项目初始化和配置
 
 **推荐的项目创建方式：**
+
 ```bash
 # 安装 NestJS CLI
 npm i -g @nestjs/cli
@@ -34,12 +35,14 @@ pnpm create nest project-name
 ```
 
 **默认配置包括：**
+
 - TypeScript
 - ESLint + Prettier
 - Jest 测试框架
 - 热重载支持
 
 **系统要求：**
+
 - Node.js 18+
 - npm 9+ / pnpm 8+ / yarn 1.22+
 
@@ -92,6 +95,7 @@ src/
 ```
 
 **关键原则：**
+
 - 使用模块化架构，每个功能独立成模块
 - 遵循单一职责原则
 - DTO 与 Entity 分离
@@ -100,6 +104,7 @@ src/
 ### 3. 控制器（Controllers）最佳实践
 
 **基础控制器模板：**
+
 ```typescript
 import {
   Controller,
@@ -113,14 +118,14 @@ import {
   UseGuards,
   UseInterceptors,
   HttpStatus,
-} from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { TransformInterceptor } from '../../common/interceptors/transform.interceptor';
+} from "@nestjs/common";
+import { UsersService } from "./users.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { TransformInterceptor } from "../../common/interceptors/transform.interceptor";
 
-@Controller('users')
+@Controller("users")
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(TransformInterceptor)
 export class UsersController {
@@ -136,24 +141,25 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.usersService.remove(id);
   }
 }
 ```
 
 **控制器最佳实践：**
+
 - 控制器只负责请求分发，业务逻辑放在 Service
 - 使用 DTO 进行参数验证
 - 合理使用装饰器
@@ -162,19 +168,20 @@ export class UsersController {
 ### 4. 服务（Services/Providers）最佳实践
 
 **基础服务模板：**
+
 ```typescript
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "./entities/user.entity";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -215,12 +222,13 @@ export class UsersService {
 ### 5. 模块（Modules）最佳实践
 
 **功能模块模板：**
+
 ```typescript
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
-import { User } from './entities/user.entity';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { UsersService } from "./users.service";
+import { UsersController } from "./users.controller";
+import { User } from "./entities/user.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
@@ -232,6 +240,7 @@ export class UsersModule {}
 ```
 
 **模块组织原则：**
+
 - 每个功能模块独立
 - 通过 exports 共享服务
 - 使用 imports 引入依赖
@@ -239,50 +248,43 @@ export class UsersModule {}
 ### 6. DTO 和验证最佳实践
 
 **DTO 定义模板：**
+
 ```typescript
-import {
-  IsString,
-  IsEmail,
-  IsOptional,
-  MinLength,
-  MaxLength,
-  IsEnum,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEmail, IsOptional, MinLength, MaxLength, IsEnum } from "class-validator";
+import { Transform } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateUserDto {
-  @ApiProperty({ description: '用户名', example: 'john_doe' })
+  @ApiProperty({ description: "用户名", example: "john_doe" })
   @IsString()
   @MinLength(3)
   @MaxLength(20)
   @Transform(({ value }) => value?.toLowerCase())
   username: string;
 
-  @ApiProperty({ description: '邮箱', example: 'john@example.com' })
+  @ApiProperty({ description: "邮箱", example: "john@example.com" })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ description: '密码', minLength: 6 })
+  @ApiProperty({ description: "密码", minLength: 6 })
   @IsString()
   @MinLength(6)
   password: string;
 
-  @ApiPropertyOptional({ description: '用户角色', enum: ['user', 'admin'] })
+  @ApiPropertyOptional({ description: "用户角色", enum: ["user", "admin"] })
   @IsOptional()
-  @IsEnum(['user', 'admin'])
+  @IsEnum(["user", "admin"])
   role?: string;
 }
 
-export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ['password'] as const),
-) {}
+export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ["password"] as const)) {}
 ```
 
 **全局验证管道配置：**
+
 ```typescript
 // main.ts
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -295,7 +297,7 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   );
 
   await app.listen(3000);
@@ -306,20 +308,16 @@ bootstrap();
 ### 7. 管道（Pipes）最佳实践
 
 **自定义管道示例：**
+
 ```typescript
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from "@nestjs/common";
 
 @Injectable()
 export class ParseIntPipe implements PipeTransform<string, number> {
   transform(value: string, metadata: ArgumentMetadata): number {
     const val = parseInt(value, 10);
     if (isNaN(val)) {
-      throw new BadRequestException('Validation failed');
+      throw new BadRequestException("Validation failed");
     }
     return val;
   }
@@ -329,22 +327,18 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 ### 8. 守卫（Guards）最佳实践
 
 **JWT 认证守卫：**
+
 ```typescript
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { Reflector } from "@nestjs/core";
+import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    private reflector: Reflector,
+    private reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -374,17 +368,18 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    const [type, token] = request.headers.authorization?.split(" ") ?? [];
+    return type === "Bearer" ? token : undefined;
   }
 }
 ```
 
 **角色守卫：**
+
 ```typescript
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { ROLES_KEY } from "../decorators/roles.decorator";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -404,7 +399,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.some((role) => user.roles?.includes(role));
 
     if (!hasRole) {
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException("Insufficient permissions");
     }
 
     return true;
@@ -413,30 +408,31 @@ export class RolesGuard implements CanActivate {
 ```
 
 **自定义装饰器：**
+
 ```typescript
 // decorators/roles.decorator.ts
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = "roles";
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 // decorators/public.decorator.ts
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const IS_PUBLIC_KEY = 'isPublic';
+export const IS_PUBLIC_KEY = "isPublic";
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
 // 使用示例
-@Controller('users')
+@Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   @Get()
-  @Roles('admin')
+  @Roles("admin")
   findAll() {
     // 只有 admin 角色可以访问
   }
 
-  @Post('login')
+  @Post("login")
   @Public()
   login() {
     // 公开接口，无需认证
@@ -447,15 +443,11 @@ export class UsersController {
 ### 9. 拦截器（Interceptors）最佳实践
 
 **响应转换拦截器：**
+
 ```typescript
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export interface Response<T> {
   code: number;
@@ -465,36 +457,26 @@ export interface Response<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, Response<T>>
-{
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => ({
         code: 200,
-        message: 'Success',
+        message: "Success",
         data,
         timestamp: new Date().toISOString(),
-      })),
+      }))
     );
   }
 }
 ```
 
 **日志拦截器：**
+
 ```typescript
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -508,7 +490,7 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(() => {
         this.logger.log(`${method} ${url} - ${Date.now() - now}ms`);
-      }),
+      })
     );
   }
 }
@@ -517,6 +499,7 @@ export class LoggingInterceptor implements NestInterceptor {
 ### 10. 异常过滤器（Exception Filters）最佳实践
 
 **全局异常过滤器：**
+
 ```typescript
 import {
   ExceptionFilter,
@@ -525,8 +508,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -538,18 +521,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+      exception instanceof HttpException ? exception.getResponse() : "Internal server error";
 
     this.logger.error(
       `${request.method} ${request.url} - ${status}`,
-      exception instanceof Error ? exception.stack : undefined,
+      exception instanceof Error ? exception.stack : undefined
     );
 
     response.status(status).json({
@@ -565,6 +544,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 ### 11. 数据库集成（TypeORM）最佳实践
 
 **实体定义：**
+
 ```typescript
 import {
   Entity,
@@ -574,12 +554,12 @@ import {
   UpdateDateColumn,
   BeforeInsert,
   BeforeUpdate,
-} from 'typeorm';
-import * as bcrypt from 'bcrypt';
+} from "typeorm";
+import * as bcrypt from "bcrypt";
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -591,7 +571,7 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @Column({ default: 'user' })
+  @Column({ default: "user" })
   role: string;
 
   @Column({ default: true })
@@ -614,29 +594,28 @@ export class User {
 ```
 
 **数据库配置：**
+
 ```typescript
 // config/database.config.ts
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import { ConfigService } from "@nestjs/config";
 
-export const getDatabaseConfig = (
-  configService: ConfigService,
-): TypeOrmModuleOptions => ({
-  type: 'mysql',
-  host: configService.get('DB_HOST', 'localhost'),
-  port: configService.get('DB_PORT', 3306),
-  username: configService.get('DB_USERNAME', 'root'),
-  password: configService.get('DB_PASSWORD', ''),
-  database: configService.get('DB_DATABASE', 'test'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: configService.get('NODE_ENV') !== 'production',
-  logging: configService.get('NODE_ENV') !== 'production',
+export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
+  type: "mysql",
+  host: configService.get("DB_HOST", "localhost"),
+  port: configService.get("DB_PORT", 3306),
+  username: configService.get("DB_USERNAME", "root"),
+  password: configService.get("DB_PASSWORD", ""),
+  database: configService.get("DB_DATABASE", "test"),
+  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+  synchronize: configService.get("NODE_ENV") !== "production",
+  logging: configService.get("NODE_ENV") !== "production",
 });
 
 // app.module.ts
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { getDatabaseConfig } from './config/database.config';
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { getDatabaseConfig } from "./config/database.config";
 
 @Module({
   imports: [
@@ -655,19 +634,20 @@ export class AppModule {}
 ### 12. 配置管理最佳实践
 
 **使用 @nestjs/config：**
+
 ```typescript
 // config/app.config.ts
-import { registerAs } from '@nestjs/config';
+import { registerAs } from "@nestjs/config";
 
-export default registerAs('app', () => ({
-  nodeEnv: process.env.NODE_ENV || 'development',
+export default registerAs("app", () => ({
+  nodeEnv: process.env.NODE_ENV || "development",
   port: parseInt(process.env.PORT, 10) || 3000,
-  apiPrefix: process.env.API_PREFIX || 'api',
+  apiPrefix: process.env.API_PREFIX || "api",
 }));
 
 // config/index.ts
-import appConfig from './app.config';
-import databaseConfig from './database.config';
+import appConfig from "./app.config";
+import databaseConfig from "./database.config";
 
 export default [appConfig, databaseConfig];
 
@@ -677,7 +657,7 @@ export class AppService {
   constructor(private configService: ConfigService) {}
 
   getHello(): string {
-    return this.configService.get('app.port');
+    return this.configService.get("app.port");
   }
 }
 ```
@@ -685,22 +665,23 @@ export class AppService {
 ### 13. Swagger API 文档集成
 
 **配置 Swagger：**
+
 ```typescript
 // main.ts
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('API Documentation')
-    .setDescription('The API description')
-    .setVersion('1.0')
+    .setTitle("API Documentation")
+    .setDescription("The API description")
+    .setVersion("1.0")
     .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup("api", app, document);
 
   await app.listen(3000);
 }
@@ -710,9 +691,10 @@ bootstrap();
 ### 14. 中间件（Middleware）最佳实践
 
 **日志中间件：**
+
 ```typescript
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Injectable, NestMiddleware, Logger } from "@nestjs/common";
+import { Request, Response, NextFunction } from "express";
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -722,12 +704,10 @@ export class LoggerMiddleware implements NestMiddleware {
     const { method, originalUrl } = req;
     const startTime = Date.now();
 
-    res.on('finish', () => {
+    res.on("finish", () => {
       const { statusCode } = res;
       const responseTime = Date.now() - startTime;
-      this.logger.log(
-        `${method} ${originalUrl} - ${statusCode} - ${responseTime}ms`,
-      );
+      this.logger.log(`${method} ${originalUrl} - ${statusCode} - ${responseTime}ms`);
     });
 
     next();
@@ -737,7 +717,7 @@ export class LoggerMiddleware implements NestMiddleware {
 // 在模块中配置
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
+    consumer.apply(LoggerMiddleware).forRoutes("*");
   }
 }
 ```

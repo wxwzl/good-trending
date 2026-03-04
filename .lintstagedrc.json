@@ -1,0 +1,29 @@
+{
+  "apps/api/**/*.ts": ["pnpm --filter @good-trending/api run lint:staged", "prettier --write"],
+  "apps/crawler/**/*.ts": [
+    "pnpm --filter @good-trending/crawler run lint:staged",
+    "prettier --write"
+  ],
+  "apps/scheduler/**/*.ts": [
+    "pnpm --filter @good-trending/scheduler run lint:staged",
+    "prettier --write"
+  ],
+  "apps/tests/**/*.{ts,tsx}": [
+    "pnpm --filter @good-trending/tests run lint:staged",
+    "prettier --write"
+  ],
+  "apps/web/**/*.{ts,tsx}": [
+    "pnpm --filter @good-trending/web run lint:staged",
+    "prettier --write"
+  ],
+  "apps/web/**/*.{css,scss}": ["prettier --write"],
+  "packages/database/**/*.ts": [
+    "pnpm --filter @good-trending/database run lint:staged",
+    "prettier --write"
+  ],
+  "packages/shared/**/*.ts": [
+    "pnpm --filter @good-trending/shared run lint:staged",
+    "prettier --write"
+  ],
+  "*.{json,md}": ["prettier --write"]
+}

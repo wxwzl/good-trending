@@ -8,14 +8,19 @@
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
     "test": "turbo run test",
     "test:unit": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:coverage": "turbo run test:coverage",
     "test:api": "pnpm --filter @good-trending/tests test:api",
     "test:e2e": "pnpm --filter @good-trending/tests test:e2e",
     "test:all": "pnpm run test:api && pnpm run test:e2e",
+    "test:affected": "node scripts/detect-changes.cjs",
     "db:generate": "pnpm --filter @good-trending/database db:generate",
     "db:push": "pnpm --filter @good-trending/database db:push",
     "db:migrate": "pnpm --filter @good-trending/database db:migrate",
@@ -32,15 +37,31 @@
     "crawl": "pnpm --filter @good-trending/crawler crawl:all",
     "crawl:twitter": "pnpm --filter @good-trending/crawler crawl:twitter",
     "crawl:amazon": "pnpm --filter @good-trending/crawler crawl:amazon",
-    "scheduler": "pnpm --filter @good-trending/scheduler start"
+    "scheduler": "pnpm --filter @good-trending/scheduler start",
+    "prepare": "husky",
+    "commit": "cz"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
+    "commitizen": "^4.3.1",
+    "cz-customizable": "^7.5.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.2.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.3.0",
-    "prettier": "^3.2.0"
+    "typescript": "^5.3.0"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    },
+    "cz-customizable": {
+      "config": ".cz-config.js"
+    }
   }
 }

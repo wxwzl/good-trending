@@ -26,9 +26,13 @@
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
     "lint": "eslint src/",
+    "lint:staged": "eslint --fix",
+    "format:staged": "prettier --write",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo node_modules",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0"

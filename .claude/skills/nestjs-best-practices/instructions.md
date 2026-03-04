@@ -132,20 +132,20 @@ project-root/
 
 ### 文件命名规范
 
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| 模块文件 | `*.module.ts` | `users.module.ts` |
-| 控制器文件 | `*.controller.ts` | `users.controller.ts` |
-| 服务文件 | `*.service.ts` | `users.service.ts` |
-| DTO 文件 | `*.dto.ts` | `create-user.dto.ts` |
-| 实体文件 | `*.entity.ts` | `user.entity.ts` |
-| 接口文件 | `*.interface.ts` | `user.interface.ts` |
-| 守卫文件 | `*.guard.ts` | `jwt-auth.guard.ts` |
-| 拦截器文件 | `*.interceptor.ts` | `logging.interceptor.ts` |
-| 管道文件 | `*.pipe.ts` | `validation.pipe.ts` |
-| 过滤器文件 | `*.filter.ts` | `http-exception.filter.ts` |
-| 中间件文件 | `*.middleware.ts` | `logger.middleware.ts` |
-| 装饰器文件 | `*.decorator.ts` | `roles.decorator.ts` |
+| 类型       | 规范               | 示例                       |
+| ---------- | ------------------ | -------------------------- |
+| 模块文件   | `*.module.ts`      | `users.module.ts`          |
+| 控制器文件 | `*.controller.ts`  | `users.controller.ts`      |
+| 服务文件   | `*.service.ts`     | `users.service.ts`         |
+| DTO 文件   | `*.dto.ts`         | `create-user.dto.ts`       |
+| 实体文件   | `*.entity.ts`      | `user.entity.ts`           |
+| 接口文件   | `*.interface.ts`   | `user.interface.ts`        |
+| 守卫文件   | `*.guard.ts`       | `jwt-auth.guard.ts`        |
+| 拦截器文件 | `*.interceptor.ts` | `logging.interceptor.ts`   |
+| 管道文件   | `*.pipe.ts`        | `validation.pipe.ts`       |
+| 过滤器文件 | `*.filter.ts`      | `http-exception.filter.ts` |
+| 中间件文件 | `*.middleware.ts`  | `logger.middleware.ts`     |
+| 装饰器文件 | `*.decorator.ts`   | `roles.decorator.ts`       |
 
 ---
 
@@ -157,11 +157,11 @@ project-root/
 
 ```typescript
 // users/users.module.ts
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
-import { User } from './entities/user.entity';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { UsersController } from "./users.controller";
+import { UsersService } from "./users.service";
+import { User } from "./entities/user.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
@@ -176,9 +176,9 @@ export class UsersModule {}
 
 ```typescript
 // app.module.ts
-import { Module } from '@nestjs/common';
-import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
+import { Module } from "@nestjs/common";
+import { UsersModule } from "./modules/users/users.module";
+import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [UsersModule, AuthModule],
@@ -190,8 +190,8 @@ export class AppModule {}
 
 ```typescript
 // shared/shared.module.ts
-import { Module, Global } from '@nestjs/common';
-import { CommonModule } from '../common/common.module';
+import { Module, Global } from "@nestjs/common";
+import { CommonModule } from "../common/common.module";
 
 @Global()
 @Module({
@@ -220,12 +220,12 @@ import {
   ParseIntPipe,
   HttpStatus,
   HttpCode,
-} from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+} from "@nestjs/common";
+import { UsersService } from "./users.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
-@Controller('users')
+@Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -239,22 +239,19 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  @Get(":id")
+  findOne(@Param("id", ParseIntPipe) id: number) {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  @Patch(":id")
+  update(@Param("id", ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param("id", ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
 }
@@ -263,15 +260,15 @@ export class UsersController {
 ### 请求装饰器
 
 ```typescript
-@Controller('users')
+@Controller("users")
 export class UsersController {
   // 路由参数
-  @Get(':id')
-  findOne(@Param('id') id: string) {}
+  @Get(":id")
+  findOne(@Param("id") id: string) {}
 
   // 查询参数
   @Get()
-  findAll(@Query('limit') limit: number, @Query('offset') offset: number) {}
+  findAll(@Query("limit") limit: number, @Query("offset") offset: number) {}
 
   // 请求体
   @Post()
@@ -279,7 +276,7 @@ export class UsersController {
 
   // 请求头
   @Get()
-  findAll(@Headers('authorization') token: string) {}
+  findAll(@Headers("authorization") token: string) {}
 
   // IP 地址
   @Post()
@@ -290,22 +287,22 @@ export class UsersController {
 ### 响应处理
 
 ```typescript
-import { Response } from 'express';
+import { Response } from "express";
 
-@Controller('files')
+@Controller("files")
 export class FilesController {
   // 流式响应
-  @Get('download')
+  @Get("download")
   download(@Res() res: Response) {
-    const file = createReadStream(join(process.cwd(), 'package.json'));
+    const file = createReadStream(join(process.cwd(), "package.json"));
     file.pipe(res);
   }
 
   // 设置响应头
-  @Get('custom')
+  @Get("custom")
   customResponse(@Res({ passthrough: true }) res: Response) {
-    res.setHeader('X-Custom-Header', 'value');
-    return { message: 'success' };
+    res.setHeader("X-Custom-Header", "value");
+    return { message: "success" };
   }
 }
 ```
@@ -317,18 +314,18 @@ export class FilesController {
 ### 服务定义
 
 ```typescript
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "./entities/user.entity";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private usersRepository: Repository<User>
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -339,10 +336,10 @@ export class UsersService {
   async findAll(query: QueryUserDto): Promise<[User[], number]> {
     const { limit = 10, offset = 0, search } = query;
 
-    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+    const queryBuilder = this.usersRepository.createQueryBuilder("user");
 
     if (search) {
-      queryBuilder.where('user.name LIKE :search', {
+      queryBuilder.where("user.name LIKE :search", {
         search: `%${search}%`,
       });
     }
@@ -379,11 +376,11 @@ export class UsersService {
   // 构造函数注入
   constructor(
     private readonly configService: ConfigService,
-    private readonly usersRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>
   ) {}
 
   // 属性注入
-  @Inject('CONFIG_OPTIONS')
+  @Inject("CONFIG_OPTIONS")
   private readonly options: ConfigOptions;
 }
 ```
@@ -406,32 +403,32 @@ import {
   Min,
   Max,
   Matches,
-} from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+} from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateUserDto {
-  @ApiProperty({ description: '用户名', example: 'john_doe' })
-  @IsString({ message: '用户名必须是字符串' })
-  @MinLength(3, { message: '用户名最少 3 个字符' })
-  @MaxLength(20, { message: '用户名最多 20 个字符' })
-  @Matches(/^[a-zA-Z0-9_]+$/, { message: '用户名只能包含字母、数字和下划线' })
+  @ApiProperty({ description: "用户名", example: "john_doe" })
+  @IsString({ message: "用户名必须是字符串" })
+  @MinLength(3, { message: "用户名最少 3 个字符" })
+  @MaxLength(20, { message: "用户名最多 20 个字符" })
+  @Matches(/^[a-zA-Z0-9_]+$/, { message: "用户名只能包含字母、数字和下划线" })
   @Transform(({ value }) => value?.toLowerCase())
   username: string;
 
-  @ApiProperty({ description: '邮箱', example: 'john@example.com' })
-  @IsEmail({}, { message: '邮箱格式不正确' })
+  @ApiProperty({ description: "邮箱", example: "john@example.com" })
+  @IsEmail({}, { message: "邮箱格式不正确" })
   email: string;
 
-  @ApiProperty({ description: '密码', minLength: 6 })
+  @ApiProperty({ description: "密码", minLength: 6 })
   @IsString()
-  @MinLength(6, { message: '密码最少 6 个字符' })
+  @MinLength(6, { message: "密码最少 6 个字符" })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/, {
-    message: '密码必须包含大小写字母和数字',
+    message: "密码必须包含大小写字母和数字",
   })
   password: string;
 
-  @ApiPropertyOptional({ description: '年龄', minimum: 1, maximum: 120 })
+  @ApiPropertyOptional({ description: "年龄", minimum: 1, maximum: 120 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -440,23 +437,21 @@ export class CreateUserDto {
   age?: number;
 
   @ApiPropertyOptional({
-    description: '用户角色',
-    enum: ['user', 'admin'],
-    default: 'user',
+    description: "用户角色",
+    enum: ["user", "admin"],
+    default: "user",
   })
   @IsOptional()
-  @IsEnum(['user', 'admin'], { message: '角色必须是 user 或 admin' })
-  role?: 'user' | 'admin';
+  @IsEnum(["user", "admin"], { message: "角色必须是 user 或 admin" })
+  role?: "user" | "admin";
 }
 
 // 更新 DTO
-export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ['password'] as const),
-) {}
+export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ["password"] as const)) {}
 
 // 查询 DTO
 export class QueryUserDto {
-  @ApiPropertyOptional({ description: '每页数量', default: 10 })
+  @ApiPropertyOptional({ description: "每页数量", default: 10 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -464,14 +459,14 @@ export class QueryUserDto {
   @Max(100)
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: '偏移量', default: 0 })
+  @ApiPropertyOptional({ description: "偏移量", default: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   offset?: number = 0;
 
-  @ApiPropertyOptional({ description: '搜索关键词' })
+  @ApiPropertyOptional({ description: "搜索关键词" })
   @IsOptional()
   @IsString()
   search?: string;
@@ -482,7 +477,7 @@ export class QueryUserDto {
 
 ```typescript
 // main.ts
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -496,7 +491,7 @@ async function bootstrap() {
         enableImplicitConversion: true,
       },
       disableErrorMessages: false, // 生产环境可设为 true
-    }),
+    })
   );
 
   await app.listen(3000);
@@ -512,21 +507,19 @@ bootstrap();
 
 ```typescript
 // config/database.config.ts
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import { ConfigService } from "@nestjs/config";
 
-export const getDatabaseConfig = (
-  configService: ConfigService,
-): TypeOrmModuleOptions => ({
-  type: 'mysql',
-  host: configService.get('DB_HOST', 'localhost'),
-  port: configService.get('DB_PORT', 3306),
-  username: configService.get('DB_USERNAME', 'root'),
-  password: configService.get('DB_PASSWORD', ''),
-  database: configService.get('DB_DATABASE', 'test'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: configService.get('NODE_ENV') !== 'production',
-  logging: configService.get('NODE_ENV') !== 'production',
+export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
+  type: "mysql",
+  host: configService.get("DB_HOST", "localhost"),
+  port: configService.get("DB_PORT", 3306),
+  username: configService.get("DB_USERNAME", "root"),
+  password: configService.get("DB_PASSWORD", ""),
+  database: configService.get("DB_DATABASE", "test"),
+  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+  synchronize: configService.get("NODE_ENV") !== "production",
+  logging: configService.get("NODE_ENV") !== "production",
 });
 ```
 
@@ -541,11 +534,11 @@ import {
   UpdateDateColumn,
   OneToMany,
   Index,
-} from 'typeorm';
-import { Order } from '../../orders/entities/order.entity';
+} from "typeorm";
+import { Order } from "../../orders/entities/order.entity";
 
-@Entity('users')
-@Index(['email'], { unique: true })
+@Entity("users")
+@Index(["email"], { unique: true })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -562,7 +555,7 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: 'enum', enum: ['user', 'admin'], default: 'user' })
+  @Column({ type: "enum", enum: ["user", "admin"], default: "user" })
   role: string;
 
   @OneToMany(() => Order, (order) => order.user)
@@ -580,8 +573,8 @@ export class User {
 
 ```typescript
 // users.module.ts
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { User } from "./entities/user.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
@@ -590,14 +583,14 @@ import { User } from './entities/user.entity';
 export class UsersModule {}
 
 // users.service.ts
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private usersRepository: Repository<User>
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -614,24 +607,24 @@ export class UsersService {
 
 ```typescript
 // auth/auth.module.ts
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { UsersModule } from '../users/users.module';
+import { Module } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+import { JwtStrategy } from "./strategies/jwt.strategy";
+import { AuthService } from "./auth.service";
+import { AuthController } from "./auth.controller";
+import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [
     UsersModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
+        secret: configService.get("JWT_SECRET"),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
+          expiresIn: configService.get("JWT_EXPIRES_IN", "7d"),
         },
       }),
     }),
@@ -647,22 +640,22 @@ export class AuthModule {}
 
 ```typescript
 // auth/strategies/jwt.strategy.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../../users/users.service';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { ConfigService } from "@nestjs/config";
+import { UsersService } from "../../users/users.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    private usersService: UsersService,
+    private usersService: UsersService
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
+      secretOrKey: configService.get("JWT_SECRET"),
     });
   }
 
@@ -680,24 +673,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
 ```typescript
 // common/decorators/roles.decorator.ts
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = "roles";
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 // common/guards/roles.guard.ts
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
-      'roles',
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>("roles", [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredRoles) {
       return true;
@@ -724,8 +717,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -737,20 +730,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    let message = "Internal server error";
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
       message =
-        typeof exceptionResponse === 'string'
+        typeof exceptionResponse === "string"
           ? exceptionResponse
           : (exceptionResponse as any).message || message;
     }
 
     // 记录错误日志
     this.logger.error(
-      `${request.method} ${request.url} - ${status} - ${JSON.stringify(exception)}`,
+      `${request.method} ${request.url} - ${status} - ${JSON.stringify(exception)}`
     );
 
     response.status(status).json({
@@ -767,7 +760,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ```typescript
 // common/exceptions/business.exception.ts
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus } from "@nestjs/common";
 
 export class BusinessException extends HttpException {
   constructor(message: string, code: number = HttpStatus.BAD_REQUEST) {
@@ -776,7 +769,7 @@ export class BusinessException extends HttpException {
 }
 
 // 使用示例
-throw new BusinessException('用户不存在', 404);
+throw new BusinessException("用户不存在", 404);
 ```
 
 ---
@@ -793,25 +786,25 @@ throw new BusinessException('用户不存在', 404);
 
 ```typescript
 // common/middleware/logger.middleware.ts
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Injectable, NestMiddleware, Logger } from "@nestjs/common";
+import { Request, Response, NextFunction } from "express";
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  private readonly logger = new Logger('HTTP');
+  private readonly logger = new Logger("HTTP");
 
   use(req: Request, res: Response, next: NextFunction) {
     const { method, originalUrl, ip } = req;
-    const userAgent = req.get('user-agent') || '';
+    const userAgent = req.get("user-agent") || "";
     const startTime = Date.now();
 
-    res.on('finish', () => {
+    res.on("finish", () => {
       const { statusCode } = res;
-      const contentLength = res.get('content-length');
+      const contentLength = res.get("content-length");
       const responseTime = Date.now() - startTime;
 
       this.logger.log(
-        `${method} ${originalUrl} ${statusCode} ${contentLength} - ${responseTime}ms - ${ip} - ${userAgent}`,
+        `${method} ${originalUrl} ${statusCode} ${contentLength} - ${responseTime}ms - ${ip} - ${userAgent}`
       );
     });
 
@@ -824,19 +817,14 @@ export class LoggerMiddleware implements NestMiddleware {
 
 ```typescript
 // common/pipes/parse-int.pipe.ts
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from "@nestjs/common";
 
 @Injectable()
 export class ParseIntPipe implements PipeTransform<string, number> {
   transform(value: string, metadata: ArgumentMetadata): number {
     const val = parseInt(value, 10);
     if (isNaN(val)) {
-      throw new BadRequestException('参数必须是数字');
+      throw new BadRequestException("参数必须是数字");
     }
     return val;
   }
@@ -847,14 +835,9 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 
 ```typescript
 // common/interceptors/transform.interceptor.ts
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export interface Response<T> {
   code: number;
@@ -864,20 +847,15 @@ export interface Response<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, Response<T>>
-{
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => ({
         code: 200,
-        message: 'Success',
+        message: "Success",
         data,
         timestamp: new Date().toISOString(),
-      })),
+      }))
     );
   }
 }

@@ -1,8 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(pnpm dev -- -p 3001)",
-      "Bash(pnpm dev:*)"
-    ]
+    "allow": ["Bash(pnpm dev -- -p 3001)", "Bash(pnpm dev:*)"]
   }
 }

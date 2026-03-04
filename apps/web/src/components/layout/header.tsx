@@ -1,10 +1,10 @@
-import { getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/routing'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { LanguageSwitcher } from '@/components/ui/language-switcher'
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/routing";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export async function Header() {
-  const t = await getTranslations()
+  const t = await getTranslations();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -32,7 +32,7 @@ export async function Header() {
               <path d="M2 12h4" />
               <path d="m4.9 4.9 2.9 2.9" />
             </svg>
-            <span>{t('siteName')}</span>
+            <span>{t("siteName")}</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-4">
@@ -40,13 +40,13 @@ export async function Header() {
               href="/trending"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {t('navigation.trending')}
+              {t("navigation.trending")}
             </Link>
             <Link
               href="/topics"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {t('navigation.topics')}
+              {t("navigation.topics")}
             </Link>
           </nav>
         </div>
@@ -57,5 +57,5 @@ export async function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

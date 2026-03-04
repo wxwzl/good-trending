@@ -47,12 +47,7 @@ const projectMapping = {
     projects: ["api", "crawler", "scheduler", "web", "tests"],
     testCommands: ["test:unit", "test:api", "test:e2e"],
     affectedPackages: ["@good-trending/shared", "@good-trending/api", "@good-trending/crawler", "@good-trending/scheduler", "@good-trending/web", "@good-trending/tests"],
-  },
-  "packages/eslint-config": {
-    projects: [],
-    testCommands: [],
-    affectedPackages: ["@good-trending/eslint-config"],
-  },
+  }
 };
 
 // 不触发测试的文件模式

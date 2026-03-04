@@ -1,31 +1,43 @@
-'use client'
+"use client";
 
-import { useTheme } from 'next-themes'
-import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
+import { useSyncExternalStore } from "react";
+
+// Store for tracking mounted state
+let mounted = false;
+const listeners = new Set<() => void>();
+
+const subscribe = (callback: () => void) => {
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+};
+
+const getSnapshot = () => mounted;
+const getServerSnapshot = () => false;
+
+// Initialize mounted state on client
+if (typeof window !== "undefined" && !mounted) {
+  mounted = true;
+  listeners.forEach((listener) => listener());
+}
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const t = useTranslations('theme')
-  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme();
+  const t = useTranslations("theme");
+  const isMounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
-    )
+  if (!isMounted) {
+    return <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />;
   }
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-      aria-label={t('title')}
+      aria-label={t("title")}
     >
-      {theme === 'dark' ? (
+      {theme === "dark" ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -63,5 +75,5 @@ export function ThemeToggle() {
         </svg>
       )}
     </button>
-  )
+  );
 }

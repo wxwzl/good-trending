@@ -44,11 +44,6 @@ coverage
 .nyc_output
 playwright-report
 test-results
-
-# Prisma
-packages/database/prisma/*.db
-packages/database/prisma/*.db-journal
-
 # Misc
 *.pem
 .vercel

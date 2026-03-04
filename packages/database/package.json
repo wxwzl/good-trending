@@ -8,14 +8,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
       "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./schema": {
-      "import": "./dist/schema/index.mjs",
       "require": "./dist/schema/index.js",
-      "types": "./dist/schema/index.d.ts"
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.mjs"
     }
   },
   "scripts": {
@@ -26,7 +26,14 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/seed.ts",
-    "clean": "rm -rf dist"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "lint:staged": "eslint --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "format:staged": "prettier --write",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo node_modules"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.2",
@@ -34,11 +41,17 @@
     "pg": "^8.14.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "@types/node": "^22.13.5",
     "@types/pg": "^8.11.11",
     "drizzle-kit": "^0.31.4",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.4.2",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
   }
 }

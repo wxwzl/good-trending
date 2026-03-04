@@ -87,6 +87,7 @@ pnpm test:all
 ### 1. API Integration Tests (Vitest)
 
 Located in `src/api/`, these tests:
+
 - Test API endpoints in isolation
 - Use MSW (Mock Service Worker) for API mocking
 - Run quickly without browser
@@ -95,6 +96,7 @@ Located in `src/api/`, these tests:
 ### 2. E2E API Tests (Playwright)
 
 Located in `src/e2e/api/`, these tests:
+
 - Test full API stack
 - Run against actual API server
 - Validate real database interactions
@@ -102,6 +104,7 @@ Located in `src/e2e/api/`, these tests:
 ### 3. E2E Web Tests (Playwright)
 
 Located in `src/e2e/web/`, these tests:
+
 - Test user-facing functionality
 - Support multiple browsers (Chrome, Firefox, Safari)
 - Include mobile viewport testing
@@ -112,10 +115,10 @@ Located in `src/e2e/web/`, these tests:
 The `src/fixtures/` directory provides test data generators using Faker:
 
 ```typescript
-import { createProductFixture, createTopicFixture } from '../fixtures'
+import { createProductFixture, createTopicFixture } from "../fixtures";
 
-const product = createProductFixture({ name: 'Custom Product' })
-const products = createProductFixture(10)
+const product = createProductFixture({ name: "Custom Product" });
+const products = createProductFixture(10);
 ```
 
 ## Mock Server
@@ -123,17 +126,17 @@ const products = createProductFixture(10)
 MSW is used for mocking API responses in integration tests:
 
 ```typescript
-import { setupMockServer, resetMockData } from '../mocks/server'
+import { setupMockServer, resetMockData } from "../mocks/server";
 
-describe('My API Test', () => {
-  setupMockServer()
+describe("My API Test", () => {
+  setupMockServer();
 
   beforeEach(() => {
-    resetMockData()
-  })
+    resetMockData();
+  });
 
   // tests...
-})
+});
 ```
 
 ## Writing New Tests
@@ -141,34 +144,34 @@ describe('My API Test', () => {
 ### API Integration Test Example
 
 ```typescript
-import { describe, it, expect } from 'vitest'
-import { setupMockServer } from '../mocks/server'
+import { describe, it, expect } from "vitest";
+import { setupMockServer } from "../mocks/server";
 
-describe('My Feature', () => {
-  setupMockServer()
+describe("My Feature", () => {
+  setupMockServer();
 
-  it('should work correctly', async () => {
-    const response = await fetch('/api/v1/my-endpoint')
-    const data = await response.json()
+  it("should work correctly", async () => {
+    const response = await fetch("/api/v1/my-endpoint");
+    const data = await response.json();
 
-    expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-  })
-})
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+  });
+});
 ```
 
 ### E2E Web Test Example
 
 ```typescript
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('My Page', () => {
-  test('should display correctly', async ({ page }) => {
-    await page.goto('/my-page')
+test.describe("My Page", () => {
+  test("should display correctly", async ({ page }) => {
+    await page.goto("/my-page");
 
-    await expect(page.locator('h1')).toBeVisible()
-  })
-})
+    await expect(page.locator("h1")).toBeVisible();
+  });
+});
 ```
 
 ## Environment Variables
@@ -184,6 +187,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/good_trending_test"
 ## CI/CD Integration
 
 In CI environments:
+
 - E2E tests run against deployed preview environments
 - API tests run against test database
 - Coverage reports are uploaded to codecov

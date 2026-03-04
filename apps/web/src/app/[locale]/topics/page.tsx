@@ -1,30 +1,26 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { Link } from '@/i18n/routing'
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/routing";
 
-export default async function TopicsPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}) {
-  const { locale } = await params
-  setRequestLocale(locale)
-  const t = await getTranslations()
+export default async function TopicsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations();
 
   // Placeholder topics
   const topics = [
-    { slug: 'electronics', name: 'Electronics', count: 128 },
-    { slug: 'fashion', name: 'Fashion', count: 95 },
-    { slug: 'home-garden', name: 'Home & Garden', count: 82 },
-    { slug: 'sports', name: 'Sports', count: 67 },
-    { slug: 'books', name: 'Books', count: 54 },
-    { slug: 'toys', name: 'Toys', count: 43 },
-  ]
+    { slug: "electronics", name: "Electronics", count: 128 },
+    { slug: "fashion", name: "Fashion", count: 95 },
+    { slug: "home-garden", name: "Home & Garden", count: 82 },
+    { slug: "sports", name: "Sports", count: 67 },
+    { slug: "books", name: "Books", count: 54 },
+    { slug: "toys", name: "Toys", count: 43 },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">{t('topics.title')}</h1>
-        <p className="text-muted-foreground mt-2">{t('topics.subtitle')}</p>
+        <h1 className="text-3xl font-bold">{t("topics.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("topics.subtitle")}</p>
       </div>
 
       {/* Topics Grid */}
@@ -38,7 +34,7 @@ export default async function TopicsPage({
             <div>
               <h3 className="font-semibold">{topic.name}</h3>
               <p className="text-sm text-muted-foreground">
-                {t('topics.productCount', { count: topic.count })}
+                {t("topics.productCount", { count: topic.count })}
               </p>
             </div>
             <svg
@@ -59,5 +55,5 @@ export default async function TopicsPage({
         ))}
       </div>
     </div>
-  )
+  );
 }

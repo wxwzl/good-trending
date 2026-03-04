@@ -1,0 +1,9 @@
+dist
+node_modules
+coverage
+migrations
+*.config.ts
+*.config.js
+*.config.mjs
+*.config.cjs
+pnpm-lock.yaml

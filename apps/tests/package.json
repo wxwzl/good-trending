@@ -12,8 +12,6 @@
     "test:api:watch": "vitest --config vitest.config.ts",
     "test:api:coverage": "vitest run --coverage --config vitest.config.ts",
     "test:all": "pnpm run test:api && pnpm run test:e2e",
-    "lint:staged": "eslint --fix",
-    "format:staged": "prettier --write",
     "playwright:install": "playwright install",
     "playwright:report": "playwright show-report"
   },

@@ -897,6 +897,87 @@ export default defineConfig({
 });
 ```
 
+### Drizzle Studio 使用指南
+
+Drizzle Studio 是 Drizzle ORM 的官方数据库管理 GUI 工具，提供可视化的数据库浏览和操作功能。
+
+#### 安装和启动
+
+```bash
+# 安装 drizzle-kit（已包含 Studio）
+pnpm add -D drizzle-kit
+
+# 启动 Drizzle Studio
+pnpm db:studio
+# 或
+pnpm drizzle-kit studio
+```
+
+#### 访问地址
+
+启动后默认访问地址: `https://local.drizzle.studio/`
+
+#### 主要功能
+
+| 功能        | 描述                                     |
+| ----------- | ---------------------------------------- |
+| 表结构浏览  | 可视化查看所有表、字段、索引和关系       |
+| 数据查询    | 支持筛选、排序、分页浏览表数据           |
+| 数据编辑    | 直接在界面中新增、修改、删除记录         |
+| SQL 执行    | 支持执行自定义 SQL 查询                  |
+| Schema 同步 | 检测 Schema 与数据库的差异，生成迁移语句 |
+| 关系可视化  | 图形化展示表之间的关联关系               |
+
+#### 配置示例
+
+```typescript
+// packages/database/drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema/index.ts",
+  out: "./migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+  // Studio 配置（可选）
+  studio: {
+    port: 4983, // 自定义端口，默认 4983
+  },
+  // 打印所有执行的 SQL 语句
+  verbose: true,
+  // 严格模式，防止数据丢失
+  strict: true,
+});
+```
+
+#### package.json 脚本配置
+
+```json
+{
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull",
+    "db:studio": "drizzle-kit studio",
+    "db:check": "drizzle-kit check"
+  }
+}
+```
+
+#### 常用命令说明
+
+| 命令          | 描述                                     |
+| ------------- | ---------------------------------------- |
+| `db:generate` | 根据 Schema 变更生成迁移文件             |
+| `db:migrate`  | 执行迁移文件到数据库                     |
+| `db:push`     | 直接将 Schema 推送到数据库（开发环境用） |
+| `db:pull`     | 从现有数据库反向生成 Schema              |
+| `db:studio`   | 启动 Drizzle Studio 可视化管理界面       |
+| `db:check`    | 检查 Schema 与数据库差异                 |
+
 ### 数据分布策略
 
 ```
@@ -1334,7 +1415,161 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
 ---
 
-## 3.7 主题系统架构
+## 3.7 API 版本管理
+
+### 版本策略
+
+采用 URL 路径版本管理策略，所有 API 接口以 `/api/v{version}` 为前缀。
+
+```
+版本格式: /api/v{major}
+
+示例:
+├── /api/v1/products    - v1 版本接口
+├── /api/v2/products    - v2 版本接口（未来）
+└── /health             - 健康检查（无版本）
+```
+
+### NestJS 实现
+
+#### 全局前缀配置
+
+```typescript
+// apps/api/src/main.ts
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // 设置全局前缀，排除健康检查端点
+  app.setGlobalPrefix("api/v1", {
+    exclude: ["/health", "/health/ready", "/health/live"],
+  });
+
+  await app.listen(3001);
+}
+bootstrap();
+```
+
+#### Controller 定义
+
+```typescript
+// apps/api/src/modules/product/product.controller.ts
+import { Controller } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+
+@ApiTags("products")
+@Controller("products") // 实际路径: /api/v1/products
+export class ProductController {
+  // GET /api/v1/products
+  @Get()
+  findAll() {
+    return this.productService.findAll();
+  }
+
+  // GET /api/v1/products/:id
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.productService.findOne(id);
+  }
+}
+```
+
+### 版本兼容性策略
+
+| 变更类型     | 版本要求 | 示例                             |
+| ------------ | -------- | -------------------------------- |
+| 新增字段     | 兼容     | 响应新增 `description` 字段      |
+| 新增接口     | 兼容     | 新增 `/products/search` 接口     |
+| 删除字段     | 大版本   | v1 → v2 删除 `oldField`          |
+| 修改字段类型 | 大版本   | v1 → v2 `id` 从 number 改 string |
+| 修改响应结构 | 大版本   | v1 → v2 修改分页结构             |
+| 接口删除     | 大版本   | v1 → v2 删除 `/old-endpoint`     |
+
+### 多版本共存方案
+
+```typescript
+// apps/api/src/app.module.ts
+import { Module } from "@nestjs/common";
+import { ProductV1Module } from "./modules/product/v1/product-v1.module";
+import { ProductV2Module } from "./modules/product/v2/product-v2.module";
+
+@Module({
+  imports: [ProductV1Module, ProductV2Module],
+})
+export class AppModule {}
+```
+
+```typescript
+// v1/controller
+@Controller("api/v1/products")
+export class ProductV1Controller { ... }
+
+// v2/controller
+@Controller("api/v2/products")
+export class ProductV2Controller { ... }
+```
+
+### 版本废弃策略
+
+```typescript
+import { Controller, Get, Deprecated } from "@nestjs/common";
+import { ApiOperation, ApiDeprecated } from "@nestjs/swagger";
+
+@Controller("api/v1/products")
+export class ProductV1Controller {
+  @Get("old-endpoint")
+  @Deprecated()
+  @ApiDeprecated()
+  @ApiOperation({
+    summary: "已废弃: 请使用 /api/v2/products/new-endpoint",
+    description: "此接口将在 2026-06-01 下线",
+  })
+  oldEndpoint() {
+    // 返回废弃提示
+    return {
+      deprecated: true,
+      message: "此接口已废弃，请迁移至 /api/v2/products/new-endpoint",
+      sunset: "2026-06-01",
+    };
+  }
+}
+```
+
+### 响应头版本信息
+
+```typescript
+// 中间件添加版本信息到响应头
+@Injectable()
+export class VersionMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    res.setHeader("X-API-Version", "1.0.0");
+    res.setHeader("X-API-Deprecated", "false");
+    next();
+  }
+}
+```
+
+### API 文档版本管理
+
+```typescript
+// apps/api/src/main.ts
+const config = new DocumentBuilder()
+  .setTitle("Good-Trending API")
+  .setDescription("API 文档")
+  .setVersion("1.0.0")
+  .addServer("/api/v1", "Version 1")
+  .addServer("/api/v2", "Version 2 (Beta)")
+  .build();
+
+const document = SwaggerModule.createDocument(app, config);
+SwaggerModule.setup("api-docs", app, document);
+```
+
+---
+
+## 3.8 主题系统架构
 
 ### 技术选型
 

@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
-import { useLocale, useTranslations } from 'next-intl'
-import { usePathname, useRouter } from '@/i18n/routing'
-import { locales, localeNames, type Locale } from '@/i18n/config'
-import { useState, useRef, useEffect } from 'react'
+import { useLocale, useTranslations } from "next-intl";
+import { usePathname, useRouter } from "@/i18n/routing";
+import { locales, localeNames, type Locale } from "@/i18n/config";
+import { useState, useRef, useEffect } from "react";
 
 export function LanguageSwitcher() {
-  const t = useTranslations('language')
-  const locale = useLocale()
-  const router = useRouter()
-  const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations("language");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLocaleChange = (newLocale: Locale) => {
-    router.replace(pathname, { locale: newLocale })
-    setIsOpen(false)
-  }
+    router.replace(pathname, { locale: newLocale });
+    setIsOpen(false);
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-secondary px-3 text-sm text-secondary-foreground hover:bg-secondary/80 transition-colors"
-        aria-label={t('title')}
+        aria-label={t("title")}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,7 @@ export function LanguageSwitcher() {
               key={loc}
               onClick={() => handleLocaleChange(loc)}
               className={`w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors ${
-                locale === loc ? 'bg-accent text-accent-foreground' : 'text-card-foreground'
+                locale === loc ? "bg-accent text-accent-foreground" : "text-card-foreground"
               }`}
             >
               {localeNames[loc]}
@@ -70,5 +70,5 @@ export function LanguageSwitcher() {
         </div>
       )}
     </div>
-  )
+  );
 }

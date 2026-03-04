@@ -1,24 +1,24 @@
-import { setupServer } from 'msw/node'
-import { handlers, resetMockData } from './handlers'
+import { setupServer } from "msw/node";
+import { handlers, resetMockData } from "./handlers";
 
-export const server = setupServer(...handlers)
+export const server = setupServer(...handlers);
 
 /**
  * Setup MSW server for testing
  */
 export function setupMockServer() {
   beforeAll(() => {
-    server.listen({ onUnhandledRequest: 'error' })
-  })
+    server.listen({ onUnhandledRequest: "error" });
+  });
 
   afterEach(() => {
-    server.resetHandlers()
-    resetMockData()
-  })
+    server.resetHandlers();
+    resetMockData();
+  });
 
   afterAll(() => {
-    server.close()
-  })
+    server.close();
+  });
 }
 
-export { resetMockData }
+export { resetMockData };

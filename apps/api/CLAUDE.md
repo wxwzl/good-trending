@@ -272,76 +272,77 @@ export class GetProductsDto {
 
 ## 2. 数据库规范
 
-### 2.1 Prisma Schema 规范
+### 2.1 Drizzle Schema 规范
 
-```prisma
+```typescript
+// packages/database/src/schema/tables.ts
+import {
+  pgTable,
+  pgEnum,
+  text,
+  decimal,
+  timestamp,
+  integer,
+  float,
+  json,
+  date,
+  uniqueIndex,
+  index,
+  primaryKey,
+} from 'drizzle-orm/pg-core';
+import { createId } from '@paralleldrive/cuid2';
+
 // 枚举定义
-enum SourceType {
-  TWITTER
-  AMAZON
-}
+export const sourceTypeEnum = pgEnum('source_type', ['X_PLATFORM', 'AMAZON']);
+export const crawlerStatusEnum = pgEnum('crawler_status', [
+  'RUNNING',
+  'COMPLETED',
+  'FAILED',
+]);
 
 // 模型定义
-model Product {
-  // 主键
-  id             String         @id @default(uuid())
+export const products = pgTable(
+  'product',
+  {
+    // 主键
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
 
-  // 基本信息
-  name           String         @db.VarChar(255)
-  slug           String         @unique @db.VarChar(255)
-  description    String?        @db.Text
-  imageUrl       String?        @db.VarChar(500)
+    // 基本信息
+    name: text('name').notNull(),
+    description: text('description'),
+    image: text('image'),
 
-  // 来源信息
-  sourceUrl      String         @db.VarChar(500)
-  sourceType     SourceType
-  sourceId       String         @db.VarChar(100)
+    // 来源信息
+    sourceUrl: text('source_url').unique().notNull(),
+    sourceId: text('source_id').notNull(),
+    sourceType: sourceTypeEnum('source_type').notNull(),
 
-  // 价格信息
-  price          Decimal?       @db.Decimal(10, 2)
-  currency       String         @default("USD") @db.VarChar(10)
+    // 价格信息
+    price: decimal('price', { precision: 10, scale: 2 }),
+    currency: text('currency').default('USD').notNull(),
 
-  // 统计数据
-  rating         Decimal?       @db.Decimal(3, 2)
-  reviewCount    Int            @default(0)
-  viewCount      Int            @default(0)
-  trendingScore  Int            @default(0)
-
-  // 状态
-  isActive       Boolean        @default(true)
-
-  // 时间戳
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  // 关联关系
-  topics         ProductTopic[]
-  tags           ProductTag[]
-  trends         Trend[]
-  history        ProductHistory[]
-
-  // 复合唯一索引
-  @@unique([sourceType, sourceId])
-
-  // 查询优化索引
-  @@index([trendingScore(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
-  @@index([sourceType])
-
-  // 表名映射
-  @@map("products")
-}
+    // 时间戳
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('product_source_idx').on(table.sourceType, table.sourceId),
+    index('product_created_at_idx').on(table.createdAt),
+  ],
+);
 ```
 
 ### 2.2 命名规范
 
-| 类型     | 规范                | 示例                   |
-| -------- | ------------------- | ---------------------- |
-| 表名     | 小写下划线          | `product_topics`       |
-| 字段名   | 小驼峰              | `trendingScore`        |
-| 枚举     | 大驼峰              | `SourceType`           |
-| 索引     | `@@index([field])`  | `@@index([createdAt])` |
-| 唯一约束 | `@@unique([field])` | `@@unique([slug])`     |
+| 类型     | 规范            | 示例                    |
+| -------- | --------------- | ----------------------- |
+| 表名     | 小写下划线      | `product_topics`        |
+| 字段名   | 小写下划线      | `trending_score`        |
+| 枚举     | 大驼峰          | `SourceType`            |
+| 索引     | `index("name")` | `index("product_idx")`  |
+| 唯一约束 | `.unique()`     | `text("slug").unique()` |
 
 ---
 

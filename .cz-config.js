@@ -19,7 +19,7 @@ module.exports = {
     { value: "tests", name: "tests:      E2E/API 测试" },
     { value: "web", name: "web:        Next.js Web 应用" },
     // Packages
-    { value: "database", name: "database:   Prisma 数据库包" },
+    { value: "database", name: "database:   drizzle 数据库包" },
     { value: "shared", name: "shared:     共享工具和类型" },
     { value: "eslint-config", name: "eslint:     ESLint 配置包" },
     // Root

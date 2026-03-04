@@ -1,29 +1,23 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
-export default async function AboutPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}) {
-  const { locale } = await params
-  setRequestLocale(locale)
-  const t = await getTranslations()
+export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations();
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">{t('navigation.about')}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t("navigation.about")}</h1>
 
         <div className="prose prose-zinc dark:prose-invert max-w-none">
-          <p className="text-lg text-muted-foreground mb-8">
-            {t('siteDescription')}
-          </p>
+          <p className="text-lg text-muted-foreground mb-8">{t("siteDescription")}</p>
 
           <h2 className="text-xl font-semibold mt-8 mb-4">What We Do</h2>
           <p className="text-muted-foreground">
-            Good Trending aggregates trending products from multiple sources including
-            X (Twitter) and Amazon. Our intelligent ranking algorithm analyzes mentions,
-            reviews, and sentiment to surface the most talked-about products.
+            Good Trending aggregates trending products from multiple sources including X (Twitter)
+            and Amazon. Our intelligent ranking algorithm analyzes mentions, reviews, and sentiment
+            to surface the most talked-about products.
           </p>
 
           <h2 className="text-xl font-semibold mt-8 mb-4">How It Works</h2>
@@ -45,5 +39,5 @@ export default async function AboutPage({
         </div>
       </div>
     </div>
-  )
+  );
 }

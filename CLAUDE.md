@@ -163,22 +163,21 @@ const response = await fetch("/api/user", {
 
 #### 资源安全管理
 
-```typescript
+````typescript
 // 确保资源正确关闭
-async function withDatabase<T>(fn: (prisma: PrismaClient) => Promise<T>): Promise<T> {
-  const prisma = new PrismaClient();
-  try {
-    return await fn(prisma);
-  } finally {
-    await prisma.$disconnect();
-  }
-}
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
-// 使用示例
-const result = await withDatabase(async (prisma) => {
-  return prisma.product.findMany();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
 });
-```
+
+export const db = drizzle(pool);
+
+// 应用关闭时断开连接
+process.on('beforeExit', async () => {
+  await pool.end();
+});
 
 #### 错误处理规范
 
@@ -198,7 +197,7 @@ try {
     throw new InternalServerErrorException("An unexpected error occurred");
   }
 }
-```
+````
 
 ### 1.6 代码注释规范
 
@@ -251,12 +250,12 @@ function calculateTrendingScore(product: Product, options: ScoreOptions = {}): n
 
 #### 必须的文档
 
-| 文档类型     | 位置                                     | 说明                        |
-| ------------ | ---------------------------------------- | --------------------------- |
-| API 接口文档 | Swagger (`/api-docs`)                    | 每个接口必须有 Swagger 注解 |
-| 数据库设计   | `packages/database/prisma/schema.prisma` | Prisma Schema + 注释        |
-| 模块架构文档 | `apps/*/README.md`                       | 每个应用必须有说明          |
-| 核心功能文档 | `docs/architecture.md`                   | 复杂模块的架构设计          |
+| 文档类型     | 位置                            | 说明                        |
+| ------------ | ------------------------------- | --------------------------- |
+| API 接口文档 | Swagger (`/api-docs`)           | 每个接口必须有 Swagger 注解 |
+| 数据库设计   | `packages/database/src/schema/` | Drizzle Schema + 注释       |
+| 模块架构文档 | `apps/*/README.md`              | 每个应用必须有说明          |
+| 核心功能文档 | `docs/architecture.md`          | 复杂模块的架构设计          |
 
 ---
 
@@ -274,7 +273,7 @@ function calculateTrendingScore(product: Product, options: ScoreOptions = {}): n
 | 后端框架 | NestJS               | 10+   | RESTful API              |
 | API 文档 | @nestjs/swagger      | -     | 自动生成 API 文档        |
 | 数据库   | PostgreSQL           | 16+   | 主数据存储               |
-| ORM      | Prisma               | 5+    | 类型安全的数据库访问     |
+| ORM      | Drizzle ORM          | 0.44+ | 类型安全的数据库访问     |
 | 缓存     | Redis                | 7+    | 缓存 + 队列存储          |
 | 任务队列 | BullMQ               | 5+    | 定时任务管理             |
 | 爬虫     | Playwright           | 1.42+ | 无头浏览器爬虫           |
@@ -355,11 +354,13 @@ good-trending/
 │   │   │   └── utils/              # 工具函数
 │   │   └── index.ts
 │   │
-│   ├── database/                   # Prisma 数据库包
-│   │   ├── prisma/
-│   │   │   └── schema.prisma       # 数据库 Schema
-│   │   └── src/
-│   │       └── client.ts           # Prisma 客户端
+│   ├── database/                   # Drizzle 数据库包
+│   │   ├── src/
+│   │   │   ├── schema/             # Schema 定义目录
+│   │   │   ├── client.ts           # Drizzle Client
+│   │   │   └── index.ts            # 统一导出
+│   │   ├── migrations/             # 迁移文件目录
+│   │   └── drizzle.config.ts       # Drizzle Kit 配置
 │   │
 │   └── eslint-config/              # ESLint 配置
 │       ├── base.js
@@ -398,7 +399,7 @@ good-trending/
 │  • 实体定义  • 值对象  • 领域服务                              │
 ├─────────────────────────────────────────────────────────────┤
 │                   基础设施层 (Infrastructure)                │
-│  Prisma + Redis + BullMQ + Playwright                        │
+│  Drizzle ORM + Redis + BullMQ + Playwright                   │
 │  • 数据持久化  • 缓存存储  • 任务队列  • 外部服务              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -428,7 +429,7 @@ good-trending/
 
 - RESTful API 设计（URL 规范、统一响应格式）
 - Swagger 文档规范（Controller 装饰器、DTO 装饰器）
-- Prisma Schema 规范
+- Drizzle Schema 规范
 - 命名规范（表名、字段名、枚举、索引）
 
 ### 3.3 测试规范
@@ -536,9 +537,10 @@ pnpm --filter @good-trending/web dev        # 只启动 web
 pnpm --filter @good-trending/api dev        # 只启动 api
 
 # 数据库
-pnpm db:generate            # 生成 Prisma Client
-pnpm db:migrate:dev         # 运行迁移
-pnpm db:studio              # 打开 Prisma Studio
+pnpm db:generate            # 生成 Drizzle 迁移文件
+pnpm db:push                # 推送 Schema 到数据库
+pnpm db:migrate             # 运行迁移
+pnpm db:studio              # 打开 Drizzle Studio
 
 # 测试
 pnpm test                   # 运行所有测试
@@ -562,7 +564,7 @@ pnpm docker:up              # 启动生产环境
 
 - [Next.js 官方文档](https://nextjs.org/docs)
 - [NestJS 官方文档](https://docs.nestjs.com)
-- [Prisma 官方文档](https://www.prisma.io/docs)
+- [Drizzle ORM 官方文档](https://orm.drizzle.team/docs/overview)
 - [Tailwind CSS 官方文档](https://tailwindcss.com/docs)
 - [Playwright 官方文档](https://playwright.dev)
 

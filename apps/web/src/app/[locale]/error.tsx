@@ -1,28 +1,26 @@
-'use client'
+"use client";
 
-import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
-import { useEffect } from 'react'
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
+import { useEffect } from "react";
 
 export default function Error({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
-  const t = useTranslations()
+  const t = useTranslations();
 
   useEffect(() => {
-    console.error(error)
-  }, [error])
+    console.error(error);
+  }, [error]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-      <h1 className="text-4xl font-bold mb-4">{t('errors.serverError')}</h1>
-      <p className="text-muted-foreground mb-8">
-        Something went wrong. Please try again later.
-      </p>
+      <h1 className="text-4xl font-bold mb-4">{t("errors.serverError")}</h1>
+      <p className="text-muted-foreground mb-8">Something went wrong. Please try again later.</p>
       <div className="flex gap-4">
         <button
           onClick={reset}
@@ -34,9 +32,9 @@ export default function Error({
           href="/"
           className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-6 text-sm font-medium hover:bg-accent transition-colors"
         >
-          {t('errors.backHome')}
+          {t("errors.backHome")}
         </Link>
       </div>
     </div>
-  )
+  );
 }

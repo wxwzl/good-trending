@@ -26,7 +26,7 @@
 
 - ✅ Monorepo 项目初始化
 - ✅ TypeScript 配置
-- ✅ Prisma 数据库 Schema 设计
+- ✅ Drizzle 数据库 Schema 设计
 - ⚪ 环境变量管理
 - ⚪ Docker 开发环境
 - ⚪ 共享类型包完善

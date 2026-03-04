@@ -56,31 +56,31 @@
 
 ## 1.3 关键质量目标
 
-| 质量属性 | 目标值 | 优先级 | 验证方法 |
-|---------|--------|--------|---------|
-| SEO友好 | Core Web Vitals 全绿，Lighthouse SEO > 90 | 高 | Lighthouse 测试 |
-| 页面性能 | LCP < 2.5s，FID < 100ms | 高 | 性能监控 |
-| 爬虫稳定性 | 每日爬取成功率 > 95% | 高 | 任务日志监控 |
-| 数据时效性 | 每日数据更新完成时间 < 6:00 AM | 高 | 监控告警 |
-| 可用性 | 99%+ | 中 | 正常运行时间监控 |
-| 可维护性 | 代码覆盖率 > 70% | 中 | 测试报告 |
-| 测试覆盖率 | 单元测试 > 70%，集成测试 > 60%，E2E 覆盖核心流程 | 高 | Jest/Vitest 覆盖报告 |
-| API 文档 | 100% 接口有 Swagger 文档 | 高 | Swagger UI 检查 |
+| 质量属性   | 目标值                                           | 优先级 | 验证方法             |
+| ---------- | ------------------------------------------------ | ------ | -------------------- |
+| SEO友好    | Core Web Vitals 全绿，Lighthouse SEO > 90        | 高     | Lighthouse 测试      |
+| 页面性能   | LCP < 2.5s，FID < 100ms                          | 高     | 性能监控             |
+| 爬虫稳定性 | 每日爬取成功率 > 95%                             | 高     | 任务日志监控         |
+| 数据时效性 | 每日数据更新完成时间 < 6:00 AM                   | 高     | 监控告警             |
+| 可用性     | 99%+                                             | 中     | 正常运行时间监控     |
+| 可维护性   | 代码覆盖率 > 70%                                 | 中     | 测试报告             |
+| 测试覆盖率 | 单元测试 > 70%，集成测试 > 60%，E2E 覆盖核心流程 | 高     | Jest/Vitest 覆盖报告 |
+| API 文档   | 100% 接口有 Swagger 文档                         | 高     | Swagger UI 检查      |
 
 ## 1.4 关键功能识别
 
-| 功能 | 业务价值 | 技术风险 | 使用频率 | 优先级 |
-|-----|---------|---------|---------|--------|
-| X平台爬虫 | 高 | 高（反爬） | 每日 | ★★★ |
-| 亚马逊爬虫 | 高 | 中（反爬） | 每日 | ★★★ |
-| Trending展示 | 高 | 低 | 高频 | ★★★ |
-| Topics分类 | 高 | 低 | 高频 | ★★★ |
-| SEO优化 | 高 | 中 | 持续 | ★★★ |
-| 国际化 (中英文) | 高 | 低 | 持续 | ★★★ |
-| 主题切换 | 中 | 低 | 持续 | ★★☆ |
-| 定时调度 | 高 | 低 | 每日 | ★★☆ |
-| 搜索功能 | 中 | 中 | 中频 | ★★☆ |
-| 历史趋势 | 中 | 低 | 低频 | ★☆☆ |
+| 功能            | 业务价值 | 技术风险   | 使用频率 | 优先级 |
+| --------------- | -------- | ---------- | -------- | ------ |
+| X平台爬虫       | 高       | 高（反爬） | 每日     | ★★★    |
+| 亚马逊爬虫      | 高       | 中（反爬） | 每日     | ★★★    |
+| Trending展示    | 高       | 低         | 高频     | ★★★    |
+| Topics分类      | 高       | 低         | 高频     | ★★★    |
+| SEO优化         | 高       | 中         | 持续     | ★★★    |
+| 国际化 (中英文) | 高       | 低         | 持续     | ★★★    |
+| 主题切换        | 中       | 低         | 持续     | ★★☆    |
+| 定时调度        | 高       | 低         | 每日     | ★★☆    |
+| 搜索功能        | 中       | 中         | 中频     | ★★☆    |
+| 历史趋势        | 中       | 低         | 低频     | ★☆☆    |
 
 ---
 
@@ -149,7 +149,7 @@
 │                               │                                         │
 │  ┌────────────────────────────┴────────────────────────────────────┐   │
 │  │                     数据层 (PostgreSQL + Redis)                   │   │
-│  │  • PostgreSQL  • Redis  • Prisma ORM                              │   │
+│  │  • PostgreSQL  • Redis  • Drizzle ORM                            │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -177,7 +177,7 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                   基础设施层                                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │  Prisma     │  │  Redis      │  │  BullMQ     │              │
+│  │  Drizzle   │  │  Redis      │  │  BullMQ     │              │
 │  └─────────────┘  └─────────────┘  └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -558,17 +558,21 @@ good-trending/
 │   │   └── package.json
 │   │
 │   ├── database/                      # 数据库包
-│   │   ├── prisma/
-│   │   │   └── schema.prisma          # Prisma Schema
 │   │   ├── src/
-│   │   │   └── index.ts               # 导出 Prisma Client
+│   │   │   ├── schema/                # Schema 定义目录
+│   │   │   │   ├── index.ts           # 统一导出所有 schema
+│   │   │   │   ├── product.ts         # 商品相关表
+│   │   │   │   ├── topic.ts           # 分类相关表
+│   │   │   │   ├── trend.ts           # 趋势相关表
+│   │   │   │   ├── tag.ts             # 标签相关表
+│   │   │   │   ├── crawler-log.ts     # 爬虫日志表
+│   │   │   │   └── enums.ts           # 枚举定义
+│   │   │   ├── client.ts              # Drizzle Client 实例
+│   │   │   └── index.ts               # 统一导出
+│   │   ├── migrations/                # 迁移文件目录
+│   │   ├── drizzle.config.ts          # Drizzle Kit 配置
 │   │   ├── tsconfig.json              # TypeScript 配置
 │   │   └── package.json
-│   │
-│   └── eslint-config/                 # ESLint 配置
-│       ├── base.js
-│       ├── next.js
-│       └── package.json
 │
 ├── turbo.json                         # TurboRepo 配置
 ├── pnpm-workspace.yaml                # pnpm workspace 配置
@@ -585,168 +589,312 @@ good-trending/
 
 ## 3.5 数据架构
 
-### Prisma Schema
+### Drizzle Schema（模块化结构）
 
-```prisma
-// packages/database/prisma/schema.prisma
+#### 枚举定义
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// 商品表
-model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  image       String?
-  price       Decimal?
-  currency    String   @default("USD")
-  sourceUrl   String   @unique
-  sourceId    String   // 来源平台的商品ID
-  sourceType  SourceType
-
-  // 关联
-  topics      ProductTopic[]
-  tags        ProductTag[]
-  trends      Trend[]
-  histories   ProductHistory[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([sourceType, sourceId])
-  @@index([createdAt])
-}
-
-// 商品-分类关联
-model ProductTopic {
-  productId String
-  topicId   String
-
-  product   Product @relation(fields: [productId], references: [id])
-  topic     Topic   @relation(fields: [topicId], references: [id])
-
-  @@id([productId, topicId])
-}
-
-// 分类/Topics
-model Topic {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  imageUrl    String?
-
-  products    ProductTopic[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([slug])
-}
-
-// 标签
-model Tag {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-
-  products  ProductTag[]
-
-  @@index([slug])
-}
-
-// 商品-标签关联
-model ProductTag {
-  productId String
-  tagId     String
-
-  product   Product @relation(fields: [productId], references: [id])
-  tag       Tag     @relation(fields: [tagId], references: [id])
-
-  @@id([productId, tagId])
-}
-
-// 趋势记录
-model Trend {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-
-  date        DateTime @db.Date
-  rank        Int
-  score       Float    // 综合热度分数
-  mentions    Int      @default(0)  // 提及次数
-  views       Int      @default(0)  // 浏览量
-  likes       Int      @default(0)  // 点赞数
-
-  sourceData  Json?    // 原始数据快照
-
-  createdAt   DateTime @default(now())
-
-  @@unique([productId, date])
-  @@index([date, rank])
-  @@index([date, score])
-}
-
-// 商品历史数据
-model ProductHistory {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-
-  date        DateTime @db.Date
-  price       Decimal?
-  rank        Int?
-  salesCount  Int?
-  reviewCount Int?
-  rating      Float?
-
-  createdAt   DateTime @default(now())
-
-  @@unique([productId, date])
-  @@index([productId, date])
-}
-
-// 爬虫日志
-model CrawlerLog {
-  id          String   @id @default(cuid())
-  sourceType  SourceType
-  status      CrawlerStatus
-
-  startTime   DateTime
-  endTime     DateTime?
-  duration    Int?     // 毫秒
-
-  itemsFound  Int      @default(0)
-  itemsSaved  Int      @default(0)
-  errors      Json?
-
-  metadata    Json?
-
-  createdAt   DateTime @default(now())
-
-  @@index([sourceType, createdAt])
-}
+```typescript
+// packages/database/src/schema/enums.ts
+import { pgEnum } from "drizzle-orm/pg-core";
 
 // 数据来源类型
-enum SourceType {
-  X_PLATFORM
-  AMAZON
-}
+export const sourceTypeEnum = pgEnum("source_type", ["X_PLATFORM", "AMAZON"]);
 
 // 爬虫状态
-enum CrawlerStatus {
-  RUNNING
-  COMPLETED
-  FAILED
-}
+export const crawlerStatusEnum = pgEnum("crawler_status", ["RUNNING", "COMPLETED", "FAILED"]);
+```
+
+#### 商品相关表
+
+```typescript
+// packages/database/src/schema/product.ts
+import { pgTable, text, decimal, timestamp, index } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { sourceTypeEnum } from "./enums";
+
+// 商品表
+export const products = pgTable(
+  "product",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    name: text("name").notNull(),
+    description: text("description"),
+    image: text("image"),
+    price: decimal("price", { precision: 10, scale: 2 }),
+    currency: text("currency").default("USD").notNull(),
+    sourceUrl: text("source_url").unique().notNull(),
+    sourceId: text("source_id").notNull(),
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("product_source_idx").on(table.sourceType, table.sourceId),
+    index("product_created_at_idx").on(table.createdAt),
+  ]
+);
+
+// 商品历史数据
+export const productHistories = pgTable(
+  "product_history",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    price: decimal("price", { precision: 10, scale: 2 }),
+    rank: integer("rank"),
+    salesCount: integer("sales_count"),
+    reviewCount: integer("review_count"),
+    rating: float("rating"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("product_history_product_date_idx").on(table.productId, table.date)]
+);
+
+// 关联关系
+export const productsRelations = relations(products, ({ many }) => ({
+  topics: many(productTopics),
+  tags: many(productTags),
+  trends: many(trends),
+  histories: many(productHistories),
+}));
+
+export const productHistoriesRelations = relations(productHistories, ({ one }) => ({
+  product: one(products, {
+    fields: [productHistories.productId],
+    references: [products.id],
+  }),
+}));
+```
+
+#### 分类相关表
+
+```typescript
+// packages/database/src/schema/topic.ts
+import { pgTable, text, timestamp, index, primaryKey } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { products } from "./product";
+
+// 分类/Topics
+export const topics = pgTable(
+  "topic",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    name: text("name").unique().notNull(),
+    slug: text("slug").unique().notNull(),
+    description: text("description"),
+    imageUrl: text("image_url"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("topic_slug_idx").on(table.slug)]
+);
+
+// 商品-分类关联
+export const productTopics = pgTable(
+  "product_topic",
+  {
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    topicId: text("topic_id")
+      .notNull()
+      .references(() => topics.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.productId, table.topicId] })]
+);
+
+// 关联关系
+export const topicsRelations = relations(topics, ({ many }) => ({
+  products: many(productTopics),
+}));
+```
+
+#### 趋势相关表
+
+```typescript
+// packages/database/src/schema/trend.ts
+import {
+  pgTable,
+  text,
+  integer,
+  float,
+  json,
+  date,
+  timestamp,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { products } from "./product";
+
+// 趋势记录
+export const trends = pgTable(
+  "trend",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    rank: integer("rank").notNull(),
+    score: float("score").notNull(),
+    mentions: integer("mentions").default(0).notNull(),
+    views: integer("views").default(0).notNull(),
+    likes: integer("likes").default(0).notNull(),
+    sourceData: json("source_data"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("trend_product_date_idx").on(table.productId, table.date),
+    index("trend_date_rank_idx").on(table.date, table.rank),
+    index("trend_date_score_idx").on(table.date, table.score),
+  ]
+);
+
+// 关联关系
+export const trendsRelations = relations(trends, ({ one }) => ({
+  product: one(products, {
+    fields: [trends.productId],
+    references: [products.id],
+  }),
+}));
+```
+
+#### 标签相关表
+
+```typescript
+// packages/database/src/schema/tag.ts
+import { pgTable, text, index, primaryKey } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { products } from "./product";
+
+// 标签
+export const tags = pgTable(
+  "tag",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    name: text("name").unique().notNull(),
+    slug: text("slug").unique().notNull(),
+  },
+  (table) => [index("tag_slug_idx").on(table.slug)]
+);
+
+// 商品-标签关联
+export const productTags = pgTable(
+  "product_tag",
+  {
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.productId, table.tagId] })]
+);
+
+// 关联关系
+export const tagsRelations = relations(tags, ({ many }) => ({
+  products: many(productTags),
+}));
+```
+
+#### 爬虫日志表
+
+```typescript
+// packages/database/src/schema/crawler-log.ts
+import { pgTable, text, integer, json, timestamp, index } from "drizzle-orm/pg-core";
+import { createId } from "@paralleldrive/cuid2";
+import { sourceTypeEnum, crawlerStatusEnum } from "./enums";
+
+// 爬虫日志
+export const crawlerLogs = pgTable(
+  "crawler_log",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    status: crawlerStatusEnum("status").notNull(),
+    startTime: timestamp("start_time").notNull(),
+    endTime: timestamp("end_time"),
+    duration: integer("duration"),
+    itemsFound: integer("items_found").default(0).notNull(),
+    itemsSaved: integer("items_saved").default(0).notNull(),
+    errors: json("errors"),
+    metadata: json("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("crawler_log_source_created_idx").on(table.sourceType, table.createdAt)]
+);
+```
+
+#### 统一导出
+
+```typescript
+// packages/database/src/schema/index.ts
+export * from "./enums";
+export * from "./product";
+export * from "./topic";
+export * from "./trend";
+export * from "./tag";
+export * from "./crawler-log";
+```
+
+#### Drizzle Client
+
+```typescript
+// packages/database/src/client.ts
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool, { schema });
+```
+
+#### 包入口
+
+```typescript
+// packages/database/src/index.ts
+export * from "./schema";
+export { db } from "./client";
+```
+
+#### Drizzle Kit 配置
+
+```typescript
+// packages/database/drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema/index.ts",
+  out: "./migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
 ```
 
 ### 数据分布策略
@@ -780,11 +928,11 @@ enum CrawlerStatus {
 
 ### 技术选型
 
-| 技术 | 用途 | 特点 |
-|-----|------|------|
-| **next-intl** | Next.js 国际化框架 | App Router 原生支持，服务端组件友好 |
-| **@formatjs/intl-localematcher** | 语言匹配 | 处理语言协商 |
-| **negotiator** | 内容协商 | 解析 Accept-Language |
+| 技术                             | 用途               | 特点                                |
+| -------------------------------- | ------------------ | ----------------------------------- |
+| **next-intl**                    | Next.js 国际化框架 | App Router 原生支持，服务端组件友好 |
+| **@formatjs/intl-localematcher** | 语言匹配           | 处理语言协商                        |
+| **negotiator**                   | 内容协商           | 解析 Accept-Language                |
 
 ### 语言配置
 
@@ -859,56 +1007,55 @@ apps/web/
 
 ```typescript
 // src/i18n/config.ts
-export const locales = ['en', 'zh'] as const
-export type Locale = (typeof locales)[number]
+export const locales = ["en", "zh"] as const;
+export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = 'en'
+export const defaultLocale: Locale = "en";
 
 export const localeNames: Record<Locale, string> = {
-  en: 'English',
-  zh: '简体中文',
-}
+  en: "English",
+  zh: "简体中文",
+};
 
 export const localeLabels: Record<Locale, { native: string; english: string }> = {
-  en: { native: 'English', english: 'English' },
-  zh: { native: '简体中文', english: 'Simplified Chinese' },
-}
+  en: { native: "English", english: "English" },
+  zh: { native: "简体中文", english: "Simplified Chinese" },
+};
 ```
 
 #### 路由配置
 
 ```typescript
 // src/i18n/routing.ts
-import { defineRouting } from 'next-intl/routing'
-import { createNavigation } from 'next-intl/navigation'
-import { locales, defaultLocale } from './config'
+import { defineRouting } from "next-intl/routing";
+import { createNavigation } from "next-intl/navigation";
+import { locales, defaultLocale } from "./config";
 
 export const routing = defineRouting({
   locales,
   defaultLocale,
-  localePrefix: 'always', // 始终显示语言前缀 /en, /zh
-})
+  localePrefix: "always", // 始终显示语言前缀 /en, /zh
+});
 
 // 创建类型安全的导航助手
-export const { Link, redirect, usePathname, useRouter, getPathname } =
-  createNavigation(routing)
+export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation(routing);
 ```
 
 #### 服务端配置
 
 ```typescript
 // src/i18n/request.ts
-import { getRequestConfig } from 'next-intl/server'
-import { locales, Locale } from './config'
-import { routing } from './routing'
+import { getRequestConfig } from "next-intl/server";
+import { locales, Locale } from "./config";
+import { routing } from "./routing";
 
 export default getRequestConfig(async ({ requestLocale }) => {
   // 获取当前语言
-  let locale = await requestLocale
+  let locale = await requestLocale;
 
   // 验证语言是否有效
   if (!locale || !locales.includes(locale as Locale)) {
-    locale = routing.defaultLocale
+    locale = routing.defaultLocale;
   }
 
   return {
@@ -916,38 +1063,38 @@ export default getRequestConfig(async ({ requestLocale }) => {
     // 按需加载翻译资源
     messages: {
       common: (await import(`../../messages/${locale}/common.json`)).default,
-      ...(locale === 'zh'
+      ...(locale === "zh"
         ? { home: (await import(`../../messages/${locale}/home.json`)).default }
         : {}),
     },
-  }
-})
+  };
+});
 ```
 
 #### 中间件配置
 
 ```typescript
 // src/i18n/middleware.ts
-import createMiddleware from 'next-intl/middleware'
-import { routing } from './routing'
+import createMiddleware from "next-intl/middleware";
+import { routing } from "./routing";
 
-export default createMiddleware(routing)
+export default createMiddleware(routing);
 
 export const config = {
   // 匹配所有路径，除了 api、_next、静态文件等
-  matcher: ['/', '/(en|zh)/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
-}
+  matcher: ["/", "/(en|zh)/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
+};
 ```
 
 ```typescript
 // middleware.ts (根目录)
-import { middleware as i18nMiddleware } from './src/i18n/middleware'
+import { middleware as i18nMiddleware } from "./src/i18n/middleware";
 
-export default i18nMiddleware
+export default i18nMiddleware;
 
 export const config = {
-  matcher: ['/', '/(en|zh)/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
-}
+  matcher: ["/", "/(en|zh)/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
+};
 ```
 
 ### 翻译资源示例
@@ -1080,57 +1227,54 @@ export const config = {
 
 ```tsx
 // src/app/[locale]/trending/page.tsx
-import { useTranslations } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
-import { Locale } from '@/i18n/config'
+import { useTranslations } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
+import { Locale } from "@/i18n/config";
 
 interface TrendingPageProps {
-  params: { locale: Locale }
+  params: { locale: Locale };
 }
 
 export default async function TrendingPage({ params: { locale } }: TrendingPageProps) {
   // 启用静态渲染
-  setRequestLocale(locale)
+  setRequestLocale(locale);
 
   // 加载页面特定翻译
-  const t = await getTranslations({ locale, namespace: 'trending' })
-  const tCommon = await getTranslations({ locale, namespace: 'common' })
+  const t = await getTranslations({ locale, namespace: "trending" });
+  const tCommon = await getTranslations({ locale, namespace: "common" });
 
   return (
     <main>
-      <h1>{t('title')}</h1>
-      <p>{t('subtitle')}</p>
-      <p>{t('lastUpdated', { date: new Date().toLocaleDateString() })}</p>
+      <h1>{t("title")}</h1>
+      <p>{t("subtitle")}</p>
+      <p>{t("lastUpdated", { date: new Date().toLocaleDateString() })}</p>
       {/* ... */}
     </main>
-  )
+  );
 }
 
 // 生成静态路径
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }))
+  return locales.map((locale) => ({ locale }));
 }
 ```
 
 ```tsx
 // 客户端组件使用
-'use client'
+"use client";
 
-import { useTranslations } from 'next-intl'
+import { useTranslations } from "next-intl";
 
 export function LanguageSwitcher() {
-  const t = useTranslations('common.language')
-  const { locale, setLocale } = useLocale()
+  const t = useTranslations("common.language");
+  const { locale, setLocale } = useLocale();
 
   return (
-    <select
-      value={locale}
-      onChange={(e) => setLocale(e.target.value as Locale)}
-    >
-      <option value="en">{t('en')}</option>
-      <option value="zh">{t('zh')}</option>
+    <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
+      <option value="en">{t("en")}</option>
+      <option value="zh">{t("zh")}</option>
     </select>
-  )
+  );
 }
 ```
 
@@ -1138,24 +1282,22 @@ export function LanguageSwitcher() {
 
 ```tsx
 // src/app/[locale]/layout.tsx
-import { locales, Locale } from '@/i18n/config'
+import { locales, Locale } from "@/i18n/config";
 
 export async function generateMetadata({ params: { locale } }) {
-  const t = await getTranslations({ locale, namespace: 'common' })
+  const t = await getTranslations({ locale, namespace: "common" });
 
   return {
     title: {
-      default: t('siteName'),
-      template: `%s | ${t('siteName')}`,
+      default: t("siteName"),
+      template: `%s | ${t("siteName")}`,
     },
-    description: t('siteDescription'),
+    description: t("siteDescription"),
     alternates: {
       canonical: `https://good-trending.com/${locale}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `https://good-trending.com/${l}`])
-      ),
+      languages: Object.fromEntries(locales.map((l) => [l, `https://good-trending.com/${l}`])),
     },
-  }
+  };
 }
 ```
 
@@ -1163,32 +1305,30 @@ export async function generateMetadata({ params: { locale } }) {
 
 ```tsx
 // src/app/sitemap.ts
-import { MetadataRoute } from 'next'
-import { locales } from '@/i18n/config'
+import { MetadataRoute } from "next";
+import { locales } from "@/i18n/config";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://good-trending.com'
-  const routes = ['', '/trending', '/topics', '/search', '/about']
+  const baseUrl = "https://good-trending.com";
+  const routes = ["", "/trending", "/topics", "/search", "/about"];
 
-  const sitemapEntries: MetadataRoute.Sitemap = []
+  const sitemapEntries: MetadataRoute.Sitemap = [];
 
   locales.forEach((locale) => {
     routes.forEach((route) => {
       sitemapEntries.push({
         url: `${baseUrl}/${locale}${route}`,
         lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: route === '' ? 1 : 0.8,
+        changeFrequency: "daily",
+        priority: route === "" ? 1 : 0.8,
         alternates: {
-          languages: Object.fromEntries(
-            locales.map((l) => [l, `${baseUrl}/${l}${route}`])
-          ),
+          languages: Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}${route}`])),
         },
-      })
-    })
-  })
+      });
+    });
+  });
 
-  return sitemapEntries
+  return sitemapEntries;
 }
 ```
 
@@ -1198,11 +1338,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
 ### 技术选型
 
-| 技术 | 用途 | 特点 |
-|-----|------|------|
-| **next-themes** | 主题管理 | SSR 友好，无闪烁 |
+| 技术             | 用途     | 特点                     |
+| ---------------- | -------- | ------------------------ |
+| **next-themes**  | 主题管理 | SSR 友好，无闪烁         |
 | **Tailwind CSS** | 主题样式 | dark: 前缀，CSS 变量支持 |
-| **Shadcn/UI** | 组件主题 | 内置 dark/light 主题支持 |
+| **Shadcn/UI**    | 组件主题 | 内置 dark/light 主题支持 |
 
 ### 主题配置
 
@@ -1330,78 +1470,76 @@ apps/web/
 // tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class'],
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  darkMode: ["class"],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: "2rem",
       screens: {
-        '2xl': '1400px',
+        "2xl": "1400px",
       },
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         brand: {
-          primary: 'hsl(var(--brand-primary))',
-          secondary: 'hsl(var(--brand-secondary))',
-          accent: 'hsl(var(--brand-accent))',
+          primary: "hsl(var(--brand-primary))",
+          secondary: "hsl(var(--brand-secondary))",
+          accent: "hsl(var(--brand-accent))",
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
-}
+  plugins: [require("tailwindcss-animate")],
+};
 ```
 
 ### ThemeProvider 配置
 
 ```tsx
 // src/components/providers/ThemeProvider.tsx
-'use client'
+"use client";
 
-import { ThemeProvider as NextThemesProvider } from 'next-themes'
-import { type ThemeProviderProps } from 'next-themes'
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { type ThemeProviderProps } from "next-themes";
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -1414,7 +1552,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     >
       {children}
     </NextThemesProvider>
-  )
+  );
 }
 ```
 
@@ -1422,26 +1560,24 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 ```tsx
 // src/app/[locale]/layout.tsx
-import { ThemeProvider } from '@/components/providers/ThemeProvider'
-import { Locale } from '@/i18n/config'
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { Locale } from "@/i18n/config";
 
 export default function RootLayout({
   children,
   params: { locale },
 }: {
-  children: React.ReactNode
-  params: { locale: Locale }
+  children: React.ReactNode;
+  params: { locale: Locale };
 }) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head />
       <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
 ```
 
@@ -1449,35 +1585,35 @@ export default function RootLayout({
 
 ```tsx
 // src/components/ui/theme-toggle.tsx
-'use client'
+"use client";
 
-import * as React from 'react'
-import { Moon, Sun, Monitor } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import * as React from "react";
+import { Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "next-themes";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
+  const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
 
   // 避免水合不匹配
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" disabled>
         <Sun className="h-5 w-5" />
       </Button>
-    )
+    );
   }
 
   return (
@@ -1490,21 +1626,21 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
           <Sun className="mr-2 h-4 w-4" />
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
           <Moon className="mr-2 h-4 w-4" />
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
           <Monitor className="mr-2 h-4 w-4" />
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 ```
 
@@ -1512,14 +1648,14 @@ export function ThemeToggle() {
 
 ```tsx
 // src/components/ui/theme-dropdown.tsx
-'use client'
+"use client";
 
-import * as React from 'react'
-import { Moon, Sun, Monitor, Check } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { useTranslations } from 'next-intl'
+import * as React from "react";
+import { Moon, Sun, Monitor, Check } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1527,44 +1663,44 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 
 const themes = [
-  { value: 'light', icon: Sun },
-  { value: 'dark', icon: Moon },
-  { value: 'system', icon: Monitor },
-] as const
+  { value: "light", icon: Sun },
+  { value: "dark", icon: Moon },
+  { value: "system", icon: Monitor },
+] as const;
 
 export function ThemeDropdown() {
-  const { setTheme, theme } = useTheme()
-  const t = useTranslations('common.theme')
-  const [mounted, setMounted] = React.useState(false)
+  const { setTheme, theme } = useTheme();
+  const t = useTranslations("common.theme");
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" disabled>
         <Sun className="h-5 w-5" />
       </Button>
-    )
+    );
   }
 
-  const currentTheme = themes.find((t) => t.value === theme) || themes[0]
-  const Icon = currentTheme.icon
+  const currentTheme = themes.find((t) => t.value === theme) || themes[0];
+  const Icon = currentTheme.icon;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <Icon className="h-5 w-5" />
-          <span className="sr-only">{t('title')}</span>
+          <span className="sr-only">{t("title")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuLabel>{t('title')}</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("title")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {themes.map(({ value, icon: ThemeIcon }) => (
           <DropdownMenuItem
@@ -1581,7 +1717,7 @@ export function ThemeDropdown() {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 ```
 
@@ -1609,12 +1745,10 @@ export default function RootLayout({ children, params: { locale } }) {
         />
       </head>
       <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
 ```
 
@@ -1622,30 +1756,28 @@ export default function RootLayout({ children, params: { locale } }) {
 
 ```tsx
 // __tests__/components/ThemeToggle.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { ThemeProvider } from 'next-themes'
+import { render, screen, fireEvent } from "@testing-library/react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeProvider } from "next-themes";
 
-const wrapper = ({ children }) => (
-  <ThemeProvider attribute="class">{children}</ThemeProvider>
-)
+const wrapper = ({ children }) => <ThemeProvider attribute="class">{children}</ThemeProvider>;
 
-describe('ThemeToggle', () => {
-  it('renders theme toggle button', () => {
-    render(<ThemeToggle />, { wrapper })
-    expect(screen.getByRole('button')).toBeInTheDocument()
-  })
+describe("ThemeToggle", () => {
+  it("renders theme toggle button", () => {
+    render(<ThemeToggle />, { wrapper });
+    expect(screen.getByRole("button")).toBeInTheDocument();
+  });
 
-  it('shows theme options when clicked', async () => {
-    render(<ThemeToggle />, { wrapper })
+  it("shows theme options when clicked", async () => {
+    render(<ThemeToggle />, { wrapper });
 
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole("button"));
 
-    expect(await screen.findByText('Light')).toBeInTheDocument()
-    expect(await screen.findByText('Dark')).toBeInTheDocument()
-    expect(await screen.findByText('System')).toBeInTheDocument()
-  })
-})
+    expect(await screen.findByText("Light")).toBeInTheDocument();
+    expect(await screen.findByText("Dark")).toBeInTheDocument();
+    expect(await screen.findByText("System")).toBeInTheDocument();
+  });
+});
 ```
 
 ---
@@ -1702,15 +1834,15 @@ describe('ThemeToggle', () => {
 
 ### 测试技术栈
 
-| 测试类型 | 工具 | 位置 | 适用范围 |
-|---------|------|------|---------|
-| **单元测试** | Vitest / Jest | 各应用内部 | 函数、组件、Service 层 |
-| **API 集成测试** | Vitest + fetch | `apps/tests/api/` | API 接口端到端测试 |
-| **E2E 测试 (Web)** | Playwright | `apps/tests/e2e/web/` | 完整用户流程 |
-| **E2E 测试 (API)** | Playwright | `apps/tests/e2e/api/` | API 端到端测试 |
-| **快照测试** | Vitest | 各应用内部 | UI 组件渲染 |
-| **Mock** | MSW + vi.fn() | `apps/tests/mocks/` | 外部依赖模拟 |
-| **覆盖率** | c8 / Istanbul | 各应用内部 | 代码覆盖率统计 |
+| 测试类型           | 工具           | 位置                  | 适用范围               |
+| ------------------ | -------------- | --------------------- | ---------------------- |
+| **单元测试**       | Vitest / Jest  | 各应用内部            | 函数、组件、Service 层 |
+| **API 集成测试**   | Vitest + fetch | `apps/tests/api/`     | API 接口端到端测试     |
+| **E2E 测试 (Web)** | Playwright     | `apps/tests/e2e/web/` | 完整用户流程           |
+| **E2E 测试 (API)** | Playwright     | `apps/tests/e2e/api/` | API 端到端测试         |
+| **快照测试**       | Vitest         | 各应用内部            | UI 组件渲染            |
+| **Mock**           | MSW + vi.fn()  | `apps/tests/mocks/`   | 外部依赖模拟           |
+| **覆盖率**         | c8 / Istanbul  | 各应用内部            | 代码覆盖率统计         |
 
 ### 测试目录结构
 
@@ -1803,7 +1935,7 @@ good-trending/
 │   │   │   │   └── utils/
 │   │   │   │       └── helpers.spec.ts
 │   │   │   └── mocks/
-│   │   │       ├── prisma.mock.ts
+│   │   │       ├── drizzle.mock.ts
 │   │   │       └── redis.mock.ts
 │   │   ├── jest.config.js
 │   │   └── package.json
@@ -1898,118 +2030,118 @@ good-trending/
 
 ```typescript
 // apps/tests/playwright.config.ts
-import { defineConfig, devices } from '@playwright/test'
-import path from 'path'
+import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
 export default defineConfig({
-  testDir: './src/e2e',
+  testDir: "./src/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ["html", { outputFolder: "playwright-report" }],
+    ["junit", { outputFile: "test-results/junit.xml" }],
   ],
-  outputDir: 'test-results',
+  outputDir: "test-results",
 
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
-    apiURL: process.env.API_URL || 'http://localhost:3001',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'on-first-retry',
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
+    apiURL: process.env.API_URL || "http://localhost:3001",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "on-first-retry",
   },
 
   projects: [
     // 前端 E2E 测试
     {
-      name: 'web-chromium',
-      testDir: './src/e2e/web',
-      use: { ...devices['Desktop Chrome'] },
+      name: "web-chromium",
+      testDir: "./src/e2e/web",
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'web-firefox',
-      testDir: './src/e2e/web',
-      use: { ...devices['Desktop Firefox'] },
+      name: "web-firefox",
+      testDir: "./src/e2e/web",
+      use: { ...devices["Desktop Firefox"] },
     },
     {
-      name: 'web-mobile',
-      testDir: './src/e2e/web',
-      use: { ...devices['Pixel 5'] },
+      name: "web-mobile",
+      testDir: "./src/e2e/web",
+      use: { ...devices["Pixel 5"] },
     },
     // API E2E 测试
     {
-      name: 'api-tests',
-      testDir: './src/e2e/api',
-      use: { ...devices['Desktop Chrome'] },
+      name: "api-tests",
+      testDir: "./src/e2e/api",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 
   // 前端 E2E 需要启动 web 服务
   webServer: {
-    command: 'pnpm --filter @good-trending/web dev',
-    url: 'http://localhost:3000',
+    command: "pnpm --filter @good-trending/web dev",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
-})
+});
 ```
 
 #### Vitest 配置 (apps/tests)
 
 ```typescript
 // apps/tests/vitest.config.ts
-import { defineConfig } from 'vitest/config'
-import path from 'path'
+import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: "node",
     testTimeout: 30000,
-    setupFiles: ['./vitest.setup.ts'],
-    include: ['src/api/**/*.test.ts'],
+    setupFiles: ["./vitest.setup.ts"],
+    include: ["src/api/**/*.test.ts"],
     coverage: {
-      provider: 'c8',
-      reporter: ['text', 'json', 'html'],
-      reportsDirectory: './coverage',
+      provider: "c8",
+      reporter: ["text", "json", "html"],
+      reportsDirectory: "./coverage",
       exclude: [
-        'node_modules/',
-        'src/fixtures/',
-        'src/mocks/',
-        'src/utils/',
-        '**/*.d.ts',
-        '**/*.config.*',
+        "node_modules/",
+        "src/fixtures/",
+        "src/mocks/",
+        "src/utils/",
+        "**/*.d.ts",
+        "**/*.config.*",
       ],
     },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@fixtures': path.resolve(__dirname, './src/fixtures'),
-      '@mocks': path.resolve(__dirname, './src/mocks'),
-      '@utils': path.resolve(__dirname, './src/utils'),
+      "@": path.resolve(__dirname, "./src"),
+      "@fixtures": path.resolve(__dirname, "./src/fixtures"),
+      "@mocks": path.resolve(__dirname, "./src/mocks"),
+      "@utils": path.resolve(__dirname, "./src/utils"),
     },
   },
-})
+});
 ```
 
 #### Vitest Setup (apps/tests)
 
 ```typescript
 // apps/tests/vitest.setup.ts
-import { beforeAll, afterAll, afterEach } from 'vitest'
-import { server } from './src/mocks/server'
+import { beforeAll, afterAll, afterEach } from "vitest";
+import { server } from "./src/mocks/server";
 
 // 启动 MSW Server
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 // 重置 handlers
-afterEach(() => server.resetHandlers())
+afterEach(() => server.resetHandlers());
 
 // 关闭 MSW Server
-afterAll(() => server.close())
+afterAll(() => server.close());
 ```
 
 ### 测试用例示例
@@ -2018,319 +2150,319 @@ afterAll(() => server.close())
 
 ```typescript
 // apps/tests/src/api/products/get-products.test.ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { apiClient } from '@utils/api-client'
-import { productFixture } from '@fixtures/product.fixture'
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { apiClient } from "@utils/api-client";
+import { productFixture } from "@fixtures/product.fixture";
 
-describe('GET /products', () => {
-  describe('成功的请求', () => {
-    it('应该返回分页的商品列表', async () => {
-      const response = await apiClient.get('/products', {
+describe("GET /products", () => {
+  describe("成功的请求", () => {
+    it("应该返回分页的商品列表", async () => {
+      const response = await apiClient.get("/products", {
         params: { page: 1, limit: 10 },
-      })
+      });
 
-      expect(response.status).toBe(200)
-      expect(response.body.data).toBeInstanceOf(Array)
-      expect(response.body.page).toBe(1)
-      expect(response.body.limit).toBe(10)
-      expect(typeof response.body.total).toBe('number')
-    })
+      expect(response.status).toBe(200);
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(response.body.page).toBe(1);
+      expect(response.body.limit).toBe(10);
+      expect(typeof response.body.total).toBe("number");
+    });
 
-    it('应该支持按来源筛选', async () => {
-      const response = await apiClient.get('/products', {
-        params: { sourceType: 'AMAZON' },
-      })
+    it("应该支持按来源筛选", async () => {
+      const response = await apiClient.get("/products", {
+        params: { sourceType: "AMAZON" },
+      });
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(200);
       response.body.data.forEach((product) => {
-        expect(product.sourceType).toBe('AMAZON')
-      })
-    })
+        expect(product.sourceType).toBe("AMAZON");
+      });
+    });
 
-    it('应该支持关键词搜索', async () => {
-      const response = await apiClient.get('/products', {
-        params: { keyword: 'laptop' },
-      })
+    it("应该支持关键词搜索", async () => {
+      const response = await apiClient.get("/products", {
+        params: { keyword: "laptop" },
+      });
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(200);
       response.body.data.forEach((product) => {
         expect(
-          product.name.toLowerCase().includes('laptop') ||
-          product.description?.toLowerCase().includes('laptop')
-        ).toBe(true)
-      })
-    })
-  })
+          product.name.toLowerCase().includes("laptop") ||
+            product.description?.toLowerCase().includes("laptop")
+        ).toBe(true);
+      });
+    });
+  });
 
-  describe('参数验证', () => {
-    it('应该拒绝无效的 page 参数', async () => {
-      const response = await apiClient.get('/products', {
+  describe("参数验证", () => {
+    it("应该拒绝无效的 page 参数", async () => {
+      const response = await apiClient.get("/products", {
         params: { page: -1 },
-      })
+      });
 
-      expect(response.status).toBe(400)
-    })
+      expect(response.status).toBe(400);
+    });
 
-    it('应该限制 limit 最大值为 100', async () => {
-      const response = await apiClient.get('/products', {
+    it("应该限制 limit 最大值为 100", async () => {
+      const response = await apiClient.get("/products", {
         params: { limit: 200 },
-      })
+      });
 
-      expect(response.status).toBe(200)
-      expect(response.body.limit).toBeLessThanOrEqual(100)
-    })
-  })
-})
+      expect(response.status).toBe(200);
+      expect(response.body.limit).toBeLessThanOrEqual(100);
+    });
+  });
+});
 ```
 
 ```typescript
 // apps/tests/src/api/products/get-product-by-id.test.ts
-import { describe, it, expect } from 'vitest'
-import { apiClient } from '@utils/api-client'
+import { describe, it, expect } from "vitest";
+import { apiClient } from "@utils/api-client";
 
-describe('GET /products/:id', () => {
-  it('应该返回指定商品的详情', async () => {
+describe("GET /products/:id", () => {
+  it("应该返回指定商品的详情", async () => {
     // 先创建测试商品或使用已存在的
-    const productId = 'test-product-id'
+    const productId = "test-product-id";
 
-    const response = await apiClient.get(`/products/${productId}`)
+    const response = await apiClient.get(`/products/${productId}`);
 
-    expect(response.status).toBe(200)
-    expect(response.body.id).toBe(productId)
-    expect(response.body.name).toBeDefined()
-    expect(response.body.sourceUrl).toBeDefined()
-  })
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(productId);
+    expect(response.body.name).toBeDefined();
+    expect(response.body.sourceUrl).toBeDefined();
+  });
 
-  it('应该返回 404 当商品不存在时', async () => {
-    const response = await apiClient.get('/products/non-existent-id')
+  it("应该返回 404 当商品不存在时", async () => {
+    const response = await apiClient.get("/products/non-existent-id");
 
-    expect(response.status).toBe(404)
-    expect(response.body.message).toContain('not found')
-  })
-})
+    expect(response.status).toBe(404);
+    expect(response.body.message).toContain("not found");
+  });
+});
 ```
 
 #### E2E 测试 - 前端 (apps/tests)
 
 ```typescript
 // apps/tests/src/e2e/web/user-journey.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('用户完整流程', () => {
-  test('应该从首页浏览到商品详情', async ({ page }) => {
+test.describe("用户完整流程", () => {
+  test("应该从首页浏览到商品详情", async ({ page }) => {
     // 1. 访问首页
-    await page.goto('/en')
-    await expect(page).toHaveTitle(/Good Trending/)
+    await page.goto("/en");
+    await expect(page).toHaveTitle(/Good Trending/);
 
     // 2. 点击 Trending 导航
-    await page.click('[data-testid="nav-trending"]')
-    await expect(page).toHaveURL(/\/en\/trending/)
+    await page.click('[data-testid="nav-trending"]');
+    await expect(page).toHaveURL(/\/en\/trending/);
 
     // 3. 等待商品列表加载
-    const productCards = page.locator('[data-testid="product-card"]')
-    await expect(productCards.first()).toBeVisible()
+    const productCards = page.locator('[data-testid="product-card"]');
+    await expect(productCards.first()).toBeVisible();
 
     // 4. 点击第一个商品
-    const firstProduct = productCards.first()
-    const productName = await firstProduct.locator('h3').textContent()
-    await firstProduct.click()
+    const firstProduct = productCards.first();
+    const productName = await firstProduct.locator("h3").textContent();
+    await firstProduct.click();
 
     // 5. 验证跳转到详情页
-    await expect(page).toHaveURL(/\/en\/product\//)
-    await expect(page.locator('h1')).toContainText(productName || '')
-  })
+    await expect(page).toHaveURL(/\/en\/product\//);
+    await expect(page.locator("h1")).toContainText(productName || "");
+  });
 
-  test('应该完成搜索流程', async ({ page }) => {
-    await page.goto('/en')
+  test("应该完成搜索流程", async ({ page }) => {
+    await page.goto("/en");
 
     // 输入搜索词
-    const searchInput = page.locator('[data-testid="search-input"]')
-    await searchInput.fill('laptop')
-    await searchInput.press('Enter')
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill("laptop");
+    await searchInput.press("Enter");
 
     // 验证搜索结果页
-    await expect(page).toHaveURL(/\/en\/search\?q=laptop/)
-    await expect(page.locator('[data-testid="search-results"]')).toBeVisible()
-  })
-})
+    await expect(page).toHaveURL(/\/en\/search\?q=laptop/);
+    await expect(page.locator('[data-testid="search-results"]')).toBeVisible();
+  });
+});
 ```
 
 ```typescript
 // apps/tests/src/e2e/web/theme.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('主题切换', () => {
-  test('应该切换到深色主题', async ({ page }) => {
-    await page.goto('/en')
+test.describe("主题切换", () => {
+  test("应该切换到深色主题", async ({ page }) => {
+    await page.goto("/en");
 
     // 打开主题下拉菜单
-    await page.click('[data-testid="theme-toggle"]')
+    await page.click('[data-testid="theme-toggle"]');
 
     // 选择深色主题
-    await page.click('text=Dark')
+    await page.click("text=Dark");
 
     // 验证 html 元素有 dark class
-    await expect(page.locator('html')).toHaveClass(/dark/)
-  })
+    await expect(page.locator("html")).toHaveClass(/dark/);
+  });
 
-  test('应该记住主题偏好', async ({ page, context }) => {
-    await page.goto('/en')
+  test("应该记住主题偏好", async ({ page, context }) => {
+    await page.goto("/en");
 
     // 设置深色主题
-    await page.click('[data-testid="theme-toggle"]')
-    await page.click('text=Dark')
-    await expect(page.locator('html')).toHaveClass(/dark/)
+    await page.click('[data-testid="theme-toggle"]');
+    await page.click("text=Dark");
+    await expect(page.locator("html")).toHaveClass(/dark/);
 
     // 刷新页面
-    await page.reload()
+    await page.reload();
 
     // 验证主题被记住
-    await expect(page.locator('html')).toHaveClass(/dark/)
-  })
-})
+    await expect(page.locator("html")).toHaveClass(/dark/);
+  });
+});
 ```
 
 ```typescript
 // apps/tests/src/e2e/web/i18n.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('国际化', () => {
-  test('应该切换到中文', async ({ page }) => {
-    await page.goto('/en')
+test.describe("国际化", () => {
+  test("应该切换到中文", async ({ page }) => {
+    await page.goto("/en");
 
     // 打开语言切换
-    await page.click('[data-testid="language-switcher"]')
+    await page.click('[data-testid="language-switcher"]');
 
     // 选择中文
-    await page.click('text=简体中文')
+    await page.click("text=简体中文");
 
     // 验证 URL 和内容
-    await expect(page).toHaveURL(/\/zh/)
-    await expect(page.locator('nav')).toContainText('首页')
-  })
+    await expect(page).toHaveURL(/\/zh/);
+    await expect(page.locator("nav")).toContainText("首页");
+  });
 
-  test('应该根据浏览器语言自动重定向', async ({ browser }) => {
+  test("应该根据浏览器语言自动重定向", async ({ browser }) => {
     // 创建中文浏览器上下文
     const context = await browser.newContext({
-      locale: 'zh-CN',
-    })
-    const page = await context.newPage()
+      locale: "zh-CN",
+    });
+    const page = await context.newPage();
 
     // 访问根路径
-    await page.goto('/')
+    await page.goto("/");
 
     // 应该重定向到中文
-    await expect(page).toHaveURL(/\/zh/)
+    await expect(page).toHaveURL(/\/zh/);
 
-    await context.close()
-  })
-})
+    await context.close();
+  });
+});
 ```
 
 #### E2E 测试 - API (apps/tests)
 
 ```typescript
 // apps/tests/src/e2e/api/products.e2e-spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('Products API E2E', () => {
-  test('GET /products 应该返回商品列表', async ({ request }) => {
-    const response = await request.get('/api/products', {
+test.describe("Products API E2E", () => {
+  test("GET /products 应该返回商品列表", async ({ request }) => {
+    const response = await request.get("/api/products", {
       params: { page: 1, limit: 10 },
-    })
+    });
 
-    expect(response.ok()).toBeTruthy()
-    const body = await response.json()
-    expect(body.data).toBeInstanceOf(Array)
-    expect(body.page).toBe(1)
-  })
+    expect(response.ok()).toBeTruthy();
+    const body = await response.json();
+    expect(body.data).toBeInstanceOf(Array);
+    expect(body.page).toBe(1);
+  });
 
-  test('GET /products/:id 应该返回商品详情', async ({ request }) => {
+  test("GET /products/:id 应该返回商品详情", async ({ request }) => {
     // 先获取一个商品 ID
-    const listResponse = await request.get('/api/products', {
+    const listResponse = await request.get("/api/products", {
       params: { limit: 1 },
-    })
-    const { data } = await listResponse.json()
+    });
+    const { data } = await listResponse.json();
 
     if (data.length > 0) {
-      const response = await request.get(`/api/products/${data[0].id}`)
-      expect(response.ok()).toBeTruthy()
-      const product = await response.json()
-      expect(product.id).toBe(data[0].id)
+      const response = await request.get(`/api/products/${data[0].id}`);
+      expect(response.ok()).toBeTruthy();
+      const product = await response.json();
+      expect(product.id).toBe(data[0].id);
     }
-  })
+  });
 
-  test('POST /products 应该创建新商品 (需要认证)', async ({ request }) => {
-    const response = await request.post('/api/products', {
+  test("POST /products 应该创建新商品 (需要认证)", async ({ request }) => {
+    const response = await request.post("/api/products", {
       data: {
-        name: 'Test Product',
-        sourceUrl: 'https://example.com/test-product',
-        sourceId: 'test-123',
-        sourceType: 'AMAZON',
+        name: "Test Product",
+        sourceUrl: "https://example.com/test-product",
+        sourceId: "test-123",
+        sourceType: "AMAZON",
       },
-    })
+    });
 
     // 未认证应该返回 401
-    expect(response.status()).toBe(401)
-  })
-})
+    expect(response.status()).toBe(401);
+  });
+});
 ```
 
 ### 测试工具函数 (apps/tests)
 
 ```typescript
 // apps/tests/src/utils/api-client.ts
-import fetch from 'node-fetch'
+import fetch from "node-fetch";
 
-const API_BASE_URL = process.env.API_URL || 'http://localhost:3001'
+const API_BASE_URL = process.env.API_URL || "http://localhost:3001";
 
 interface RequestOptions {
-  params?: Record<string, string | number>
-  headers?: Record<string, string>
-  body?: unknown
+  params?: Record<string, string | number>;
+  headers?: Record<string, string>;
+  body?: unknown;
 }
 
 export const apiClient = {
   async get(path: string, options: RequestOptions = {}) {
-    const url = new URL(`${API_BASE_URL}/api${path}`)
+    const url = new URL(`${API_BASE_URL}/api${path}`);
     if (options.params) {
       Object.entries(options.params).forEach(([key, value]) => {
-        url.searchParams.append(key, String(value))
-      })
+        url.searchParams.append(key, String(value));
+      });
     }
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
-    })
+    });
 
-    const body = await response.json()
-    return { status: response.status, body }
+    const body = await response.json();
+    return { status: response.status, body };
   },
 
   async post(path: string, data: unknown, options: RequestOptions = {}) {
     const response = await fetch(`${API_BASE_URL}/api${path}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
       body: JSON.stringify(data),
-    })
+    });
 
-    const body = await response.json()
-    return { status: response.status, body }
+    const body = await response.json();
+    return { status: response.status, body };
   },
-}
+};
 ```
 
 ```typescript
 // apps/tests/src/fixtures/product.fixture.ts
-import { faker } from '@faker-js/faker'
-import { SourceType } from '@good-trending/database'
+import { faker } from "@faker-js/faker";
+import { SourceType } from "@good-trending/database";
 
 export const productFixture = {
   single: (overrides?: Partial<Product>) => ({
@@ -2339,7 +2471,7 @@ export const productFixture = {
     description: faker.commerce.productDescription(),
     image: faker.image.url(),
     price: parseFloat(faker.commerce.price()),
-    currency: 'USD',
+    currency: "USD",
     sourceUrl: faker.internet.url(),
     sourceId: faker.string.uuid(),
     sourceType: faker.helpers.enumValue(SourceType),
@@ -2349,45 +2481,42 @@ export const productFixture = {
   }),
 
   many: (count: number, overrides?: Partial<Product>) => {
-    return Array.from({ length: count }, () => productFixture.single(overrides))
+    return Array.from({ length: count }, () => productFixture.single(overrides));
   },
-}
+};
 ```
 
 ### MSW Mock 配置 (apps/tests)
 
 ```typescript
 // apps/tests/src/mocks/handlers/product.handler.ts
-import { http, HttpResponse } from 'msw'
-import { productFixture } from '@fixtures/product.fixture'
+import { http, HttpResponse } from "msw";
+import { productFixture } from "@fixtures/product.fixture";
 
 export const productHandlers = [
-  http.get('*/api/products', () => {
+  http.get("*/api/products", () => {
     return HttpResponse.json({
       data: productFixture.many(10),
       total: 100,
       page: 1,
       limit: 10,
-    })
+    });
   }),
 
-  http.get('*/api/products/:id', ({ params }) => {
-    const { id } = params
-    return HttpResponse.json(productFixture.single({ id }))
+  http.get("*/api/products/:id", ({ params }) => {
+    const { id } = params;
+    return HttpResponse.json(productFixture.single({ id }));
   }),
-]
+];
 ```
 
 ```typescript
 // apps/tests/src/mocks/server.ts
-import { setupServer } from 'msw/node'
-import { productHandlers } from './handlers/product.handler'
-import { trendingHandlers } from './handlers/trending.handler'
+import { setupServer } from "msw/node";
+import { productHandlers } from "./handlers/product.handler";
+import { trendingHandlers } from "./handlers/trending.handler";
 
-export const server = setupServer(
-  ...productHandlers,
-  ...trendingHandlers
-)
+export const server = setupServer(...productHandlers, ...trendingHandlers);
 ```
 
 ### 测试命令
@@ -2434,8 +2563,8 @@ jobs:
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -2468,14 +2597,14 @@ jobs:
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
 
       - name: Setup test database
-        run: pnpm --filter @good-trending/database prisma:migrate:deploy
+        run: pnpm --filter @good-trending/database db:push
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test_db
 
@@ -2505,49 +2634,64 @@ jobs:
 
 ### Mock 策略
 
-#### Prisma Mock (API 单元测试)
+#### Drizzle Mock (API 单元测试)
 
 ```typescript
-// apps/api/test/mocks/prisma.mock.ts
-import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended'
-import { PrismaClient } from '@prisma/client'
+// apps/api/test/mocks/drizzle.mock.ts
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Pool } from "pg";
+import * as schema from "@good-trending/database/schema";
 
-export const prismaMock = mockDeep<PrismaClient>() as unknown as DeepMockProxy<PrismaClient>
+// 测试用的内存数据库连接
+const pool = new Pool({
+  connectionString: process.env.TEST_DATABASE_URL,
+});
 
-beforeEach(() => {
-  mockReset(prismaMock)
-})
+export const db = drizzle(pool, { schema });
+
+// 测试前清理数据库
+export async function cleanDatabase() {
+  await db.delete(trends);
+  await db.delete(productHistories);
+  await db.delete(productTags);
+  await db.delete(productTopics);
+  await db.delete(crawlerLogs);
+  await db.delete(tags);
+  await db.delete(topics);
+  await db.delete(products);
+}
 ```
 
 #### MSW API Mock (apps/tests)
 
 ```typescript
 // apps/tests/src/mocks/handlers/product.handler.ts
-import { http, HttpResponse } from 'msw'
-import { productFixture } from '@fixtures/product.fixture'
+import { http, HttpResponse } from "msw";
+import { productFixture } from "@fixtures/product.fixture";
 
 export const productHandlers = [
-  http.get('*/api/products', () => {
+  http.get("*/api/products", () => {
     return HttpResponse.json({
       data: productFixture.many(10),
       total: 100,
       page: 1,
       limit: 10,
-    })
+    });
   }),
 
-  http.get('*/api/products/:id', ({ params }) => {
-    const { id } = params
-    return HttpResponse.json(productFixture.single({ id }))
+  http.get("*/api/products/:id", ({ params }) => {
+    const { id } = params;
+    return HttpResponse.json(productFixture.single({ id }));
   }),
 
-  http.get('*/api/trending', () => {
+  http.get("*/api/trending", () => {
     return HttpResponse.json({
       data: productFixture.many(20),
       date: new Date().toISOString(),
-    })
+    });
   }),
-]
+];
 ```
 
 ---
@@ -2558,13 +2702,13 @@ export const productHandlers = [
 
 ```typescript
 // apps/api/src/main.ts
-import { NestFactory } from '@nestjs/core'
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
-import { ValidationPipe } from '@nestjs/common'
-import { AppModule } from './app.module'
+import { NestFactory } from "@nestjs/core";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule);
 
   // 全局验证管道
   app.useGlobalPipes(
@@ -2572,30 +2716,30 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
     })
-  )
+  );
 
   // Swagger 配置
   const config = new DocumentBuilder()
-    .setTitle('Good-Trending API')
-    .setDescription('商品趋势追踪平台 API 文档')
-    .setVersion('1.0')
-    .addTag('products', '商品相关接口')
-    .addTag('trending', '趋势相关接口')
-    .addTag('topics', '分类相关接口')
-    .addTag('search', '搜索相关接口')
-    .addTag('crawler', '爬虫管理接口')
+    .setTitle("Good-Trending API")
+    .setDescription("商品趋势追踪平台 API 文档")
+    .setVersion("1.0")
+    .addTag("products", "商品相关接口")
+    .addTag("trending", "趋势相关接口")
+    .addTag("topics", "分类相关接口")
+    .addTag("search", "搜索相关接口")
+    .addTag("crawler", "爬虫管理接口")
     .addBearerAuth()
-    .addServer('http://localhost:3001', '开发环境')
-    .addServer('https://api.good-trending.com', '生产环境')
-    .build()
+    .addServer("http://localhost:3001", "开发环境")
+    .addServer("https://api.good-trending.com", "生产环境")
+    .build();
 
   const document = SwaggerModule.createDocument(app, config, {
     operationIdFactory: (controllerKey: string, methodKey: string) =>
-      `${controllerKey.replace('Controller', '')}_${methodKey}`,
-  })
+      `${controllerKey.replace("Controller", "")}_${methodKey}`,
+  });
 
   // 自定义 Swagger UI 路径
-  SwaggerModule.setup('api-docs', app, document, {
+  SwaggerModule.setup("api-docs", app, document, {
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
@@ -2603,115 +2747,107 @@ async function bootstrap() {
       showExtensions: true,
       showCommonExtensions: true,
     },
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'Good-Trending API Docs',
-  })
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Good-Trending API Docs",
+  });
 
   // 导出 OpenAPI JSON (用于测试工具导入)
-  if (process.env.NODE_ENV !== 'production') {
-    const fs = await import('fs')
-    fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2))
+  if (process.env.NODE_ENV !== "production") {
+    const fs = await import("fs");
+    fs.writeFileSync("./openapi.json", JSON.stringify(document, null, 2));
   }
 
-  await app.listen(3001)
+  await app.listen(3001);
 }
-bootstrap()
+bootstrap();
 ```
 
 ### DTO 装饰器规范
 
 ```typescript
 // apps/api/src/modules/product/dto/product.dto.ts
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger'
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsEnum,
-  IsDateString,
-  Min,
-  Max,
-} from 'class-validator'
-import { Type } from 'class-transformer'
-import { SourceType } from '@prisma/client'
+import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
+import { IsString, IsNumber, IsOptional, IsEnum, IsDateString, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
+import { SourceType } from "@good-trending/database/schema";
 
 // ==================== 基础 DTO ====================
 
 export class ProductDto {
   @ApiProperty({
-    description: '商品唯一标识',
-    example: 'clx123456789',
+    description: "商品唯一标识",
+    example: "clx123456789",
   })
-  id: string
+  id: string;
 
   @ApiProperty({
-    description: '商品名称',
+    description: "商品名称",
     example: 'Apple MacBook Pro 14"',
   })
-  name: string
+  name: string;
 
   @ApiPropertyOptional({
-    description: '商品描述',
-    example: '最新款 MacBook Pro，搭载 M3 芯片',
+    description: "商品描述",
+    example: "最新款 MacBook Pro，搭载 M3 芯片",
   })
-  description?: string
+  description?: string;
 
   @ApiPropertyOptional({
-    description: '商品图片 URL',
-    example: 'https://example.com/image.jpg',
+    description: "商品图片 URL",
+    example: "https://example.com/image.jpg",
   })
-  image?: string
+  image?: string;
 
   @ApiPropertyOptional({
-    description: '商品价格',
+    description: "商品价格",
     example: 1999.99,
   })
-  price?: number
+  price?: number;
 
   @ApiProperty({
-    description: '货币单位',
-    example: 'USD',
-    default: 'USD',
+    description: "货币单位",
+    example: "USD",
+    default: "USD",
   })
-  currency: string
+  currency: string;
 
   @ApiProperty({
-    description: '来源平台商品链接',
-    example: 'https://amazon.com/dp/B0XXXXXXX',
+    description: "来源平台商品链接",
+    example: "https://amazon.com/dp/B0XXXXXXX",
   })
-  sourceUrl: string
+  sourceUrl: string;
 
   @ApiProperty({
-    description: '来源平台商品 ID',
-    example: 'B0XXXXXXX',
+    description: "来源平台商品 ID",
+    example: "B0XXXXXXX",
   })
-  sourceId: string
+  sourceId: string;
 
   @ApiProperty({
-    description: '数据来源类型',
+    description: "数据来源类型",
     enum: SourceType,
     example: SourceType.AMAZON,
   })
-  sourceType: SourceType
+  sourceType: SourceType;
 
   @ApiProperty({
-    description: '创建时间',
-    example: '2024-01-15T10:30:00Z',
+    description: "创建时间",
+    example: "2024-01-15T10:30:00Z",
   })
-  createdAt: Date
+  createdAt: Date;
 
   @ApiProperty({
-    description: '更新时间',
-    example: '2024-01-16T08:20:00Z',
+    description: "更新时间",
+    example: "2024-01-16T08:20:00Z",
   })
-  updatedAt: Date
+  updatedAt: Date;
 }
 
 // ==================== 查询 DTO ====================
 
 export class PaginationDto {
   @ApiPropertyOptional({
-    description: '页码，从 1 开始',
+    description: "页码，从 1 开始",
     example: 1,
     default: 1,
     minimum: 1,
@@ -2720,10 +2856,10 @@ export class PaginationDto {
   @IsNumber()
   @Min(1)
   @IsOptional()
-  page?: number = 1
+  page?: number = 1;
 
   @ApiPropertyOptional({
-    description: '每页数量',
+    description: "每页数量",
     example: 10,
     default: 10,
     minimum: 1,
@@ -2734,164 +2870,164 @@ export class PaginationDto {
   @Min(1)
   @Max(100)
   @IsOptional()
-  limit?: number = 10
+  limit?: number = 10;
 }
 
 export class ProductQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: '数据来源类型筛选',
+    description: "数据来源类型筛选",
     enum: SourceType,
     example: SourceType.AMAZON,
   })
   @IsEnum(SourceType)
   @IsOptional()
-  sourceType?: SourceType
+  sourceType?: SourceType;
 
   @ApiPropertyOptional({
-    description: '分类 ID 筛选',
-    example: 'clx123456789',
+    description: "分类 ID 筛选",
+    example: "clx123456789",
   })
   @IsString()
   @IsOptional()
-  topicId?: string
+  topicId?: string;
 
   @ApiPropertyOptional({
-    description: '搜索关键词',
-    example: 'laptop',
+    description: "搜索关键词",
+    example: "laptop",
   })
   @IsString()
   @IsOptional()
-  keyword?: string
+  keyword?: string;
 }
 
 export class TrendingQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: '日期筛选 (YYYY-MM-DD)',
-    example: '2024-01-15',
+    description: "日期筛选 (YYYY-MM-DD)",
+    example: "2024-01-15",
   })
   @IsDateString()
   @IsOptional()
-  date?: string
+  date?: string;
 
   @ApiPropertyOptional({
-    description: '分类筛选',
-    example: 'electronics',
+    description: "分类筛选",
+    example: "electronics",
   })
   @IsString()
   @IsOptional()
-  topic?: string
+  topic?: string;
 }
 
 // ==================== 响应 DTO ====================
 
 export class PaginatedResponseDto<T> {
   @ApiProperty({
-    description: '数据列表',
+    description: "数据列表",
     type: [ProductDto],
   })
-  data: T[]
+  data: T[];
 
   @ApiProperty({
-    description: '总数量',
+    description: "总数量",
     example: 100,
   })
-  total: number
+  total: number;
 
   @ApiProperty({
-    description: '当前页码',
+    description: "当前页码",
     example: 1,
   })
-  page: number
+  page: number;
 
   @ApiProperty({
-    description: '每页数量',
+    description: "每页数量",
     example: 10,
   })
-  limit: number
+  limit: number;
 
   @ApiProperty({
-    description: '总页数',
+    description: "总页数",
     example: 10,
   })
-  totalPages: number
+  totalPages: number;
 }
 
 export class TrendingResponseDto {
   @ApiProperty({
-    description: '商品列表 (含趋势信息)',
+    description: "商品列表 (含趋势信息)",
     type: [ProductDto],
   })
-  products: ProductDto[]
+  products: ProductDto[];
 
   @ApiProperty({
-    description: '趋势日期',
-    example: '2024-01-15',
+    description: "趋势日期",
+    example: "2024-01-15",
   })
-  date: string
+  date: string;
 
   @ApiProperty({
-    description: '数据更新时间',
-    example: '2024-01-15T06:00:00Z',
+    description: "数据更新时间",
+    example: "2024-01-15T06:00:00Z",
   })
-  updatedAt: string
+  updatedAt: string;
 }
 
 // ==================== 创建/更新 DTO ====================
 
 export class CreateProductDto {
   @ApiProperty({
-    description: '商品名称',
+    description: "商品名称",
     example: 'Apple MacBook Pro 14"',
   })
   @IsString()
-  name: string
+  name: string;
 
   @ApiPropertyOptional({
-    description: '商品描述',
-    example: '最新款 MacBook Pro',
+    description: "商品描述",
+    example: "最新款 MacBook Pro",
   })
   @IsString()
   @IsOptional()
-  description?: string
+  description?: string;
 
   @ApiPropertyOptional({
-    description: '商品图片 URL',
-    example: 'https://example.com/image.jpg',
+    description: "商品图片 URL",
+    example: "https://example.com/image.jpg",
   })
   @IsString()
   @IsOptional()
-  image?: string
+  image?: string;
 
   @ApiPropertyOptional({
-    description: '商品价格',
+    description: "商品价格",
     example: 1999.99,
   })
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
-  price?: number
+  price?: number;
 
   @ApiProperty({
-    description: '来源平台商品链接',
-    example: 'https://amazon.com/dp/B0XXXXXXX',
+    description: "来源平台商品链接",
+    example: "https://amazon.com/dp/B0XXXXXXX",
   })
   @IsString()
-  sourceUrl: string
+  sourceUrl: string;
 
   @ApiProperty({
-    description: '来源平台商品 ID',
-    example: 'B0XXXXXXX',
+    description: "来源平台商品 ID",
+    example: "B0XXXXXXX",
   })
   @IsString()
-  sourceId: string
+  sourceId: string;
 
   @ApiProperty({
-    description: '数据来源类型',
+    description: "数据来源类型",
     enum: SourceType,
     example: SourceType.AMAZON,
   })
   @IsEnum(SourceType)
-  sourceType: SourceType
+  sourceType: SourceType;
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}
@@ -2912,7 +3048,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common'
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -2920,160 +3056,154 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
-} from '@nestjs/swagger'
-import { ProductService } from './product.service'
+} from "@nestjs/swagger";
+import { ProductService } from "./product.service";
 import {
   ProductDto,
   ProductQueryDto,
   CreateProductDto,
   UpdateProductDto,
   PaginatedResponseDto,
-} from './dto/product.dto'
+} from "./dto/product.dto";
 
-@ApiTags('products')
+@ApiTags("products")
 @ApiBearerAuth()
-@Controller('products')
+@Controller("products")
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get()
   @ApiOperation({
-    summary: '获取商品列表',
-    description: '支持分页、筛选和搜索',
+    summary: "获取商品列表",
+    description: "支持分页、筛选和搜索",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '成功获取商品列表',
+    description: "成功获取商品列表",
     type: PaginatedResponseDto<ProductDto>,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '请求参数错误',
+    description: "请求参数错误",
   })
   async findAll(@Query() query: ProductQueryDto) {
-    return this.productService.findAll(query)
+    return this.productService.findAll(query);
   }
 
-  @Get('trending')
+  @Get("trending")
   @ApiOperation({
-    summary: '获取热门商品',
-    description: '获取指定日期的热门趋势商品',
+    summary: "获取热门商品",
+    description: "获取指定日期的热门趋势商品",
   })
   @ApiQuery({
-    name: 'date',
+    name: "date",
     required: false,
-    description: '日期 (YYYY-MM-DD)',
-    example: '2024-01-15',
+    description: "日期 (YYYY-MM-DD)",
+    example: "2024-01-15",
   })
   @ApiQuery({
-    name: 'limit',
+    name: "limit",
     required: false,
-    description: '返回数量',
+    description: "返回数量",
     example: 20,
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '成功获取热门商品',
+    description: "成功获取热门商品",
   })
-  async getTrending(
-    @Query('date') date?: string,
-    @Query('limit') limit?: number
-  ) {
-    return this.productService.getTrending({ date, limit })
+  async getTrending(@Query("date") date?: string, @Query("limit") limit?: number) {
+    return this.productService.getTrending({ date, limit });
   }
 
-  @Get(':id')
+  @Get(":id")
   @ApiOperation({
-    summary: '获取商品详情',
-    description: '根据 ID 获取单个商品的详细信息',
+    summary: "获取商品详情",
+    description: "根据 ID 获取单个商品的详细信息",
   })
   @ApiParam({
-    name: 'id',
-    description: '商品 ID',
-    example: 'clx123456789',
+    name: "id",
+    description: "商品 ID",
+    example: "clx123456789",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '成功获取商品详情',
+    description: "成功获取商品详情",
     type: ProductDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '商品不存在',
+    description: "商品不存在",
   })
-  async findOne(@Param('id') id: string) {
-    return this.productService.findById(id)
+  async findOne(@Param("id") id: string) {
+    return this.productService.findById(id);
   }
 
   @Post()
   @ApiOperation({
-    summary: '创建商品',
-    description: '手动创建一个新商品（管理员功能）',
+    summary: "创建商品",
+    description: "手动创建一个新商品（管理员功能）",
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: '商品创建成功',
+    description: "商品创建成功",
     type: ProductDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '请求参数错误',
+    description: "请求参数错误",
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: '商品已存在',
+    description: "商品已存在",
   })
   async create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto)
+    return this.productService.create(createProductDto);
   }
 
-  @Put(':id')
+  @Put(":id")
   @ApiOperation({
-    summary: '更新商品',
-    description: '更新指定商品的信息',
+    summary: "更新商品",
+    description: "更新指定商品的信息",
   })
   @ApiParam({
-    name: 'id',
-    description: '商品 ID',
-    example: 'clx123456789',
+    name: "id",
+    description: "商品 ID",
+    example: "clx123456789",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '商品更新成功',
+    description: "商品更新成功",
     type: ProductDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '商品不存在',
+    description: "商品不存在",
   })
-  async update(
-    @Param('id') id: string,
-    @Body() updateProductDto: UpdateProductDto
-  ) {
-    return this.productService.update(id, updateProductDto)
+  async update(@Param("id") id: string, @Body() updateProductDto: UpdateProductDto) {
+    return this.productService.update(id, updateProductDto);
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: '删除商品',
-    description: '删除指定的商品',
+    summary: "删除商品",
+    description: "删除指定的商品",
   })
   @ApiParam({
-    name: 'id',
-    description: '商品 ID',
-    example: 'clx123456789',
+    name: "id",
+    description: "商品 ID",
+    example: "clx123456789",
   })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
-    description: '商品删除成功',
+    description: "商品删除成功",
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: '商品不存在',
+    description: "商品不存在",
   })
-  async remove(@Param('id') id: string) {
-    return this.productService.remove(id)
+  async remove(@Param("id") id: string) {
+    return this.productService.remove(id);
   }
 }
 ```
@@ -3088,23 +3218,23 @@ export class ProductController {
 
 #### 接口列表
 
-| 方法 | 路径 | 描述 |
-|-----|------|------|
-| GET | `/products` | 获取商品列表（分页） |
-| GET | `/products/trending` | 获取热门趋势商品 |
-| GET | `/products/:id` | 获取商品详情 |
-| POST | `/products` | 创建商品 |
-| PUT | `/products/:id` | 更新商品 |
-| DELETE | `/products/:id` | 删除商品 |
-| GET | `/trending` | 获取今日趋势 |
-| GET | `/trending/:date` | 获取指定日期趋势 |
-| GET | `/topics` | 获取分类列表 |
-| GET | `/topics/:slug` | 获取分类详情 |
-| GET | `/topics/:slug/products` | 获取分类下商品 |
-| GET | `/search` | 搜索商品 |
-| GET | `/crawler/status` | 获取爬虫状态 |
-| POST | `/crawler/trigger` | 手动触发爬虫 |
-| GET | `/health` | 健康检查 |
+| 方法   | 路径                     | 描述                 |
+| ------ | ------------------------ | -------------------- |
+| GET    | `/products`              | 获取商品列表（分页） |
+| GET    | `/products/trending`     | 获取热门趋势商品     |
+| GET    | `/products/:id`          | 获取商品详情         |
+| POST   | `/products`              | 创建商品             |
+| PUT    | `/products/:id`          | 更新商品             |
+| DELETE | `/products/:id`          | 删除商品             |
+| GET    | `/trending`              | 获取今日趋势         |
+| GET    | `/trending/:date`        | 获取指定日期趋势     |
+| GET    | `/topics`                | 获取分类列表         |
+| GET    | `/topics/:slug`          | 获取分类详情         |
+| GET    | `/topics/:slug/products` | 获取分类下商品       |
+| GET    | `/search`                | 搜索商品             |
+| GET    | `/crawler/status`        | 获取爬虫状态         |
+| POST   | `/crawler/trigger`       | 手动触发爬虫         |
+| GET    | `/health`                | 健康检查             |
 
 ### 测试用例导出
 
@@ -3124,14 +3254,14 @@ Swagger 文档可用于生成测试用例：
 
 # 非功能需求："目标-场景-决策"表
 
-| 目标 | 场景 | 决策 | 状态 |
-|-----|------|-----|------|
-| SEO友好 | Google爬虫索引页面 | 1. 使用 Next.js SSR/SSG<br>2. 动态生成 sitemap.xml<br>3. 结构化数据 (JSON-LD)<br>4. 语义化 HTML | 设计完成 |
-| 页面性能 | 用户访问 Trending 页面 | 1. ISR 增量静态再生<br>2. Redis 缓存热点数据<br>3. 图片懒加载<br>4. 代码分割 | 设计完成 |
-| 爬虫稳定性 | X平台反爬虫检测 | 1. Playwright 隐身模式<br>2. 代理轮换<br>3. 随机延迟<br>4. 浏览器指纹模拟 | 设计完成 |
-| 爬虫稳定性 | 亚马逊页面结构变化 | 1. 多选择器容错<br>2. 异常监控告警<br>3. 数据验证机制 | 设计完成 |
-| 数据时效性 | 每日数据更新 | 1. BullMQ 定时调度<br>2. 任务失败重试<br>3. 完成后触发 ISR revalidate | 设计完成 |
-| 可用性 | 单点故障 | 1. Docker 容器自动重启<br>2. 健康检查接口<br>3. 降级策略（展示缓存数据） | 设计完成 |
+| 目标       | 场景                   | 决策                                                                                            | 状态     |
+| ---------- | ---------------------- | ----------------------------------------------------------------------------------------------- | -------- |
+| SEO友好    | Google爬虫索引页面     | 1. 使用 Next.js SSR/SSG<br>2. 动态生成 sitemap.xml<br>3. 结构化数据 (JSON-LD)<br>4. 语义化 HTML | 设计完成 |
+| 页面性能   | 用户访问 Trending 页面 | 1. ISR 增量静态再生<br>2. Redis 缓存热点数据<br>3. 图片懒加载<br>4. 代码分割                    | 设计完成 |
+| 爬虫稳定性 | X平台反爬虫检测        | 1. Playwright 隐身模式<br>2. 代理轮换<br>3. 随机延迟<br>4. 浏览器指纹模拟                       | 设计完成 |
+| 爬虫稳定性 | 亚马逊页面结构变化     | 1. 多选择器容错<br>2. 异常监控告警<br>3. 数据验证机制                                           | 设计完成 |
+| 数据时效性 | 每日数据更新           | 1. BullMQ 定时调度<br>2. 任务失败重试<br>3. 完成后触发 ISR revalidate                           | 设计完成 |
+| 可用性     | 单点故障               | 1. Docker 容器自动重启<br>2. 健康检查接口<br>3. 降级策略（展示缓存数据）                        | 设计完成 |
 
 ---
 
@@ -3139,22 +3269,22 @@ Swagger 文档可用于生成测试用例：
 
 ## 技术栈确认
 
-| 层级 | 技术选型 | 职责 |
-|-----|---------|-----|
-| **前端** | Next.js 14+ (App Router) + Shadcn/UI | SSR/SSG 渲染，SEO 优化 |
-| **API** | NestJS + Swagger | RESTful API，业务逻辑，接口文档 |
-| **爬虫** | Playwright + TypeScript | 数据采集 |
-| **调度** | BullMQ + Redis | 定时任务，队列管理 |
-| **数据库** | PostgreSQL + Prisma | 数据持久化 |
-| **缓存** | Redis | 页面缓存，队列存储 |
-| **构建** | TurboRepo + pnpm | Monorepo 管理 |
-| **单元测试** | Vitest (前端) + Jest (后端) | 函数、组件、Service 测试 |
-| **集成测试** | Jest + Supertest | API 接口、数据库测试 |
-| **E2E 测试** | Playwright | 完整用户流程测试 |
-| **Mock** | MSW + jest-mock-extended | API 和依赖模拟 |
-| **测试数据** | @faker-js/faker | 测试数据生成 |
-| **国际化** | next-intl | 多语言支持，资源按需加载 |
-| **主题系统** | next-themes + Tailwind CSS | 明暗主题切换 |
+| 层级         | 技术选型                             | 职责                            |
+| ------------ | ------------------------------------ | ------------------------------- |
+| **前端**     | Next.js 14+ (App Router) + Shadcn/UI | SSR/SSG 渲染，SEO 优化          |
+| **API**      | NestJS + Swagger                     | RESTful API，业务逻辑，接口文档 |
+| **爬虫**     | Playwright + TypeScript              | 数据采集                        |
+| **调度**     | BullMQ + Redis                       | 定时任务，队列管理              |
+| **数据库**   | PostgreSQL + Drizzle ORM             | 数据持久化                      |
+| **缓存**     | Redis                                | 页面缓存，队列存储              |
+| **构建**     | TurboRepo + pnpm                     | Monorepo 管理                   |
+| **单元测试** | Vitest (前端) + Jest (后端)          | 函数、组件、Service 测试        |
+| **集成测试** | Jest + Supertest                     | API 接口、数据库测试            |
+| **E2E 测试** | Playwright                           | 完整用户流程测试                |
+| **Mock**     | MSW + jest-mock-extended             | API 和依赖模拟                  |
+| **测试数据** | @faker-js/faker                      | 测试数据生成                    |
+| **国际化**   | next-intl                            | 多语言支持，资源按需加载        |
+| **主题系统** | next-themes + Tailwind CSS           | 明暗主题切换                    |
 
 ## 核心设计决策
 

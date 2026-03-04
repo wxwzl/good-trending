@@ -2,46 +2,43 @@
   "name": "@good-trending/database",
   "version": "1.0.0",
   "private": true,
+  "description": "Database schema and client for Good-Trending",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
-    "./client": {
-      "types": "./dist/client.d.ts",
-      "import": "./dist/client.mjs",
-      "require": "./dist/client.js"
+    "./schema": {
+      "import": "./dist/schema/index.mjs",
+      "require": "./dist/schema/index.js",
+      "types": "./dist/schema/index.d.ts"
     }
   },
   "scripts": {
     "build": "tsup",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts",
-    "lint": "eslint src/",
-    "lint:staged": "eslint --fix",
-    "format:staged": "prettier --write",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo node_modules",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "dev": "tsup --watch",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/seed.ts",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@prisma/client": "^5.8.0"
+    "drizzle-orm": "^0.44.2",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "pg": "^8.14.1"
   },
   "devDependencies": {
-    "@types/node": "^25.3.3",
-    "prisma": "^5.8.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
+    "@types/node": "^22.13.5",
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.31.4",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
   }
 }

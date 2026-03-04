@@ -1,0 +1,82 @@
+{
+  "siteName": "Good Trending",
+  "siteDescription": "Discover trending products from X and Amazon",
+  "navigation": {
+    "home": "Home",
+    "trending": "Trending",
+    "topics": "Topics",
+    "search": "Search",
+    "about": "About"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "loadMore": "Load More",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "share": "Share"
+  },
+  "theme": {
+    "title": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "title": "Language",
+    "en": "English",
+    "zh": "简体中文"
+  },
+  "home": {
+    "title": "Discover What's Trending",
+    "subtitle": "Track the hottest products from X Platform and Amazon daily",
+    "viewTrending": "View Trending",
+    "browseTopics": "Browse Topics"
+  },
+  "trending": {
+    "title": "Trending Products",
+    "subtitle": "Discover what's hot today",
+    "lastUpdated": "Last updated: {date}",
+    "noResults": "No trending products found",
+    "rank": "Rank #{rank}",
+    "score": "Trending Score",
+    "source": {
+      "title": "Source",
+      "x_platform": "X Platform",
+      "amazon": "Amazon"
+    },
+    "filters": {
+      "all": "All",
+      "today": "Today",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month"
+    }
+  },
+  "topics": {
+    "title": "Browse Topics",
+    "subtitle": "Explore products by category",
+    "productCount": "{count} products"
+  },
+  "product": {
+    "price": "Price",
+    "source": "Source",
+    "viewOriginal": "View Original",
+    "trendHistory": "Trend History",
+    "rankHistory": "Rank History"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search products...",
+    "noResults": "No products found for \"{query}\"",
+    "results": "Found {count} results for \"{query}\""
+  },
+  "footer": {
+    "copyright": "© {year} Good Trending. All rights reserved.",
+    "poweredBy": "Powered by Next.js"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "serverError": "Something went wrong",
+    "backHome": "Back to Home"
+  }
+}

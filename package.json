@@ -1,0 +1,46 @@
+{
+  "name": "good-trending",
+  "version": "1.0.0",
+  "private": true,
+  "description": "商品趋势追踪平台 - 发现 X 平台和亚马逊的热门商品趋势",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "test": "turbo run test",
+    "test:unit": "turbo run test",
+    "test:api": "pnpm --filter @good-trending/tests test:api",
+    "test:e2e": "pnpm --filter @good-trending/tests test:e2e",
+    "test:all": "pnpm run test:api && pnpm run test:e2e",
+    "db:generate": "pnpm --filter @good-trending/database db:generate",
+    "db:push": "pnpm --filter @good-trending/database db:push",
+    "db:migrate": "pnpm --filter @good-trending/database db:migrate",
+    "db:migrate:dev": "pnpm --filter @good-trending/database db:migrate:dev",
+    "db:studio": "pnpm --filter @good-trending/database db:studio",
+    "db:seed": "pnpm --filter @good-trending/database db:seed",
+    "db:reset": "pnpm --filter @good-trending/database db:reset",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up -d",
+    "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "crawl": "pnpm --filter @good-trending/crawler crawl:all",
+    "crawl:twitter": "pnpm --filter @good-trending/crawler crawl:twitter",
+    "crawl:amazon": "pnpm --filter @good-trending/crawler crawl:amazon",
+    "scheduler": "pnpm --filter @good-trending/scheduler start"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0",
+    "prettier": "^3.2.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

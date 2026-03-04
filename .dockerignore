@@ -1,0 +1,46 @@
+node_modules
+dist
+build
+.next
+coverage
+*.log
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# CI
+.github
+*.md
+!README.md
+
+# Tests
+apps/tests
+**/*.test.ts
+**/*.spec.ts
+**/__tests__/**
+coverage
+playwright-report
+test-results
+
+# Misc
+.turbo
+*.tgz

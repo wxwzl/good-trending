@@ -1,5 +1,5 @@
 # Dependencies
-.claude\settings.json
+.claude/settings.json
 node_modules
 .pnpm-store
 

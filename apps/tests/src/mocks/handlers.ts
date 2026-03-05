@@ -1,25 +1,23 @@
 import { http, HttpResponse, delay } from "msw";
 import {
-  createProductFixture,
-  createTopicFixture,
-  createTrendFixture,
+  createProductFixtures,
+  createTopicFixtures,
+  createTrendFixtures,
   createPaginatedResponse,
 } from "../fixtures";
 
-const API_BASE = "/api/v1";
-
-// Mock data stores
-let mockProducts = createProductFixture(20);
-let mockTopics = createTopicFixture(10);
-let mockTrends = createTrendFixture(10);
+// Mock data stores - using plural functions to create arrays
+let mockProducts = createProductFixtures(20);
+let mockTopics = createTopicFixtures(10);
+let mockTrends = createTrendFixtures(10);
 
 /**
  * Reset mock data to initial state
  */
 export function resetMockData() {
-  mockProducts = createProductFixture(20);
-  mockTopics = createTopicFixture(10);
-  mockTrends = createTrendFixture(10);
+  mockProducts = createProductFixtures(20);
+  mockTopics = createTopicFixtures(10);
+  mockTrends = createTrendFixtures(10);
 }
 
 /**
@@ -45,20 +43,35 @@ export function getMockTrends() {
 
 /**
  * API handlers for MSW
+ * Response format matches real API: { data: { data: [...], total, page, limit, totalPages } }
  */
 export const handlers = [
-  // Health check
-  http.get(`${API_BASE}/health`, async () => {
+  // Health check (root level) - matches real API response format
+  http.get("*/health", async () => {
     await delay(100);
     return HttpResponse.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
+      data: {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      },
     });
   }),
 
-  // Products API
-  http.get(`${API_BASE}/products`, async ({ request }) => {
+  // Health check (api level)
+  http.get("*/api/v1/health", async () => {
+    await delay(100);
+    return HttpResponse.json({
+      data: {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      },
+    });
+  }),
+
+  // Products API - response format: { data: { data: [...], total, page, limit, totalPages } }
+  http.get("*/api/v1/products", async ({ request }) => {
     await delay(100);
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
@@ -73,12 +86,13 @@ export const handlers = [
     const start = (page - 1) * limit;
     const paginatedProducts = filteredProducts.slice(start, start + limit);
 
-    return HttpResponse.json(
-      createPaginatedResponse(paginatedProducts, filteredProducts.length, page, limit)
-    );
+    return HttpResponse.json({
+      data: createPaginatedResponse(paginatedProducts, filteredProducts.length, page, limit),
+    });
   }),
 
-  http.get(`${API_BASE}/products/:id`, async ({ params }) => {
+  // Single product - response format: { data: { id, name, ... } }
+  http.get("*/api/v1/products/:id", async ({ params }) => {
     await delay(100);
     const product = mockProducts.find((p) => p.id === params.id);
 
@@ -86,10 +100,10 @@ export const handlers = [
       return new HttpResponse(null, { status: 404 });
     }
 
-    return HttpResponse.json(product);
+    return HttpResponse.json({ data: product });
   }),
 
-  http.get(`${API_BASE}/products/slug/:slug`, async ({ params }) => {
+  http.get("*/api/v1/products/slug/:slug", async ({ params }) => {
     await delay(100);
     const product = mockProducts.find((p) => p.slug === params.slug);
 
@@ -97,11 +111,11 @@ export const handlers = [
       return new HttpResponse(null, { status: 404 });
     }
 
-    return HttpResponse.json(product);
+    return HttpResponse.json({ data: product });
   }),
 
   // Trending API
-  http.get(`${API_BASE}/trending`, async ({ request }) => {
+  http.get("*/api/v1/trending", async ({ request }) => {
     await delay(100);
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
@@ -112,13 +126,37 @@ export const handlers = [
     const paginatedTrends = mockTrends.slice(start, start + limit);
 
     return HttpResponse.json({
-      period,
-      ...createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
+      data: {
+        period,
+        ...createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
+      },
+    });
+  }),
+
+  // Trending daily/weekly/monthly endpoints
+  http.get("*/api/v1/trending/daily", async () => {
+    await delay(100);
+    return HttpResponse.json({
+      data: createPaginatedResponse(mockTrends.slice(0, 10), mockTrends.length, 1, 10),
+    });
+  }),
+
+  http.get("*/api/v1/trending/weekly", async () => {
+    await delay(100);
+    return HttpResponse.json({
+      data: createPaginatedResponse(mockTrends.slice(0, 10), mockTrends.length, 1, 10),
+    });
+  }),
+
+  http.get("*/api/v1/trending/monthly", async () => {
+    await delay(100);
+    return HttpResponse.json({
+      data: createPaginatedResponse(mockTrends.slice(0, 10), mockTrends.length, 1, 10),
     });
   }),
 
   // Topics API
-  http.get(`${API_BASE}/topics`, async ({ request }) => {
+  http.get("*/api/v1/topics", async ({ request }) => {
     await delay(100);
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
@@ -127,12 +165,12 @@ export const handlers = [
     const start = (page - 1) * limit;
     const paginatedTopics = mockTopics.slice(start, start + limit);
 
-    return HttpResponse.json(
-      createPaginatedResponse(paginatedTopics, mockTopics.length, page, limit)
-    );
+    return HttpResponse.json({
+      data: createPaginatedResponse(paginatedTopics, mockTopics.length, page, limit),
+    });
   }),
 
-  http.get(`${API_BASE}/topics/:slug`, async ({ params }) => {
+  http.get("*/api/v1/topics/:slug", async ({ params }) => {
     await delay(100);
     const topic = mockTopics.find((t) => t.slug === params.slug);
 
@@ -140,10 +178,10 @@ export const handlers = [
       return new HttpResponse(null, { status: 404 });
     }
 
-    return HttpResponse.json(topic);
+    return HttpResponse.json({ data: topic });
   }),
 
-  http.get(`${API_BASE}/topics/:slug/products`, async ({ params, request }) => {
+  http.get("*/api/v1/topics/:slug/products", async ({ params, request }) => {
     await delay(100);
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
@@ -153,13 +191,15 @@ export const handlers = [
     const paginatedProducts = mockProducts.slice(start, start + limit);
 
     return HttpResponse.json({
-      topic: mockTopics.find((t) => t.slug === params.slug),
-      ...createPaginatedResponse(paginatedProducts, mockProducts.length, page, limit),
+      data: {
+        topic: mockTopics.find((t) => t.slug === params.slug),
+        ...createPaginatedResponse(paginatedProducts, mockProducts.length, page, limit),
+      },
     });
   }),
 
   // Search API
-  http.get(`${API_BASE}/search`, async ({ request }) => {
+  http.get("*/api/v1/search", async ({ request }) => {
     await delay(150);
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
@@ -183,8 +223,24 @@ export const handlers = [
     const paginatedResults = searchResults.slice(start, start + limit);
 
     return HttpResponse.json({
-      query,
-      ...createPaginatedResponse(paginatedResults, searchResults.length, page, limit),
+      data: {
+        query,
+        ...createPaginatedResponse(paginatedResults, searchResults.length, page, limit),
+      },
     });
+  }),
+
+  // Search suggestions
+  http.get("*/api/v1/search/suggestions", async ({ request }) => {
+    await delay(100);
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get("keyword") || "";
+
+    const suggestions = mockProducts
+      .filter((p) => p.name.toLowerCase().includes(keyword.toLowerCase()))
+      .slice(0, 5)
+      .map((p) => p.name);
+
+    return HttpResponse.json({ data: suggestions });
   }),
 ];

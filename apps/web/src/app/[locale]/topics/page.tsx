@@ -1,59 +1,70 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/routing";
+import { Container } from "@/components/ui/container";
+import { TopicCard } from "@/components/features/topic-card";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
+
+interface Topic {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  productCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function getTopics(): Promise<Topic[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/topics`, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error("Failed to fetch topics:", error);
+    return [];
+  }
+}
 
 export default async function TopicsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  // Placeholder topics
-  const topics = [
-    { slug: "electronics", name: "Electronics", count: 128 },
-    { slug: "fashion", name: "Fashion", count: 95 },
-    { slug: "home-garden", name: "Home & Garden", count: 82 },
-    { slug: "sports", name: "Sports", count: 67 },
-    { slug: "books", name: "Books", count: 54 },
-    { slug: "toys", name: "Toys", count: 43 },
-  ];
+  const topics = await getTopics();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">{t("topics.title")}</h1>
-        <p className="text-muted-foreground mt-2">{t("topics.subtitle")}</p>
-      </div>
+    <div className="py-8">
+      <Container>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">{t("topics.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("topics.subtitle")}</p>
+        </div>
 
-      {/* Topics Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {topics.map((topic) => (
-          <Link
-            key={topic.slug}
-            href={`/topics/${topic.slug}`}
-            className="group flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
-          >
-            <div>
-              <h3 className="font-semibold">{topic.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t("topics.productCount", { count: topic.count })}
-              </p>
-            </div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground group-hover:text-foreground transition-colors"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </Link>
-        ))}
-      </div>
+        {/* Topics Grid */}
+        {topics.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topics.map((topic) => (
+              <TopicCard
+                key={topic.id}
+                topic={{
+                  slug: topic.slug,
+                  name: topic.name,
+                  description: topic.description,
+                  productCount: topic.productCount || 0,
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">No topics found</p>
+          </div>
+        )}
+      </Container>
     </div>
   );
 }

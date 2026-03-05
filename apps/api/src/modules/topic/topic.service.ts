@@ -1,0 +1,251 @@
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
+import { db } from '@good-trending/database';
+import { topics, products, productTopics } from '@good-trending/database';
+import { eq, desc, count } from 'drizzle-orm';
+import {
+  CreateTopicDto,
+  UpdateTopicDto,
+  GetTopicsDto,
+  TopicResponseDto,
+  TopicWithProductCountDto,
+} from './dto/topic.dto';
+
+/**
+ * 分类服务层
+ * 负责分类数据的业务逻辑处理
+ */
+@Injectable()
+export class TopicService {
+  private readonly logger = new Logger(TopicService.name);
+
+  /**
+   * 获取分类列表
+   */
+  async getTopics(query: GetTopicsDto) {
+    const { page = 1, limit = 20 } = query;
+
+    // 参数边界检查
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const offset = (safePage - 1) * safeLimit;
+
+    // 查询分类列表，包含商品数量
+    const topicsData = await db
+      .select({
+        id: topics.id,
+        name: topics.name,
+        slug: topics.slug,
+        description: topics.description,
+        imageUrl: topics.imageUrl,
+        createdAt: topics.createdAt,
+        updatedAt: topics.updatedAt,
+      })
+      .from(topics)
+      .orderBy(desc(topics.createdAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    // 查询总数
+    const totalResult = await db.select({ count: count() }).from(topics);
+    const total = totalResult[0]?.count ?? 0;
+
+    // 获取每个分类的商品数量
+    const topicsWithCount = await Promise.all(
+      topicsData.map(async (topic) => {
+        const productCountResult = await db
+          .select({ count: count() })
+          .from(productTopics)
+          .where(eq(productTopics.topicId, topic.id));
+
+        return {
+          ...topic,
+          productCount: productCountResult[0]?.count ?? 0,
+        };
+      }),
+    );
+
+    return {
+      data: topicsWithCount,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+    };
+  }
+
+  /**
+   * 根据 slug 获取分类详情
+   */
+  async getTopicBySlug(slug: string): Promise<TopicWithProductCountDto> {
+    // 参数验证
+    if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
+      throw new NotFoundException('Invalid topic slug');
+    }
+
+    const topic = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.slug, slug.trim()))
+      .limit(1);
+
+    if (!topic[0]) {
+      throw new NotFoundException(`Topic with slug ${slug} not found`);
+    }
+
+    // 获取商品数量
+    const productCountResult = await db
+      .select({ count: count() })
+      .from(productTopics)
+      .where(eq(productTopics.topicId, topic[0].id));
+
+    return {
+      ...topic[0],
+      productCount: productCountResult[0]?.count ?? 0,
+    };
+  }
+
+  /**
+   * 获取分类下的商品
+   */
+  async getProductsByTopic(
+    slug: string,
+    query: { page?: number; limit?: number },
+  ) {
+    const { page = 1, limit = 10 } = query;
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const offset = (safePage - 1) * safeLimit;
+
+    // 查找分类
+    const topic = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.slug, slug))
+      .limit(1);
+
+    if (!topic[0]) {
+      throw new NotFoundException(`Topic with slug ${slug} not found`);
+    }
+
+    // 查询商品列表
+    const productsData = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        image: products.image,
+        price: products.price,
+        currency: products.currency,
+        sourceUrl: products.sourceUrl,
+        sourceId: products.sourceId,
+        sourceType: products.sourceType,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .innerJoin(productTopics, eq(products.id, productTopics.productId))
+      .where(eq(productTopics.topicId, topic[0].id))
+      .orderBy(desc(products.createdAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    // 查询总数
+    const totalResult = await db
+      .select({ count: count() })
+      .from(productTopics)
+      .where(eq(productTopics.topicId, topic[0].id));
+
+    const total = totalResult[0]?.count ?? 0;
+
+    return {
+      data: productsData,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+      topic: topic[0],
+    };
+  }
+
+  /**
+   * 创建分类
+   */
+  async createTopic(dto: CreateTopicDto): Promise<TopicResponseDto> {
+    // 检查 slug 是否已存在
+    const existing = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.slug, dto.slug))
+      .limit(1);
+
+    if (existing[0]) {
+      throw new ConflictException(`Topic with slug ${dto.slug} already exists`);
+    }
+
+    // 检查名称是否已存在
+    const existingName = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.name, dto.name))
+      .limit(1);
+
+    if (existingName[0]) {
+      throw new ConflictException(`Topic with name ${dto.name} already exists`);
+    }
+
+    this.logger.log(`Creating topic: ${dto.name}`);
+
+    const result = await db
+      .insert(topics)
+      .values({
+        name: dto.name,
+        slug: dto.slug,
+        description: dto.description,
+        imageUrl: dto.imageUrl,
+      })
+      .returning();
+
+    return result[0];
+  }
+
+  /**
+   * 更新分类
+   */
+  async updateTopic(
+    slug: string,
+    dto: UpdateTopicDto,
+  ): Promise<TopicResponseDto> {
+    // 查找分类
+    const topic = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.slug, slug))
+      .limit(1);
+
+    if (!topic[0]) {
+      throw new NotFoundException(`Topic with slug ${slug} not found`);
+    }
+
+    // 更新数据
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
+
+    const result = await db
+      .update(topics)
+      .set(updateData)
+      .where(eq(topics.id, topic[0].id))
+      .returning();
+
+    return result[0];
+  }
+}

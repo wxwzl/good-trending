@@ -50,7 +50,7 @@ services:
     container_name: good-trending-redis-commander
     restart: unless-stopped
     environment:
-      - REDIS_HOSTS=local:redis:6389
+      - REDIS_HOSTS=local:redis:6379
     ports:
       - "8081:8081"
     depends_on:

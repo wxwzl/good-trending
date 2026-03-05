@@ -54,7 +54,7 @@ export default defineConfig({
       name: "api",
       testDir: "./src/e2e/api",
       use: {
-        baseURL: process.env.E2E_API_URL || "http://localhost:3001",
+        baseURL: process.env.E2E_API_URL || "http://localhost:3005",
       },
     },
   ],
@@ -69,7 +69,7 @@ export default defineConfig({
         },
         {
           command: "pnpm --filter @good-trending/api dev",
-          url: "http://localhost:3001/health",
+          url: "http://localhost:3005/health",
           reuseExistingServer: !process.env.CI,
           timeout: 120 * 1000,
         },

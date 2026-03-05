@@ -8,15 +8,15 @@ export async function Footer() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="space-y-4 text-center">
             <h3 className="text-lg font-semibold">{t("siteName")}</h3>
             <p className="text-sm text-muted-foreground">{t("siteDescription")}</p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4 text-center">
             <h4 className="text-sm font-semibold">{t("navigation.home")}</h4>
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-2 items-center">
               <Link
                 href="/trending"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -32,9 +32,9 @@ export async function Footer() {
             </nav>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4 text-center">
             <h4 className="text-sm font-semibold">{t("navigation.about")}</h4>
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-2 items-center">
               <Link
                 href="/about"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -42,11 +42,6 @@ export async function Footer() {
                 {t("navigation.about")}
               </Link>
             </nav>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold">{t("language.title")}</h4>
-            <p className="text-sm text-muted-foreground">{t("footer.poweredBy")}</p>
           </div>
         </div>
 

@@ -71,8 +71,7 @@
     "results": "Found {count} results for \"{query}\""
   },
   "footer": {
-    "copyright": "© {year} Good Trending. All rights reserved.",
-    "poweredBy": "Powered by Next.js"
+    "copyright": "© {year} Good Trending. All rights reserved."
   },
   "errors": {
     "notFound": "Page not found",

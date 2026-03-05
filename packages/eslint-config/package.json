@@ -1,0 +1,26 @@
+{
+  "name": "@good-trending/eslint-config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared ESLint configuration for Good-Trending monorepo",
+  "main": "index.js",
+  "files": [
+    "base.js",
+    "next.js",
+    "nest.js",
+    "index.js"
+  ],
+  "scripts": {
+    "clean": "rm -rf node_modules"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "typescript-eslint": "^8.20.0"
+  }
+}

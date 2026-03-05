@@ -1,0 +1,170 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { db } from '@good-trending/database';
+import { products, productTopics } from '@good-trending/database';
+import { eq, ilike, or, and, desc, count } from 'drizzle-orm';
+import {
+  SearchQueryDto,
+  SearchResponseDto,
+  SearchResultItemDto,
+  SearchSuggestionDto,
+} from './dto/search.dto';
+import { SourceType } from '../product/dto/get-products.dto';
+
+/**
+ * 搜索服务层
+ * 负责商品搜索的业务逻辑处理
+ */
+@Injectable()
+export class SearchService {
+  private readonly logger = new Logger(SearchService.name);
+
+  /**
+   * 搜索商品
+   */
+  async search(query: SearchQueryDto): Promise<SearchResponseDto> {
+    const { q, page = 1, limit = 10, sourceType, topicId } = query;
+
+    // 参数边界检查
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const offset = (safePage - 1) * safeLimit;
+
+    this.logger.debug(
+      `Searching products: q=${q}, page=${safePage}, limit=${safeLimit}`,
+    );
+
+    // 构建搜索条件
+    const searchConditions = [
+      or(ilike(products.name, `%${q}%`), ilike(products.description, `%${q}%`)),
+    ];
+
+    if (sourceType) {
+      searchConditions.push(
+        eq(products.sourceType, sourceType as 'X_PLATFORM' | 'AMAZON'),
+      );
+    }
+
+    // 如果指定了分类
+    let productIds: string[] | null = null;
+    if (topicId) {
+      const topicProducts = await db
+        .select({ productId: productTopics.productId })
+        .from(productTopics)
+        .where(eq(productTopics.topicId, topicId));
+
+      productIds = topicProducts.map((tp) => tp.productId);
+      if (productIds.length === 0) {
+        return {
+          data: [],
+          total: 0,
+          page: safePage,
+          limit: safeLimit,
+          query: q,
+        };
+      }
+    }
+
+    // 执行搜索
+    const results = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        image: products.image,
+        price: products.price,
+        sourceType: products.sourceType,
+      })
+      .from(products)
+      .where(and(...searchConditions))
+      .orderBy(desc(products.createdAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    // 计算相关度分数（简化版：名称匹配优先）
+    const data: SearchResultItemDto[] = results.map((item) => {
+      // 简单的相关度计算：名称完全匹配得高分，部分匹配得中等分
+      let relevanceScore = 0.5;
+      const lowerName = item.name.toLowerCase();
+      const lowerQuery = q.toLowerCase();
+
+      if (lowerName === lowerQuery) {
+        relevanceScore = 1.0;
+      } else if (lowerName.includes(lowerQuery)) {
+        relevanceScore = 0.8;
+      } else if (item.description?.toLowerCase().includes(lowerQuery)) {
+        relevanceScore = 0.6;
+      }
+
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description ?? undefined,
+        image: item.image ?? undefined,
+        price: item.price ?? undefined,
+        sourceType: item.sourceType as SourceType,
+        relevanceScore,
+      };
+    });
+
+    // 按相关度排序
+    data.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+    // 查询总数
+    const totalResult = await db
+      .select({ count: count() })
+      .from(products)
+      .where(and(...searchConditions));
+
+    return {
+      data,
+      total: totalResult[0]?.count ?? 0,
+      page: safePage,
+      limit: safeLimit,
+      query: q,
+    };
+  }
+
+  /**
+   * 获取搜索建议
+   */
+  async getSuggestions(keyword: string): Promise<SearchSuggestionDto[]> {
+    if (!keyword || keyword.trim().length < 2) {
+      return [];
+    }
+
+    const lowerKeyword = keyword.toLowerCase().trim();
+
+    // 搜索匹配的商品名称
+    const results = await db
+      .select({
+        name: products.name,
+      })
+      .from(products)
+      .where(ilike(products.name, `%${lowerKeyword}%`))
+      .limit(10);
+
+    // 聚合并去重
+    const suggestionMap = new Map<string, number>();
+
+    for (const result of results) {
+      const name = result.name.toLowerCase();
+      // 提取包含关键词的子串作为建议
+      const words = name.split(/\s+/);
+      for (const word of words) {
+        if (word.includes(lowerKeyword) && word.length >= 2) {
+          const count = suggestionMap.get(word) ?? 0;
+          suggestionMap.set(word, count + 1);
+        }
+      }
+    }
+
+    // 排序并返回前 5 个
+    return Array.from(suggestionMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([text, count]) => ({
+        text,
+        count,
+      }));
+  }
+}

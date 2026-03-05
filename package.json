@@ -63,5 +63,8 @@
     "cz-customizable": {
       "config": ".cz-config.js"
     }
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

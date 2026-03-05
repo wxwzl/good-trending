@@ -71,8 +71,7 @@
     "results": "找到 {count} 个 \"{query}\" 相关结果"
   },
   "footer": {
-    "copyright": "© {year} 好物趋势. 保留所有权利.",
-    "poweredBy": "由 Next.js 驱动"
+    "copyright": "© {year} 好物趋势. 保留所有权利."
   },
   "errors": {
     "notFound": "页面未找到",

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../../.env -- cross-env PORT=3010 next dev --turbopack",
+    "dev": "node scripts/dev.js",
     "clean": "rm -rf .next .turbo node_modules",
     "build": "next build",
     "start": "next start",

@@ -20,11 +20,11 @@ async function searchProducts(query: string, page: number = 1): Promise<SearchRe
   try {
     const result = await searchApi.products({ q: query, page });
     return {
-      data: result.data?.data || [],
-      total: result.data?.total || 0,
-      page: result.data?.page || 1,
-      limit: result.data?.limit || 10,
-      totalPages: result.data?.totalPages || 0,
+      data: result.data || [],
+      total: result.total || 0,
+      page: result.page || 1,
+      limit: result.limit || 10,
+      totalPages: result.totalPages || 0,
     };
   } catch (error) {
     console.error("Failed to search products:", error);

@@ -10,7 +10,7 @@ import { topicApi, type Topic } from "@/lib/api";
 async function getTopics(): Promise<Topic[]> {
   try {
     const result = await topicApi.list();
-    return result.data || [];
+    return result || [];
   } catch (error) {
     console.error("Failed to fetch topics:", error);
     return [];

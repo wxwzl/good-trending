@@ -25,11 +25,11 @@ async function getTrendingProducts(period?: string) {
   });
 
   return {
-    data: result.data?.data || [],
-    total: result.data?.total || 0,
-    page: result.data?.page || 1,
-    limit: result.data?.limit || 20,
-    totalPages: result.data?.totalPages || 0,
+    data: result.data || [],
+    total: result.total || 0,
+    page: result.page || 1,
+    limit: result.limit || 20,
+    totalPages: result.totalPages || 0,
   };
 }
 

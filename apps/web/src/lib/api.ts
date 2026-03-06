@@ -22,17 +22,18 @@ interface FetchOptions extends RequestInit {
   revalidate?: number; // Next.js revalidate (秒)
 }
 
-interface ApiResponse<T> {
-  data?: T;
-  total?: number;
-  page?: number;
-  limit?: number;
-  totalPages?: number;
-  statusCode?: number;
-  message?: string;
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public response?: Response
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
 }
 
-async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { locale = "en", revalidate, ...fetchOptions } = options;
 
   const baseUrl = getApiBaseUrl();
@@ -51,30 +52,22 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
   // 服务端渲染时添加 revalidate 选项
   const nextOptions = revalidate ? { next: { revalidate } } : undefined;
 
-  try {
-    const response = await fetch(url, {
-      ...requestInit,
-      ...nextOptions,
-    });
+  const response = await fetch(url, {
+    ...requestInit,
+    ...nextOptions,
+  });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "Unknown error" }));
-      return {
-        statusCode: response.status,
-        message: error.message || `HTTP ${response.status}`,
-      };
-    }
-
-    const data = await response.json();
-    // 兼容后端直接返回数据包装在 data 字段中的情况
-    return data.data || data;
-  } catch (error) {
-    return {
-      statusCode: 500,
-      message: error instanceof Error ? error.message : "Network error",
-    };
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+    throw new ApiError(errorData.message || `HTTP ${response.status}`, response.status, response);
   }
+
+  const data = await response.json();
+  // 兼容后端直接返回数据包装在 data 字段中的情况
+  return data.data || data;
 }
+
+export { ApiError };
 
 // ============================================
 // Types
@@ -148,7 +141,7 @@ export const productApi = {
     limit?: number;
     sourceType?: string;
     topicId?: string;
-  }): Promise<ApiResponse<PaginatedResponse<Product>>> => {
+  }): Promise<PaginatedResponse<Product>> => {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.set("page", String(params.page));
     if (params.limit) searchParams.set("limit", String(params.limit));
@@ -163,7 +156,7 @@ export const productApi = {
    * Get single product by ID
    * GET /api/v1/products/:id
    */
-  get: (id: string): Promise<ApiResponse<Product>> => {
+  get: (id: string): Promise<Product> => {
     return fetchApi<Product>(`/products/${id}`, { revalidate: 3600 }); // 1小时缓存
   },
 
@@ -171,7 +164,7 @@ export const productApi = {
    * Get single product by slug
    * GET /api/v1/products/slug/:slug
    */
-  getBySlug: (slug: string): Promise<ApiResponse<Product>> => {
+  getBySlug: (slug: string): Promise<Product> => {
     return fetchApi<Product>(`/products/slug/${slug}`, { revalidate: 3600 }); // 1小时缓存
   },
 };
@@ -185,7 +178,7 @@ export const topicApi = {
    * Get all topics
    * GET /api/v1/topics
    */
-  list: async (params?: { page?: number; limit?: number }): Promise<ApiResponse<Topic[]>> => {
+  list: async (params?: { page?: number; limit?: number }): Promise<Topic[]> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -196,7 +189,7 @@ export const topicApi = {
    * Get topic by slug
    * GET /api/v1/topics/:slug
    */
-  get: (slug: string): Promise<ApiResponse<Topic>> => {
+  get: (slug: string): Promise<Topic> => {
     return fetchApi<Topic>(`/topics/${slug}`);
   },
 
@@ -207,7 +200,7 @@ export const topicApi = {
   products: async (
     slug: string,
     params?: { page?: number; limit?: number }
-  ): Promise<ApiResponse<PaginatedResponse<Product>>> => {
+  ): Promise<PaginatedResponse<Product>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -228,7 +221,7 @@ export const trendingApi = {
     page?: number;
     limit?: number;
     period?: "daily" | "weekly" | "monthly";
-  }): Promise<ApiResponse<PaginatedResponse<TrendingItem>>> => {
+  }): Promise<PaginatedResponse<TrendingItem>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -245,7 +238,7 @@ export const trendingApi = {
   daily: async (params?: {
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginatedResponse<TrendingItem>>> => {
+  }): Promise<PaginatedResponse<TrendingItem>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -259,7 +252,7 @@ export const trendingApi = {
   weekly: async (params?: {
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginatedResponse<TrendingItem>>> => {
+  }): Promise<PaginatedResponse<TrendingItem>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -273,7 +266,7 @@ export const trendingApi = {
   monthly: async (params?: {
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginatedResponse<TrendingItem>>> => {
+  }): Promise<PaginatedResponse<TrendingItem>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -291,7 +284,7 @@ export const trendingApi = {
       limit?: number;
       period?: "daily" | "weekly" | "monthly";
     }
-  ): Promise<ApiResponse<PaginatedResponse<TrendingItem>>> => {
+  ): Promise<PaginatedResponse<TrendingItem>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -313,7 +306,7 @@ export const searchApi = {
     q: string;
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginatedResponse<Product>>> => {
+  }): Promise<PaginatedResponse<Product>> => {
     const searchParams = new URLSearchParams();
     searchParams.set("q", params.q);
     if (params.page) searchParams.set("page", String(params.page));

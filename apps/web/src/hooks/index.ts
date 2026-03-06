@@ -26,10 +26,7 @@ interface AsyncResult<T> {
   refetch: () => void;
 }
 
-function useAsync<T>(
-  asyncFn: () => Promise<{ data?: T; message?: string }>,
-  deps: unknown[] = []
-): AsyncResult<T> {
+function useAsync<T>(asyncFn: () => Promise<T>, deps: unknown[] = []): AsyncResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,13 +35,12 @@ function useAsync<T>(
     setLoading(true);
     setError(null);
 
-    const result = await asyncFn();
-
-    if (result.data) {
-      setData(result.data);
+    try {
+      const result = await asyncFn();
+      setData(result);
       setError(null);
-    } else {
-      setError(result.message || "An error occurred");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     }
 
     setLoading(false);
@@ -123,7 +119,7 @@ export function useSearchProducts(
     () =>
       query
         ? searchApi.products({ q: query, ...params })
-        : Promise.resolve({ data: { data: [], total: 0, page: 1, limit: 10, totalPages: 0 } }),
+        : Promise.resolve({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 }),
     [query, params?.page, params?.limit]
   );
 }

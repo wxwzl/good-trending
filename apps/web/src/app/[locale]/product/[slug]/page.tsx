@@ -15,7 +15,7 @@ import Image from "next/image";
 async function getProduct(slug: string): Promise<Product | null> {
   try {
     const result = await productApi.getBySlug(slug);
-    return result.data || null;
+    return result || null;
   } catch (error) {
     console.error("Failed to fetch product:", error);
     return null;

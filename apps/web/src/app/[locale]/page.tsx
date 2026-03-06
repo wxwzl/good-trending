@@ -49,8 +49,8 @@ export default async function HomePage({ params }: HomePageProps) {
     topicApi.list({ limit: 4 }),
   ]);
 
-  const trendingProducts = trendingResult.data?.data || [];
-  const featuredTopics = topicsResult.data || [];
+  const trendingProducts = trendingResult.data || [];
+  const featuredTopics = topicsResult || [];
 
   return (
     <div className="flex flex-col">

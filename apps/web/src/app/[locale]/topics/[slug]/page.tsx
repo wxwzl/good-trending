@@ -16,15 +16,14 @@ interface TopicWithProducts extends Topic {
 async function getTopicBySlug(slug: string): Promise<TopicWithProducts | null> {
   try {
     // Get topic info
-    const topicResult = await topicApi.get(slug);
-    const topic = topicResult.data;
+    const topic = await topicApi.get(slug);
     if (!topic) {
       return null;
     }
 
     // Get products for this topic
     const productsResult = await topicApi.products(slug, { limit: 20 });
-    const products = productsResult.data?.data || [];
+    const products = productsResult.data || [];
 
     return {
       ...topic,
@@ -54,8 +53,7 @@ export async function generateMetadata({ params }: TopicPageProps): Promise<Meta
 
   try {
     // Fetch topic for metadata using unified API client
-    const topicResult = await topicApi.get(slug);
-    const topic = topicResult.data;
+    const topic = await topicApi.get(slug);
 
     if (!topic) {
       return {

@@ -100,7 +100,7 @@ async function bootstrap() {
       '商品热门趋势追踪平台 API 文档\n\n' +
         '## 响应格式\n' +
         '- 成功响应: `{ "data": ... }`\n' +
-        '- 分页响应: `{ "data": [...], "total": 100, "page": 1, "limit": 10, "totalPages": 10 }`\n' +
+        '- 分页响应: `{ "data": { "items": [...], "total": 100, "page": 1, "limit": 10, "totalPages": 10 } }`\n' +
         '- 错误响应: `{ "statusCode": 400, "message": "...", "error": "Bad Request", "timestamp": "...", "path": "..." }`',
     )
     .setVersion('1.0')

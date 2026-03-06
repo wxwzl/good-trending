@@ -15,6 +15,16 @@ import { AmazonCrawler } from "./crawlers/amazon";
 import { TwitterCrawler } from "./crawlers/twitter";
 import { db, products } from "@good-trending/database";
 import { eq } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+
+// 生成 slug 的辅助函数
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .substring(0, 100);
+}
 import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({
@@ -54,7 +64,9 @@ async function saveProductsToDatabase(productDataList: ProductData[]): Promise<n
 
       // 插入新产品
       await db.insert(products).values({
+        id: createId(),
         name: productData.name,
+        slug: generateSlug(productData.name),
         description: productData.description,
         image: productData.image,
         price: productData.price ? productData.price.toString() : null,

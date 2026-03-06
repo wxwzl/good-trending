@@ -10,17 +10,26 @@ import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { trendingApi, type TrendingItem } from "@/lib/api";
 
+// 将 URL 参数映射到 API 参数
+const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+};
+
 async function getTrendingProducts(period?: string) {
+  const apiPeriod = period ? periodMap[period] || "daily" : "daily";
   const result = await trendingApi.list({
-    period: period as "daily" | "weekly" | "monthly",
+    period: apiPeriod,
     limit: 20,
   });
+
   return {
-    data: result.data || [],
-    total: result.total || 0,
-    page: result.page || 1,
-    limit: result.limit || 20,
-    totalPages: result.totalPages || 0,
+    data: result.data?.data || [],
+    total: result.data?.total || 0,
+    page: result.data?.page || 1,
+    limit: result.data?.limit || 20,
+    totalPages: result.data?.totalPages || 0,
   };
 }
 
@@ -72,7 +81,7 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
     id: item.productId,
     name: item.productName,
     url: `${baseUrl}/${locale}/product/${item.productId}`,
-    image: item.productImage,
+    image: item.productImage ?? undefined,
     position: index + 1,
   }));
 
@@ -122,9 +131,10 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
                       id: item.productId,
                       name: item.productName,
                       slug: item.productId,
-                      image: item.productImage,
+                      image: item.productImage ?? undefined,
                       price: item.productPrice ? parseFloat(item.productPrice) : undefined,
-                      source: item.productSourceType === "X_PLATFORM" ? "x_platform" : "amazon",
+                      currency: "USD",
+                      source: "amazon",
                       trendingScore: item.score,
                       rank: item.rank,
                     }}

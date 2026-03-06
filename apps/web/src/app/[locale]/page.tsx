@@ -9,32 +9,7 @@ import { SearchBar } from "@/components/features/search-bar";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
-
-// Type definitions
-interface TrendingItem {
-  id: string;
-  product?: {
-    id: string;
-    name: string;
-    image?: string;
-    price?: string;
-    currency?: string;
-    sourceType?: string;
-  };
-  name: string;
-  score?: number;
-  rank?: number;
-}
-
-interface Topic {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string;
-  productCount?: number;
-}
+import { trendingApi, topicApi, type TrendingItem, type Topic } from "@/lib/api";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -68,19 +43,14 @@ export default async function HomePage({ params }: HomePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  // Fetch data from API
-  const [trendingResponse, topicsResponse] = await Promise.all([
-    fetch(`${API_BASE_URL}/trending?limit=4`, { next: { revalidate: 300 } })
-      .then((res) => res.json())
-      .catch(() => ({ data: { data: [], total: 0 } })),
-    fetch(`${API_BASE_URL}/topics?limit=4`, { next: { revalidate: 3600 } })
-      .then((res) => res.json())
-      .catch(() => ({ data: { data: [], total: 0 } })),
+  // Fetch data from API using unified client
+  const [trendingResult, topicsResult] = await Promise.all([
+    trendingApi.list({ limit: 4 }),
+    topicApi.list({ limit: 4 }),
   ]);
 
-  // API returns { data: { data: [...], total: number } }
-  const trendingProducts = trendingResponse.data?.data || [];
-  const featuredTopics = topicsResponse.data?.data || [];
+  const trendingProducts = trendingResult.data?.data || [];
+  const featuredTopics = topicsResult.data || [];
 
   return (
     <div className="flex flex-col">
@@ -228,17 +198,17 @@ export default async function HomePage({ params }: HomePageProps) {
 
           {trendingProducts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {trendingProducts.map((item: TrendingItem) => (
+              {trendingProducts.map((item) => (
                 <ProductCard
-                  key={item.id}
+                  key={item.productId}
                   product={{
-                    id: item.product?.id || item.id,
-                    name: item.product?.name || item.name,
-                    slug: item.product?.id || item.id,
-                    image: item.product?.image,
-                    price: item.product?.price ? parseFloat(item.product.price) : undefined,
-                    currency: item.product?.currency,
-                    source: item.product?.sourceType === "X_PLATFORM" ? "x_platform" : "amazon",
+                    id: item.productId,
+                    name: item.productName,
+                    slug: item.productId,
+                    image: item.productImage ?? undefined,
+                    price: item.productPrice ? parseFloat(item.productPrice) : undefined,
+                    currency: "USD",
+                    source: "amazon",
                     trendingScore: item.score,
                     rank: item.rank,
                   }}
@@ -268,7 +238,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
           {featuredTopics.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredTopics.map((topic: Topic) => (
+              {featuredTopics.map((topic) => (
                 <TopicCard
                   key={topic.id}
                   topic={{

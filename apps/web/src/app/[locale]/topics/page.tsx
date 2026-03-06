@@ -5,31 +5,12 @@ import { TopicCard } from "@/components/features/topic-card";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
-
-interface Topic {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  imageUrl?: string;
-  productCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import { topicApi, type Topic } from "@/lib/api";
 
 async function getTopics(): Promise<Topic[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/topics`, {
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const json = await response.json();
-    // API returns { data: { data: [...], total: number } }
-    return json.data?.data || json.data || [];
+    const result = await topicApi.list();
+    return result.data || [];
   } catch (error) {
     console.error("Failed to fetch topics:", error);
     return [];

@@ -24,7 +24,7 @@ describe('ProductController', () => {
   };
 
   const mockPaginatedResponse = {
-    data: [mockProductResponse],
+    items: [mockProductResponse],
     total: 1,
     page: 1,
     limit: 10,

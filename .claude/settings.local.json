@@ -21,7 +21,9 @@
       "mcp__chrome-devtools__list_pages",
       "mcp__chrome-devtools__new_page",
       "mcp__chrome-devtools__close_page",
-      "mcp__chrome-devtools__list_network_requests"
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__MCP_DOCKER__browser_navigate",
+      "mcp__MCP_DOCKER__browser_console_messages"
     ]
   }
 }

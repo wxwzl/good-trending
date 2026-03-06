@@ -116,13 +116,14 @@ export class SearchResultItemDto {
 
 /**
  * 搜索结果响应 DTO
+ * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
 export class SearchResponseDto {
   @ApiProperty({
     description: '搜索结果列表',
     type: [SearchResultItemDto],
   })
-  data: SearchResultItemDto[];
+  items: SearchResultItemDto[];
 
   @ApiProperty({
     description: '总数量',

@@ -55,62 +55,247 @@ Good-Trending 是一个商品趋势追踪平台，通过爬取 X 平台（Twitte
 - PostgreSQL 16+（或使用 Docker）
 - Redis 7+（或使用 Docker）
 
-### 安装步骤
+### 为什么 API 不会自动创建数据库？
 
-1. **克隆仓库**
+**架构设计原则：分离关注点**
 
-```bash
-git clone https://github.com/your-username/good-trending.git
-cd good-trending
+本项目遵循企业级应用的最佳实践，将数据库 Schema 管理与应用运行时分离：
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   数据库迁移     │ ──▶ │    种子数据      │ ──▶ │   启动 API      │
+│  (schema 变更)   │     │  (初始数据)      │     │  (业务逻辑)     │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        ↓                        ↍                      ↓
+   显式命令执行              显式命令执行            应用启动
+   pnpm db:migrate          pnpm db:seed            pnpm dev
 ```
 
-2. **安装依赖**
+**原因说明：**
+
+1. **Schema 变更是敏感操作** - 数据库结构变更（添加表、修改字段）需要谨慎处理，不应在应用启动时自动执行
+2. **权限分离** - 迁移需要 DDL（数据定义语言）权限，而应用运行时只需要 DML（数据操作语言）权限
+3. **版本控制** - 所有数据库变更都通过版本化的迁移文件管理，便于审计和回滚
+4. **团队协作** - 显式执行迁移确保所有开发者对数据库变更有统一认知
+5. **生产安全** - 防止意外变更生产数据库结构
+
+### 完整安装步骤（从零开始）
+
+#### 步骤 1：克隆仓库并安装依赖
 
 ```bash
+# 克隆仓库
+git clone https://github.com/your-username/good-trending.git
+cd good-trending
+
+# 安装依赖
 pnpm install
 ```
 
-3. **配置环境变量**
+#### 步骤 2：配置环境变量
 
 ```bash
 # 复制环境变量模板
 cp .env.example .env
 
-# 编辑 .env 文件，填入必要的配置
+# 编辑 .env 文件（最小配置如下）
+# --- 数据库配置 ---
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/good_trending"
+
+# --- Redis 配置 ---
+REDIS_URL="redis://localhost:6379"
+
+# --- API 配置 ---
+API_PORT=3015
+API_URL="http://localhost:3015/api/v1"
+
+# --- Web 配置 ---
+WEB_PORT=3010
+NEXT_PUBLIC_API_URL="http://localhost:3015/api/v1"
 ```
 
-4. **启动本地数据库**
+#### 步骤 3：启动基础设施（PostgreSQL + Redis）
 
 ```bash
+# 使用 Docker Compose 启动数据库和缓存
 pnpm docker:dev
+
+# 验证服务状态
+docker-compose -f docker-compose.dev.yml ps
 ```
 
-5. **运行数据库迁移**
+**注意：** 首次启动会下载 Docker 镜像，可能需要几分钟。
+
+#### 步骤 4：数据库初始化（关键步骤）
 
 ```bash
-pnpm db:migrate:dev
+# 方式 A：使用 Drizzle Push（开发环境推荐）
+# 直接根据 schema 定义创建表，无需迁移文件
+pnpm db:push
+
+# 方式 B：使用迁移（生产环境推荐）
+# 先创建迁移文件，再执行迁移
+pnpm db:generate   # 生成迁移文件
+pnpm db:migrate    # 执行迁移
+
+# 验证表结构
+pnpm db:studio     # 打开 Drizzle Studio 可视化工具
+```
+
+**两种方式的差异：**
+
+| 方式         | 适用场景 | 优点             | 缺点                 |
+| ------------ | -------- | ---------------- | -------------------- |
+| `db:push`    | 开发环境 | 快速、自动同步   | 无法回滚、不记录历史 |
+| `db:migrate` | 生产环境 | 版本控制、可回滚 | 需要手动管理迁移文件 |
+
+#### 步骤 5：填充初始数据
+
+```bash
+# 运行种子脚本，创建示例商品和趋势数据
 pnpm db:seed
 ```
 
-6. **启动开发服务器**
+**种子数据包括：**
+
+- 8 个示例商品（AirPods、Sony 耳机等）
+- 5 个分类（电子产品、家居生活等）
+- 7 天的趋势数据（用于展示 Weekly/Monthly 趋势）
+- 商品与分类的关联关系
+
+#### 步骤 6：启动开发服务器
 
 ```bash
-# 启动所有服务
+# 方式 A：一键启动所有服务（推荐）
 pnpm dev
 
-# 或单独启动
-pnpm --filter @good-trending/web dev    # 前端 (http://localhost:3000)
-pnpm --filter @good-trending/api dev    # API (http://localhost:3001)
+# 方式 B：单独启动各服务（便于调试）
+# 终端 1：启动 API
+pnpm --filter @good-trending/api dev
+
+# 终端 2：启动 Web
+pnpm --filter @good-trending/web dev
+
+# 终端 3：启动调度器（可选，用于定时任务）
+pnpm --filter @good-trending/scheduler start
+```
+
+#### 步骤 7：验证运行状态
+
+```bash
+# 检查 API 健康状态
+curl http://localhost:3015/health
+
+# 检查数据库连接
+curl http://localhost:3015/api/v1/trending
+
+# 打开浏览器访问
+open http://localhost:3010
 ```
 
 ### 访问地址
 
-| 服务     | 地址                           |
-| -------- | ------------------------------ |
-| Web 应用 | http://localhost:3000          |
-| API 服务 | http://localhost:3001          |
-| API 文档 | http://localhost:3001/api-docs |
-| 健康检查 | http://localhost:3001/health   |
+| 服务           | 地址                           |
+| -------------- | ------------------------------ |
+| Web 应用       | http://localhost:3010          |
+| API 服务       | http://localhost:3015          |
+| API 文档       | http://localhost:3015/api-docs |
+| 健康检查       | http://localhost:3015/health   |
+| Drizzle Studio | http://localhost:4983          |
+
+---
+
+## 故障排除
+
+### 数据库相关问题
+
+#### 问题 1：API 启动报错 "Database does not exist"
+
+**原因**：PostgreSQL 容器已启动，但数据库未创建
+
+**解决**：
+
+```bash
+# 进入 PostgreSQL 容器创建数据库
+docker-compose -f docker-compose.dev.yml exec postgres psql -U postgres -c "CREATE DATABASE good_trending;"
+
+# 或自动创建（如果配置了自动创建）
+pnpm db:push
+```
+
+#### 问题 2：API 启动报错 "relation 'xxx' does not exist"
+
+**原因**：数据库存在，但表结构未创建
+
+**解决**：
+
+```bash
+# 运行数据库迁移创建表
+pnpm db:push
+
+# 验证表是否创建
+pnpm db:studio  # 打开可视化工具查看
+```
+
+#### 问题 3：页面显示 "暂无热门商品"
+
+**原因**：表结构已创建，但没有数据
+
+**解决**：
+
+```bash
+# 运行种子脚本填充数据
+pnpm db:seed
+
+# 验证数据
+curl http://localhost:3015/api/v1/trending
+```
+
+#### 问题 4：连接数据库超时
+
+**原因**：PostgreSQL 容器还在启动中，或端口冲突
+
+**解决**：
+
+```bash
+# 检查容器状态
+docker-compose -f docker-compose.dev.yml ps
+
+# 查看日志
+docker-compose -f docker-compose.dev.yml logs postgres
+
+# 重启容器
+docker-compose -f docker-compose.dev.yml restart postgres
+```
+
+#### 问题 5：如何完全重置数据库？
+
+```bash
+# 方式 1：使用命令
+pnpm db:reset
+
+# 方式 2：手动删除并重建容器
+docker-compose -f docker-compose.dev.yml down -v  # 删除容器和数据卷
+docker-compose -f docker-compose.dev.yml up -d    # 重新创建
+pnpm db:push                                      # 重建表结构
+pnpm db:seed                                      # 填充数据
+```
+
+### 快速诊断命令
+
+```bash
+# 1. 检查数据库连接
+pg_isready -h localhost -p 5432
+
+# 2. 检查 Redis 连接
+redis-cli -h localhost -p 6379 ping
+
+# 3. 查看 API 日志
+pnpm --filter @good-trending/api dev
+
+# 4. 测试 API 端点
+curl -s http://localhost:3015/health | jq
+```
 
 ---
 

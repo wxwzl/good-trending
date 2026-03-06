@@ -106,9 +106,11 @@ async function seed() {
 
     // 3. 创建商品 (Products)
     console.log("🛍️ 创建商品...");
+
     const productData = [
       {
         name: "Apple AirPods Pro 2",
+        slug: "apple-airpods-pro-2",
         description: "主动降噪无线蓝牙耳机，MagSafe充电盒",
         image: "https://picsum.photos/seed/airpods/400/400",
         price: "249.00",
@@ -119,6 +121,7 @@ async function seed() {
       },
       {
         name: "Sony WH-1000XM5 无线降噪耳机",
+        slug: "sony-wh-1000xm5",
         description: "业界领先降噪技术，30小时续航",
         image: "https://picsum.photos/seed/sony/400/400",
         price: "349.99",
@@ -129,6 +132,7 @@ async function seed() {
       },
       {
         name: "Dyson V15 Detect 无线吸尘器",
+        slug: "dyson-v15-detect",
         description: "激光探测灰尘，智能显示屏",
         image: "https://picsum.photos/seed/dyson/400/400",
         price: "749.99",
@@ -139,6 +143,7 @@ async function seed() {
       },
       {
         name: "Stanley Quencher 保温杯 40oz",
+        slug: "stanley-quencher-40oz",
         description: "网红保温杯，保持冰镇40小时",
         image: "https://picsum.photos/seed/stanley/400/400",
         price: "45.00",
@@ -149,6 +154,7 @@ async function seed() {
       },
       {
         name: "Lululemon Align 高腰紧身裤",
+        slug: "lululemon-align",
         description: "网红瑜伽裤，裸感面料",
         image: "https://picsum.photos/seed/lululemon/400/400",
         price: "98.00",
@@ -159,6 +165,7 @@ async function seed() {
       },
       {
         name: "iPhone 15 Pro Max",
+        slug: "iphone-15-pro-max",
         description: "钛金属设计，A17 Pro芯片",
         image: "https://picsum.photos/seed/iphone/400/400",
         price: "1199.00",
@@ -169,6 +176,7 @@ async function seed() {
       },
       {
         name: "Samsung Galaxy S24 Ultra",
+        slug: "samsung-galaxy-s24-ultra",
         description: "AI智能手机，S Pen手写笔",
         image: "https://picsum.photos/seed/samsung/400/400",
         price: "1299.99",
@@ -179,6 +187,7 @@ async function seed() {
       },
       {
         name: "Nintendo Switch OLED",
+        slug: "nintendo-switch-oled",
         description: "7英寸OLED屏幕，64GB存储",
         image: "https://picsum.photos/seed/switch/400/400",
         price: "349.99",

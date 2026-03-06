@@ -41,6 +41,7 @@ CREATE TABLE "product_topic" (
 CREATE TABLE "product" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
+	"slug" text NOT NULL,
 	"description" text,
 	"image" text,
 	"price" numeric(10, 2),
@@ -50,6 +51,7 @@ CREATE TABLE "product" (
 	"source_type" "source_type" NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "product_slug_unique" UNIQUE("slug"),
 	CONSTRAINT "product_source_url_unique" UNIQUE("source_url")
 );
 --> statement-breakpoint
@@ -96,6 +98,7 @@ CREATE INDEX "crawler_log_source_created_idx" ON "crawler_log" USING btree ("sou
 CREATE UNIQUE INDEX "product_history_product_date_idx" ON "product_history" USING btree ("product_id","date");--> statement-breakpoint
 CREATE INDEX "product_source_idx" ON "product" USING btree ("source_type","source_id");--> statement-breakpoint
 CREATE INDEX "product_created_at_idx" ON "product" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "product_slug_idx" ON "product" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "tag_slug_idx" ON "tag" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "topic_slug_idx" ON "topic" USING btree ("slug");--> statement-breakpoint
 CREATE UNIQUE INDEX "trend_product_date_idx" ON "trend" USING btree ("product_id","date");--> statement-breakpoint

@@ -75,13 +75,14 @@ export class ProductResponseDto {
 
 /**
  * 分页商品响应 DTO
+ * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
 export class PaginatedProductResponseDto {
   @ApiProperty({
     description: '商品列表',
     type: [ProductResponseDto],
   })
-  data: ProductResponseDto[];
+  items: ProductResponseDto[];
 
   @ApiProperty({
     description: '总数量',

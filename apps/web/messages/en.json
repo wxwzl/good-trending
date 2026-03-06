@@ -73,7 +73,8 @@
     "title": "Browse Topics",
     "subtitle": "Explore products by category",
     "productCount": "{count} products",
-    "noResults": "No topics found"
+    "noResults": "No topics found",
+    "noProducts": "No products in this topic"
   },
   "product": {
     "price": "Price",

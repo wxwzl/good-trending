@@ -79,8 +79,9 @@ export class SearchService {
 
       const productIds = topicProducts.map((tp) => tp.productId);
       if (productIds.length === 0) {
+        // 返回空结果结构，由 controller 统一包装
         return {
-          data: [],
+          items: [],
           total: 0,
           page: safePage,
           limit: safeLimit,
@@ -144,8 +145,9 @@ export class SearchService {
       .from(products)
       .where(and(...searchConditions));
 
+    // 返回包含 items 的对象，由 controller 统一包装为 { data: { data: items, total, ... } }
     return {
-      data,
+      items: data,
       total: totalResult[0]?.count ?? 0,
       page: safePage,
       limit: safeLimit,

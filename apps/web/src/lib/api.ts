@@ -9,9 +9,9 @@
  * 客户端使用 NEXT_PUBLIC_API_URL
  */
 const getApiBaseUrl = (): string => {
-  // 服务端渲染 (Node.js 环境)
+  // 服务端渲染 (Node.js 环境) - 使用 localhost 因为没有使用 Docker
   if (typeof window === "undefined") {
-    return process.env.API_URL || "http://host.docker.internal:3015/api/v1";
+    return process.env.API_URL || "http://localhost:3015/api/v1";
   }
   // 浏览器环境
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3015/api/v1";
@@ -66,7 +66,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     }
 
     const data = await response.json();
-    // 统一响应格式：如果后端包装了 { data: ... }，取 data
+    // 兼容后端直接返回数据包装在 data 字段中的情况
     return data.data || data;
   } catch (error) {
     return {
@@ -115,7 +115,9 @@ export interface Topic {
 export interface TrendingItem {
   id: string;
   productId: string;
-  product: Product;
+  productName: string;
+  productImage: string | null;
+  productPrice: string | null;
   date: string;
   rank: number;
   score: number;

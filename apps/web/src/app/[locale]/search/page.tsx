@@ -6,19 +6,7 @@ import { ProductCard } from "@/components/features/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  price?: string;
-  currency?: string;
-  sourceType: "X_PLATFORM" | "AMAZON";
-  sourceUrl: string;
-}
+import { searchApi, type Product } from "@/lib/api";
 
 interface SearchResponse {
   data: Product[];
@@ -30,14 +18,14 @@ interface SearchResponse {
 
 async function searchProducts(query: string, page: number = 1): Promise<SearchResponse> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/search?q=${encodeURIComponent(query)}&page=${page}`,
-      { cache: "no-store" }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return response.json();
+    const result = await searchApi.products({ q: query, page });
+    return {
+      data: result.data?.data || [],
+      total: result.data?.total || 0,
+      page: result.data?.page || 1,
+      limit: result.data?.limit || 10,
+      totalPages: result.data?.totalPages || 0,
+    };
   } catch (error) {
     console.error("Failed to search products:", error);
     return { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };

@@ -21,7 +21,7 @@ describe('TrendingController', () => {
   };
 
   const mockPaginatedResponse = {
-    data: [mockTrendItem],
+    items: [mockTrendItem],
     total: 1,
     page: 1,
     limit: 10,
@@ -162,8 +162,8 @@ describe('TrendingController', () => {
         'electronics',
         {},
       );
-      expect(result.data).toBeDefined();
-      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.items).toBeDefined();
+      expect(result.items.length).toBeGreaterThan(0);
     });
 
     it('should_pass_query_params_to_service', async () => {

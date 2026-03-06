@@ -2,7 +2,6 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { databaseHealthCheck, getPoolStatus } from '@good-trending/database';
 import { redisHealthCheck } from '@good-trending/database';
-import { CacheService } from '../../common/cache';
 
 /**
  * 服务健康状态
@@ -37,7 +36,7 @@ interface HealthCheckResponse {
 export class HealthController {
   private readonly version = process.env.npm_package_version || '1.0.0';
 
-  constructor(private readonly cacheService: CacheService) {}
+  constructor() {}
 
   /**
    * 简单健康检查

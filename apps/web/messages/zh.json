@@ -73,7 +73,8 @@
     "title": "浏览分类",
     "subtitle": "按分类探索商品",
     "productCount": "{count} 个商品",
-    "noResults": "暂无分类"
+    "noResults": "暂无分类",
+    "noProducts": "该分类暂无商品"
   },
   "product": {
     "price": "价格",

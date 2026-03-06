@@ -18,13 +18,9 @@ describe('TopicController', () => {
     updatedAt: new Date('2024-01-01'),
   };
 
-  const mockPaginatedResponse = {
-    data: [mockTopicResponse],
-    total: 1,
-    page: 1,
-    limit: 10,
-    totalPages: 1,
-  };
+  // TopicService now returns arrays directly (not paginated objects)
+  // TransformInterceptor wraps them in { data: [...] }
+  const mockTopicsArray = [mockTopicResponse];
 
   const mockService = {
     getTopics: jest.fn(),
@@ -57,20 +53,20 @@ describe('TopicController', () => {
     it('should_return_paginated_topics', async () => {
       // Arrange
       const query: GetTopicsDto = { page: 1, limit: 10 };
-      service.getTopics.mockResolvedValue(mockPaginatedResponse);
+      service.getTopics.mockResolvedValue(mockTopicsArray);
 
       // Act
       const result = await controller.getTopics(query);
 
       // Assert
       expect(service.getTopics).toHaveBeenCalledWith(query);
-      expect(result).toEqual(mockPaginatedResponse);
+      expect(result).toEqual(mockTopicsArray);
     });
 
     it('should_pass_query_params_to_service', async () => {
       // Arrange
       const query: GetTopicsDto = { page: 2, limit: 20 };
-      service.getTopics.mockResolvedValue(mockPaginatedResponse);
+      service.getTopics.mockResolvedValue(mockTopicsArray);
 
       // Act
       await controller.getTopics(query);
@@ -110,15 +106,9 @@ describe('TopicController', () => {
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
       };
-      const mockProductsResponse = {
-        topic: mockTopicResponse,
-        data: [mockProduct],
-        total: 1,
-        page: 1,
-        limit: 10,
-        totalPages: 1,
-      };
-      service.getProductsByTopic.mockResolvedValue(mockProductsResponse);
+      // getProductsByTopic now returns array directly
+      const mockProductsArray = [mockProduct];
+      service.getProductsByTopic.mockResolvedValue(mockProductsArray);
 
       // Act
       const result = await controller.getProductsByTopic('electronics', {
@@ -131,7 +121,7 @@ describe('TopicController', () => {
         page: 1,
         limit: 10,
       });
-      expect(result).toEqual(mockProductsResponse);
+      expect(result).toEqual(mockProductsArray);
     });
   });
 

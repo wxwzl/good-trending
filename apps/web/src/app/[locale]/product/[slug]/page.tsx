@@ -9,36 +9,13 @@ import { Link } from "@/i18n/routing";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generateProductMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
+import { productApi, type Product } from "@/lib/api";
 import Image from "next/image";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  price?: string;
-  currency?: string;
-  sourceUrl: string;
-  sourceId: string;
-  sourceType: "X_PLATFORM" | "AMAZON";
-  createdAt: string;
-  updatedAt: string;
-}
-
-async function getProduct(id: string): Promise<Product | null> {
+async function getProduct(slug: string): Promise<Product | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    });
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const json = await response.json();
-    // API returns { data: Product }
-    return json.data || json;
+    const result = await productApi.getBySlug(slug);
+    return result.data || null;
   } catch (error) {
     console.error("Failed to fetch product:", error);
     return null;

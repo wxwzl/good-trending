@@ -1,5 +1,5 @@
 {
-  "id": "eedeaa7e-5bf1-4e13-86b5-4e54abea4515",
+  "id": "91670c91-df72-4a16-8704-66b48f2d889a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -324,6 +324,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
@@ -419,11 +425,31 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "product_slug_idx": {
+          "name": "product_slug_idx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "product_slug_unique": {
+          "name": "product_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        },
         "product_source_url_unique": {
           "name": "product_source_url_unique",
           "nullsNotDistinct": false,

@@ -9,7 +9,7 @@ describe('SearchController', () => {
   let service: jest.Mocked<SearchService>;
 
   const mockSearchResponse = {
-    data: [
+    items: [
       {
         id: 'test-id-123',
         name: 'Apple AirPods Pro',

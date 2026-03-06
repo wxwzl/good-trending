@@ -146,13 +146,14 @@ export class TrendingItemDto {
 
 /**
  * 分页趋势响应 DTO
+ * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
 export class PaginatedTrendingResponseDto {
   @ApiProperty({
     description: '趋势列表',
     type: [TrendingItemDto],
   })
-  data: TrendingItemDto[];
+  items: TrendingItemDto[];
 
   @ApiProperty({
     description: '总数量',

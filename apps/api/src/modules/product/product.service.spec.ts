@@ -21,6 +21,7 @@ describe('ProductService', () => {
   const mockProduct = {
     id: 'test-id-123',
     name: 'Test Product',
+    slug: 'test-product',
     description: 'Test Description',
     image: 'https://example.com/image.jpg',
     price: '99.99',
@@ -96,7 +97,7 @@ describe('ProductService', () => {
       // Arrange
       const query: GetProductsDto = {};
       const mockResult = {
-        data: [mockProduct],
+        items: [mockProduct],
         total: 1,
         page: 1,
         limit: 10,
@@ -118,7 +119,7 @@ describe('ProductService', () => {
         sortBy: SortField.CREATED_AT,
         order: SortOrder.DESC,
       });
-      expect(result.data).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
       expect(result.total).toBe(1);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
@@ -131,7 +132,7 @@ describe('ProductService', () => {
       // Arrange
       const query: GetProductsDto = {};
       const cachedResult = {
-        data: [mockProduct],
+        items: [mockProduct],
         total: 1,
         page: 1,
         limit: 10,
@@ -154,7 +155,7 @@ describe('ProductService', () => {
       const query: GetProductsDto = { page: -1, limit: 200 };
       cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
-        data: [],
+        items: [],
         total: 0,
         page: 1,
         limit: 100,
@@ -178,7 +179,7 @@ describe('ProductService', () => {
       const query: GetProductsDto = { sourceType: SourceType.X_PLATFORM };
       cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
-        data: [mockProduct],
+        items: [mockProduct],
         total: 1,
         page: 1,
         limit: 10,
@@ -201,7 +202,7 @@ describe('ProductService', () => {
       const query: GetProductsDto = { keyword: 'test' };
       cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
-        data: [mockProduct],
+        items: [mockProduct],
         total: 1,
         page: 1,
         limit: 10,

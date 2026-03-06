@@ -71,7 +71,7 @@ export class ProductRepository {
     // 执行分页查询
     const offset = (page - 1) * limit;
 
-    const [data, totalResult] = await Promise.all([
+    const [items, totalResult] = await Promise.all([
       db
         .select()
         .from(products)
@@ -88,7 +88,7 @@ export class ProductRepository {
     const total = totalResult[0]?.count ?? 0;
 
     return {
-      data,
+      items,
       total,
       page,
       limit,

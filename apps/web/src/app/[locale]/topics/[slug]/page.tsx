@@ -7,27 +7,7 @@ import { ProductCard } from "@/components/features/product-card";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
-
-interface Topic {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  imageUrl?: string;
-  productCount?: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  price?: string;
-  currency?: string;
-  sourceType: "X_PLATFORM" | "AMAZON";
-}
+import { topicApi, productApi, type Topic, type Product } from "@/lib/api";
 
 interface TopicWithProducts extends Topic {
   products: Product[];
@@ -35,29 +15,16 @@ interface TopicWithProducts extends Topic {
 
 async function getTopicBySlug(slug: string): Promise<TopicWithProducts | null> {
   try {
-    // First get topic info - use same fetch pattern as homepage
-    const topicsJson = await fetch(`${API_BASE_URL}/topics?limit=100`, {
-      next: { revalidate: 3600 },
-    })
-      .then((res) => res.json())
-      .catch(() => ({ data: { data: [] } }));
-
-    // API returns { data: { data: [...], total: number } }
-    const topics: Topic[] = topicsJson.data?.data || topicsJson.data || [];
-
-    const topic = topics.find((t) => t.slug === slug);
+    // Get topic info
+    const topicResult = await topicApi.get(slug);
+    const topic = topicResult.data;
     if (!topic) {
       return null;
     }
 
     // Get products for this topic
-    const productsJson = await fetch(`${API_BASE_URL}/products?topicId=${topic.id}&limit=20`, {
-      next: { revalidate: 3600 },
-    })
-      .then((res) => res.json())
-      .catch(() => ({ data: { data: [] } }));
-
-    const products: Product[] = productsJson.data?.data || productsJson.data || [];
+    const productsResult = await topicApi.products(slug, { limit: 20 });
+    const products = productsResult.data?.data || [];
 
     return {
       ...topic,
@@ -73,20 +40,22 @@ interface TopicPageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
+// export async function generateStaticParams() {
+//   const posts = await fetch('https://.../posts').then((res) => res.json())
+
+//   return posts.map((post) => ({
+//     slug: post.slug,
+//   }))
+// }
+
 export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const currentLocale = locale as Locale;
 
   try {
-    // Fetch topic for metadata - use same fetch pattern as homepage
-    const topicsJson = await fetch(`${API_BASE_URL}/topics?limit=100`, {
-      next: { revalidate: 3600 },
-    })
-      .then((res) => res.json())
-      .catch(() => ({ data: { data: [] } }));
-
-    const topics: Topic[] = topicsJson.data?.data || topicsJson.data || [];
-    const topic = topics.find((t) => t.slug === slug);
+    // Fetch topic for metadata using unified API client
+    const topicResult = await topicApi.get(slug);
+    const topic = topicResult.data;
 
     if (!topic) {
       return {

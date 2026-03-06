@@ -87,7 +87,7 @@ export class ProductService {
     });
 
     const response: PaginatedProductResponseDto = {
-      data: result.data.map(this.mapToResponseDto),
+      items: result.items.map(this.mapToResponseDto),
       total: result.total,
       page: result.page,
       limit: result.limit,

@@ -3,7 +3,7 @@
  * Web 开发服务器启动脚本
  * 从 .env.dev 读取 PORT 变量并启动 Next.js
  */
-
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');

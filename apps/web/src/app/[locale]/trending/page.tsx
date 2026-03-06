@@ -8,52 +8,20 @@ import { Button } from "@/components/ui/button";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
+import { trendingApi, type TrendingItem } from "@/lib/api";
 
-// API 基础 URL - 服务端渲染时使用容器可访问的地址
-const API_BASE_URL =
-  process.env.API_URL || // 服务端专用 (host.docker.internal:3015)
-  process.env.NEXT_PUBLIC_API_URL || // 客户端
-  "http://localhost:3015/api/v1";
-
-// API response structure
-interface TrendingItem {
-  rank: number;
-  productId: string;
-  productName: string;
-  productImage?: string;
-  productPrice?: string;
-  productSourceType?: "X_PLATFORM" | "AMAZON";
-  score: number;
-  mentions?: number;
-  views?: number;
-  likes?: number;
-  date: string;
-}
-
-interface TrendingResponse {
-  data: TrendingItem[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-async function getTrendingProducts(period?: string): Promise<TrendingResponse> {
-  try {
-    const url = `${API_BASE_URL}/trending${period ? `?period=${period}` : ""}`;
-    const response = await fetch(url, {
-      next: { revalidate: 300 }, // Revalidate every 5 minutes
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const json = await response.json();
-    // API wraps response in { data: {...} }
-    return json.data || json;
-  } catch (error) {
-    console.error("Failed to fetch trending products:", error);
-    return { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
-  }
+async function getTrendingProducts(period?: string) {
+  const result = await trendingApi.list({
+    period: period as "daily" | "weekly" | "monthly",
+    limit: 20,
+  });
+  return {
+    data: result.data || [],
+    total: result.total || 0,
+    page: result.page || 1,
+    limit: result.limit || 20,
+    totalPages: result.totalPages || 0,
+  };
 }
 
 interface TrendingPageProps {

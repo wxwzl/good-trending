@@ -128,7 +128,7 @@ export function useSearchProducts(
 // Topic hooks
 // ============================================
 
-export function useTopics(): AsyncResult<Topic[]> {
+export function useTopics(): AsyncResult<PaginatedResponse<Topic>> {
   return useAsync(() => topicApi.list(), []);
 }
 

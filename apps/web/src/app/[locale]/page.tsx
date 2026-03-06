@@ -50,7 +50,7 @@ export default async function HomePage({ params }: HomePageProps) {
   ]);
 
   const trendingProducts = trendingResult.data || [];
-  const featuredTopics = topicsResult || [];
+  const featuredTopics = topicsResult.data || [];
 
   return (
     <div className="flex flex-col">

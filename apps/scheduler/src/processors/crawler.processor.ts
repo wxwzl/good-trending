@@ -21,6 +21,38 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
  * @param _sourceType - 数据源类型 (未使用，保留用于未来扩展)
  * @returns 保存的产品数量
  */
+/**
+ * 生成 URL 友好的 slug
+ * 将名称转换为小写，替换特殊字符为连字符
+ */
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-") // 非字母数字替换为连字符
+    .replace(/^-|-$/g, "") // 去除首尾连字符
+    .substring(0, 100); // 限制长度
+}
+
+/**
+ * 生成唯一的 slug
+ * 如果 slug 已存在，追加随机字符串
+ */
+async function generateUniqueSlug(db: any, products: any, name: string): Promise<string> {
+  const { eq } = await import("drizzle-orm");
+  let slug = generateSlug(name);
+
+  // 检查是否已存在
+  const existing = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
+
+  if (existing.length > 0) {
+    // 如果已存在，追加时间戳后缀
+    const timestamp = Date.now().toString(36).slice(-6);
+    slug = `${slug}-${timestamp}`;
+  }
+
+  return slug;
+}
+
 async function saveProductsToDatabase(
   productDataList: Array<{
     name: string;
@@ -54,9 +86,13 @@ async function saveProductsToDatabase(
         continue;
       }
 
+      // 生成唯一 slug
+      const slug = await generateUniqueSlug(db, products, productData.name);
+
       // 插入新产品
       await db.insert(products).values({
         name: productData.name,
+        slug,
         description: productData.description,
         image: productData.image,
         price: productData.price ? productData.price.toString() : null,

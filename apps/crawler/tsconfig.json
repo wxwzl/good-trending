@@ -19,8 +19,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@good-trending/shared": ["../../packages/shared/src"],
-      "@good-trending/database": ["../../packages/database/src"]
+      "@good-trending/shared": ["../../packages/shared/dist"],
+      "@good-trending/database": ["../../packages/database/dist"]
     },
     "types": ["node"]
   },

@@ -57,6 +57,83 @@ export class AmazonCrawler extends BaseCrawler<ProductData> {
     return "AMAZON";
   }
 
+  /**
+   * 将亚马逊分类映射到系统分类
+   */
+  private mapCategoriesToTopics(categories: string[]): string[] {
+    const topics: string[] = [];
+
+    // 分类映射表（亚马逊分类关键字 -> 系统分类 slug）
+    const categoryMappings: Record<string, string[]> = {
+      // Tech Gadgets
+      Electronics: ["tech-gadgets"],
+      Computers: ["tech-gadgets"],
+      "Cell Phones": ["tech-gadgets"],
+      "Smart Home": ["tech-gadgets", "home-living"],
+      "Wearable Technology": ["tech-gadgets"],
+      Headphones: ["tech-gadgets"],
+      "Portable Audio": ["tech-gadgets"],
+      Camera: ["tech-gadgets"],
+      Photography: ["tech-gadgets"],
+      Accessories: ["tech-gadgets"],
+
+      // Home & Living
+      "Home & Kitchen": ["home-living"],
+      Kitchen: ["home-living"],
+      Furniture: ["home-living"],
+      "Home Décor": ["home-living"],
+      Bedding: ["home-living"],
+      Bath: ["home-living"],
+      Appliances: ["home-living"],
+
+      // Fashion
+      Clothing: ["fashion"],
+      Shoes: ["fashion"],
+      Jewelry: ["fashion"],
+      Watches: ["fashion"],
+      Handbags: ["fashion"],
+
+      // Beauty & Personal Care
+      Beauty: ["beauty-personal-care"],
+      "Personal Care": ["beauty-personal-care"],
+      "Skin Care": ["beauty-personal-care"],
+      Makeup: ["beauty-personal-care"],
+      Hair: ["beauty-personal-care"],
+      Fragrance: ["beauty-personal-care"],
+
+      // Sports & Outdoors
+      Sports: ["sports-outdoors"],
+      "Outdoor Recreation": ["sports-outdoors"],
+      Fitness: ["sports-outdoors", "health-wellness"],
+      Exercise: ["sports-outdoors", "health-wellness"],
+      Camping: ["sports-outdoors"],
+      Hiking: ["sports-outdoors"],
+
+      // Health & Wellness
+      Health: ["health-wellness"],
+      "Household Supplies": ["health-wellness"],
+      "Baby Care": ["health-wellness"],
+      Wellness: ["health-wellness"],
+
+      // Toys & Games
+      Toys: ["toys-games"],
+      Games: ["toys-games"],
+      "Video Games": ["toys-games", "tech-gadgets"],
+      Puzzles: ["toys-games"],
+    };
+
+    for (const category of categories) {
+      for (const [keyword, mappedTopics] of Object.entries(categoryMappings)) {
+        if (category.toLowerCase().includes(keyword.toLowerCase())) {
+          topics.push(...mappedTopics);
+        }
+      }
+    }
+
+    // 去重并返回
+    return [...new Set(topics)];
+  }
+
   protected async crawl(): Promise<ProductData[]> {
     const products: ProductData[] = [];
 
@@ -188,18 +265,45 @@ export class AmazonCrawler extends BaseCrawler<ProductData> {
         const asinMatch = window.location.pathname.match(/\/dp\/([A-Z0-9]+)/);
         const asin = asinMatch ? asinMatch[1] : "";
 
+        // 提取分类（面包屑导航）
+        const breadcrumbs: string[] = [];
+        const breadcrumbSelectors = [
+          "#wayfinding-breadcrumbs_feature_div ul li a",
+          "#wayfinding-breadcrumbs_container ul li a",
+          "[data-feature-name='wayfinding-breadcrumbs'] a",
+          "#breadcrumb-back-link",
+        ];
+        for (const selector of breadcrumbSelectors) {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            elements.forEach((el) => {
+              const text = el.textContent?.trim();
+              if (text && text.length > 0 && text !== "Back to results") {
+                breadcrumbs.push(text);
+              }
+            });
+            if (breadcrumbs.length > 0) {
+              break;
+            }
+          }
+        }
+
         return {
           name,
           description,
           image,
           price,
           sourceId: asin,
+          breadcrumbs,
         };
       });
 
       if (!productInfo.name || !productInfo.sourceId) {
         return null;
       }
+
+      // 将亚马逊分类映射到系统分类
+      const topics = this.mapCategoriesToTopics(productInfo.breadcrumbs);
 
       return {
         name: productInfo.name,
@@ -210,6 +314,7 @@ export class AmazonCrawler extends BaseCrawler<ProductData> {
         sourceUrl: url,
         sourceId: productInfo.sourceId,
         sourceType: "AMAZON",
+        topics,
       };
     } catch (error) {
       this.logger.error(`Failed to extract product details: ${error}`);

@@ -13,6 +13,8 @@ export interface ProductData {
   sourceUrl: string;
   sourceId: string;
   sourceType: "X_PLATFORM" | "AMAZON";
+  /** 商品分类名称列表（可选，爬虫提取） */
+  topics?: string[];
 }
 
 /**

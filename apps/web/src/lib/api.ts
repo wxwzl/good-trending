@@ -1,11 +1,25 @@
 /**
  * API client for fetching data from the backend
+ * 支持 SSR 和客户端，自动选择正确的 API 地址
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
+/**
+ * 获取 API 基础 URL
+ * 服务端渲染使用 API_URL (Docker 容器内访问主机)
+ * 客户端使用 NEXT_PUBLIC_API_URL
+ */
+const getApiBaseUrl = (): string => {
+  // 服务端渲染 (Node.js 环境)
+  if (typeof window === "undefined") {
+    return process.env.API_URL || "http://host.docker.internal:3015/api/v1";
+  }
+  // 浏览器环境
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3015/api/v1";
+};
 
 interface FetchOptions extends RequestInit {
   locale?: string;
+  revalidate?: number; // Next.js revalidate (秒)
 }
 
 interface ApiResponse<T> {
@@ -19,18 +33,28 @@ interface ApiResponse<T> {
 }
 
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
-  const { locale = "en", ...fetchOptions } = options;
+  const { locale = "en", revalidate, ...fetchOptions } = options;
 
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
+
+  // 构建请求选项
+  const requestInit: RequestInit = {
+    ...fetchOptions,
+    headers: {
+      "Content-Type": "application/json",
+      "Accept-Language": locale,
+      ...fetchOptions.headers,
+    },
+  };
+
+  // 服务端渲染时添加 revalidate 选项
+  const nextOptions = revalidate ? { next: { revalidate } } : undefined;
 
   try {
     const response = await fetch(url, {
-      ...fetchOptions,
-      headers: {
-        "Content-Type": "application/json",
-        "Accept-Language": locale,
-        ...fetchOptions.headers,
-      },
+      ...requestInit,
+      ...nextOptions,
     });
 
     if (!response.ok) {
@@ -42,7 +66,8 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     }
 
     const data = await response.json();
-    return data;
+    // 统一响应格式：如果后端包装了 { data: ... }，取 data
+    return data.data || data;
   } catch (error) {
     return {
       statusCode: 500,
@@ -58,6 +83,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 export interface Product {
   id: string;
   name: string;
+  slug: string;
   description?: string;
   image?: string;
   price?: string;
@@ -126,7 +152,9 @@ export const productApi = {
     if (params.limit) searchParams.set("limit", String(params.limit));
     if (params.sourceType) searchParams.set("sourceType", params.sourceType);
     if (params.topicId) searchParams.set("topicId", params.topicId);
-    return fetchApi<PaginatedResponse<Product>>(`/products?${searchParams}`);
+    return fetchApi<PaginatedResponse<Product>>(`/products?${searchParams}`, {
+      revalidate: 300, // 5分钟缓存
+    });
   },
 
   /**
@@ -134,7 +162,15 @@ export const productApi = {
    * GET /api/v1/products/:id
    */
   get: (id: string): Promise<ApiResponse<Product>> => {
-    return fetchApi<Product>(`/products/${id}`);
+    return fetchApi<Product>(`/products/${id}`, { revalidate: 3600 }); // 1小时缓存
+  },
+
+  /**
+   * Get single product by slug
+   * GET /api/v1/products/slug/:slug
+   */
+  getBySlug: (slug: string): Promise<ApiResponse<Product>> => {
+    return fetchApi<Product>(`/products/slug/${slug}`, { revalidate: 3600 }); // 1小时缓存
   },
 };
 
@@ -195,7 +231,9 @@ export const trendingApi = {
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
     if (params?.period) searchParams.set("period", params.period);
-    return fetchApi<PaginatedResponse<TrendingItem>>(`/trending?${searchParams}`);
+    return fetchApi<PaginatedResponse<TrendingItem>>(`/trending?${searchParams}`, {
+      revalidate: 300, // 5分钟缓存
+    });
   },
 
   /**

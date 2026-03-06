@@ -11,11 +11,57 @@ config({ path: resolve(__dirname, '../../../.env') });
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
 import { AppModule } from './app.module';
 import { TransformInterceptor, HttpExceptionFilter } from './common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // ============================================================
+  // 响应压缩配置 (Gzip)
+  // 减少响应体积，提高传输效率
+  // ============================================================
+  app.use(
+    compression({
+      // 压缩阈值：只压缩大于 1KB 的响应
+      threshold: 1024,
+      // 压缩级别：1-9，6 是性能和压缩率的平衡点
+      level: 6,
+      // 过滤函数：确定哪些响应需要压缩
+      filter: (req, res) => {
+        // 如果请求头中明确要求不压缩，则不压缩
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        // 使用默认的压缩过滤逻辑
+        return compression.filter(req, res);
+      },
+    }),
+  );
+
+  // 安全 Headers 配置 (Helmet)
+  app.use(
+    helmet({
+      // X-Content-Type-Options: 防止 MIME 类型嗅探
+      xContentTypeOptions: true,
+      // X-Frame-Options: 防止点击劫持
+      xFrameOptions: { action: 'deny' },
+      // X-XSS-Protection: XSS 过滤器 (现代浏览器已弃用，但仍为旧浏览器提供保护)
+      xXssProtection: true,
+      // 禁用 X-Powered-By 头，隐藏技术栈信息
+      xPoweredBy: false,
+      // Strict-Transport-Security (HSTS) - 强制 HTTPS
+      hsts: {
+        maxAge: 31536000, // 1 年
+        includeSubDomains: true,
+        preload: true,
+      },
+      // Content-Security-Policy - 通过 Next.js 前端配置，这里不重复设置
+      contentSecurityPolicy: false,
+    }),
+  );
 
   // CORS 配置
   app.enableCors({
@@ -48,7 +94,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger 文档配置
-  const config = new DocumentBuilder()
+  const swaggerConfig = new DocumentBuilder()
     .setTitle('Good-Trending API')
     .setDescription(
       '商品热门趋势追踪平台 API 文档\n\n' +
@@ -59,13 +105,14 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addTag('health', '健康检查接口')
+    .addTag('monitoring', '系统监控接口')
     .addTag('products', '商品管理接口')
     .addTag('trending', '热门趋势接口')
     .addTag('topics', '分类管理接口')
     .addTag('search', '搜索接口')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,

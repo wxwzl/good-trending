@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Put, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TopicService } from './topic.service';
 import {
@@ -117,12 +125,12 @@ export class TopicController {
 
   /**
    * 更新分类
-   * PUT /api/v1/topics/:slug
+   * PATCH /api/v1/topics/:slug
    */
-  @Put(':slug')
+  @Patch(':slug')
   @ApiOperation({
     summary: '更新分类',
-    description: '更新分类信息。',
+    description: '更新分类信息。只更新请求中包含的字段。',
   })
   @ApiParam({
     name: 'slug',

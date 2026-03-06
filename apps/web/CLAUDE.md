@@ -84,6 +84,8 @@ export default function Page() {
 }
 ```
 
+### 1.5 尽量用语义化的标签来实现，让seo达到最优。
+
 ---
 
 ## 2. 前端开发流程
@@ -115,6 +117,10 @@ export default function Page() {
 - 配置 SEO 元数据
 
 ---
+
+### 2.4 阶段 4：自测
+
+启动开发服务器,用chrome-devtools mcp 用浏览器访问项目的所有页面并查看每一个页面的控制台是否有报错。
 
 ## 3. 组件规范
 

@@ -63,13 +63,7 @@ export function SearchBar({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder || t("placeholder")}
           autoFocus={autoFocus}
-          className="
-            w-full h-11 pl-10 pr-4
-            bg-background border border-border rounded-lg
-            text-foreground placeholder:text-muted-foreground
-            focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary
-            transition-colors
-          "
+          className="w-full h-11 pl-10 pr-4 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-colors"
         />
 
         {/* Clear Button */}

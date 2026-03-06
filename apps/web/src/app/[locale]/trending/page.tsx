@@ -1,30 +1,28 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/features/product-card";
 import { TrendingFilters } from "@/components/features/trending-filters";
 import { Button } from "@/components/ui/button";
+import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { generatePageMetadata, baseUrl } from "@/lib/seo";
+import { type Locale } from "@/i18n/config";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
 
+// API response structure
 interface TrendingItem {
-  id: string;
-  productId: string;
-  product: {
-    id: string;
-    name: string;
-    description?: string;
-    image?: string;
-    price?: string;
-    currency?: string;
-    sourceType: "X_PLATFORM" | "AMAZON";
-    sourceUrl: string;
-  };
   rank: number;
+  productId: string;
+  productName: string;
+  productImage?: string;
+  productPrice?: string;
+  productSourceType?: "X_PLATFORM" | "AMAZON";
   score: number;
-  mentions: number;
-  views: number;
-  likes: number;
+  mentions?: number;
+  views?: number;
+  likes?: number;
   date: string;
 }
 
@@ -39,24 +37,50 @@ interface TrendingResponse {
 async function getTrendingProducts(period?: string): Promise<TrendingResponse> {
   try {
     const url = `${API_BASE_URL}/trending${period ? `?period=${period}` : ""}`;
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, {
+      next: { revalidate: 300 }, // Revalidate every 5 minutes
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return response.json();
+    const json = await response.json();
+    // API wraps response in { data: {...} }
+    return json.data || json;
   } catch (error) {
     console.error("Failed to fetch trending products:", error);
     return { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
   }
 }
 
-export default async function TrendingPage({
-  params,
-  searchParams,
-}: {
+interface TrendingPageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ period?: string }>;
-}) {
+}
+
+export async function generateMetadata({ params }: TrendingPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const currentLocale = locale as Locale;
+
+  const title = locale === "zh" ? "热门商品" : "Trending Products";
+  const description =
+    locale === "zh"
+      ? "发现今日 X 平台和亚马逊的热门商品趋势"
+      : "Discover the hottest trending products from X Platform and Amazon today";
+
+  return generatePageMetadata({
+    title,
+    description,
+    path: "/trending",
+    locale: currentLocale,
+    keywords: locale === "zh" ? ["热门", "趋势", "商品"] : ["trending", "hot", "popular"],
+  });
+}
+
+// Enable dynamic rendering for this page
+export const dynamic = "force-dynamic";
+export const revalidate = 300; // Revalidate every 5 minutes
+
+export default async function TrendingPage({ params, searchParams }: TrendingPageProps) {
   const { locale } = await params;
   const { period } = await searchParams;
   setRequestLocale(locale);
@@ -71,11 +95,34 @@ export default async function TrendingPage({
     minute: "2-digit",
   });
 
+  // Prepare items for ItemList JSON-LD
+  const itemListItems = trendingData.data.map((item, index) => ({
+    id: item.productId,
+    name: item.productName,
+    url: `${baseUrl}/${locale}/product/${item.productId}`,
+    image: item.productImage,
+    position: index + 1,
+  }));
+
+  // Breadcrumb items for structured data
+  const breadcrumbItems = [
+    { name: t("navigation.home"), url: `${baseUrl}/${locale}` },
+    { name: t("navigation.trending"), url: `${baseUrl}/${locale}/trending` },
+  ];
+
   return (
     <div className="py-8">
+      {/* Structured Data */}
+      <ItemListJsonLd
+        name={t("trending.title")}
+        description={t("trending.subtitle")}
+        items={itemListItems}
+      />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+
       <Container>
         {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">{t("trending.title")}</h1>
@@ -85,33 +132,35 @@ export default async function TrendingPage({
               {t("trending.lastUpdated", { date: lastUpdated })}
             </Badge>
           </div>
-        </div>
+        </header>
 
         {/* Filters */}
-        <div className="mb-8">
-          <TrendingFilters activeFilter={"today"} onFilterChange={() => {}} />
-        </div>
+        <nav className="mb-8" aria-label="Time period filter">
+          <TrendingFilters />
+        </nav>
 
         {/* Product Grid */}
         {trendingData.data.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {trendingData.data.map((item) => (
-              <ProductCard
-                key={item.id}
-                product={{
-                  id: item.product.id,
-                  name: item.product.name,
-                  slug: item.product.id,
-                  image: item.product.image,
-                  price: item.product.price ? parseFloat(item.product.price) : undefined,
-                  currency: item.product.currency,
-                  source: item.product.sourceType === "X_PLATFORM" ? "x_platform" : "amazon",
-                  trendingScore: item.score,
-                  rank: item.rank,
-                }}
-              />
-            ))}
-          </div>
+          <section aria-label="Trending products list">
+            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {trendingData.data.map((item) => (
+                <li key={item.productId}>
+                  <ProductCard
+                    product={{
+                      id: item.productId,
+                      name: item.productName,
+                      slug: item.productId,
+                      image: item.productImage,
+                      price: item.productPrice ? parseFloat(item.productPrice) : undefined,
+                      source: item.productSourceType === "X_PLATFORM" ? "x_platform" : "amazon",
+                      trendingScore: item.score,
+                      rank: item.rank,
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : (
           <div className="text-center py-16">
             <p className="text-muted-foreground">{t("trending.noResults")}</p>

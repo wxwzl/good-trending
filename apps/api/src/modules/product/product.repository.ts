@@ -3,6 +3,7 @@ import { db } from '@good-trending/database';
 import { products, productTopics, productTags } from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { SourceType } from './dto/get-products.dto';
 import {
   ProductQueryOptions,
   ProductCreateInput,
@@ -12,6 +13,20 @@ import {
 /**
  * 商品仓库层
  * 负责数据库操作
+ *
+ * 性能优化说明：
+ * 1. 索引使用：
+ *    - product_source_idx: 用于 sourceType + sourceId 查询
+ *    - product_created_at_idx: 用于时间排序
+ *    - product_source_url_unique: 用于来源 URL 唯一性检查
+ *
+ * 2. N+1 查询预防：
+ *    - findMany 方法使用 Promise.all 并行执行 count 查询
+ *    - getProductTopics/getProductTags 应在需要时批量查询
+ *
+ * 3. 分页优化：
+ *    - 使用 limit + offset 实现分页
+ *    - 考虑大数据量时使用游标分页
  */
 @Injectable()
 export class ProductRepository {
@@ -33,7 +48,10 @@ export class ProductRepository {
 
     if (sourceType) {
       conditions.push(
-        eq(products.sourceType, sourceType as 'X_PLATFORM' | 'AMAZON'),
+        eq(
+          products.sourceType,
+          sourceType as (typeof SourceType)[keyof typeof SourceType],
+        ),
       );
     }
 
@@ -118,7 +136,8 @@ export class ProductRepository {
         currency: input.currency ?? 'USD',
         sourceUrl: input.sourceUrl,
         sourceId: input.sourceId,
-        sourceType: input.sourceType as 'X_PLATFORM' | 'AMAZON',
+        sourceType:
+          input.sourceType as (typeof SourceType)[keyof typeof SourceType],
       })
       .returning();
 

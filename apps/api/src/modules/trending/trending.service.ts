@@ -6,23 +6,27 @@ import {
   topics,
   productTopics,
 } from '@good-trending/database';
-import { eq, desc, and, gte, lte, count } from 'drizzle-orm';
+import { eq, desc, and, gte, lte, count, inArray } from 'drizzle-orm';
 import {
   GetTrendingDto,
   Period,
   PaginatedTrendingResponseDto,
 } from './dto/trending.dto';
+import { CacheService, CacheKeys, CacheTTLConfig } from '../../common/cache';
 
 /**
  * 趋势服务层
- * 负责热门趋势数据的业务逻辑处理
+ * 负责热门趋势数据的业务逻辑处理，包含缓存优化
  */
 @Injectable()
 export class TrendingService {
   private readonly logger = new Logger(TrendingService.name);
 
+  constructor(private readonly cacheService: CacheService) {}
+
   /**
    * 获取热门趋势数据
+   * 使用缓存优化频繁查询
    *
    * @param query 查询参数
    * @returns 分页趋势列表
@@ -45,6 +49,21 @@ export class TrendingService {
 
     // 计算日期范围
     const { start, end } = this.getDateRange(period, startDate, endDate);
+
+    // 构建缓存键
+    const cacheKey = CacheKeys.TRENDING_LIST(
+      `${period}:${start}:${end}`,
+      safePage,
+      safeLimit,
+    );
+
+    // 尝试从缓存获取（趋势数据缓存时间较短，1分钟）
+    const cached =
+      await this.cacheService.get<PaginatedTrendingResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for trending: ${cacheKey}`);
+      return cached;
+    }
 
     this.logger.debug(
       `Fetching trending: page=${safePage}, limit=${safeLimit}, period=${period}, start=${start}, end=${end}`,
@@ -71,7 +90,9 @@ export class TrendingService {
         };
       }
 
-      // 暂时简化处理，实际应该用 IN 子查询
+      // 将商品 ID 添加到查询条件中
+      const productIds = topicProducts.map((tp) => tp.productId);
+      conditions.push(inArray(trends.productId, productIds));
     }
 
     // 执行分页查询
@@ -107,7 +128,7 @@ export class TrendingService {
 
     const total = totalResult[0]?.count ?? 0;
 
-    return {
+    const response: PaginatedTrendingResponseDto = {
       data: trendData.map((item, index) => ({
         rank: item.rank ?? (safePage - 1) * safeLimit + index + 1,
         productId: item.productId,
@@ -125,6 +146,11 @@ export class TrendingService {
       limit: safeLimit,
       totalPages: Math.ceil(total / safeLimit),
     };
+
+    // 缓存结果（趋势数据缓存1分钟，因为实时性要求较高）
+    await this.cacheService.set(cacheKey, response, CacheTTLConfig.SHORT);
+
+    return response;
   }
 
   /**

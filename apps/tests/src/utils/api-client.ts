@@ -101,9 +101,10 @@ export class ApiError extends Error {
 
 /**
  * Create API client for testing
+ * Note: API runs on port 3005 by default
  */
 export function createApiClient(
-  baseUrl: string = process.env.E2E_API_URL || "http://localhost:3001"
+  baseUrl: string = process.env.E2E_API_URL || "http://localhost:3005"
 ) {
   return new ApiClient({ baseUrl });
 }

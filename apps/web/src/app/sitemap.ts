@@ -1,9 +1,9 @@
 import { MetadataRoute } from "next";
 import { locales } from "@/i18n/config";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://goodtrending.com";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://goodtrending.com";
 
+export default function sitemap(): MetadataRoute.Sitemap {
   // Static pages
   const staticPages = ["", "/trending", "/topics", "/search", "/about"];
 

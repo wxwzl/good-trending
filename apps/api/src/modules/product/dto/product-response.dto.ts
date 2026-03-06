@@ -2,11 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SourceType } from './get-products.dto';
 
 /**
- * 数据来源类型（兼容数据库和 DTO）
- */
-export type SourceTypeValue = 'X_PLATFORM' | 'AMAZON';
-
-/**
  * 商品响应 DTO
  */
 export class ProductResponseDto {
@@ -63,7 +58,7 @@ export class ProductResponseDto {
     enum: SourceType,
     example: SourceType.X_PLATFORM,
   })
-  sourceType: SourceTypeValue;
+  sourceType: SourceType;
 
   @ApiProperty({
     description: '创建时间',

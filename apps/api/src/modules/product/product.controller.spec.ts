@@ -18,7 +18,7 @@ describe('ProductController', () => {
     currency: 'USD',
     sourceUrl: 'https://example.com/product',
     sourceId: 'source-123',
-    sourceType: 'X_PLATFORM' as const,
+    sourceType: SourceType.X_PLATFORM,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
   };

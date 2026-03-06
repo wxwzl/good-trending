@@ -28,13 +28,14 @@ test.describe("Trending Page", () => {
   });
 
   test("should display period filter", async ({ page }) => {
-    // Look for period filter buttons
-    const dailyFilter = page.getByRole("button", { name: /daily|今天/i });
-    const weeklyFilter = page.getByRole("button", { name: /weekly|本周/i });
-    const monthlyFilter = page.getByRole("button", { name: /monthly|本月/i });
+    // Look for period filter buttons (actual labels from translation: "All", "Today", "This Week", "This Month")
+    const todayFilter = page.getByRole("button", { name: /today|今天/i });
+    const weekFilter = page.getByRole("button", { name: /this week|本周/i });
+    const monthFilter = page.getByRole("button", { name: /this month|本月/i });
+    const allFilter = page.getByRole("button", { name: /^all$|全部/i });
 
     // At least one filter should be visible
-    const filters = [dailyFilter, weeklyFilter, monthlyFilter];
+    const filters = [todayFilter, weekFilter, monthFilter, allFilter];
     const visibleFilters = await Promise.all(filters.map((f) => f.isVisible().catch(() => false)));
 
     // Check that at least one filter exists
@@ -42,10 +43,10 @@ test.describe("Trending Page", () => {
   });
 
   test("should filter by daily period", async ({ page }) => {
-    const dailyFilter = page.getByRole("button", { name: /daily|今天/i });
+    const todayFilter = page.getByRole("button", { name: /today|今天/i });
 
-    if (await dailyFilter.isVisible()) {
-      await dailyFilter.click();
+    if (await todayFilter.isVisible()) {
+      await todayFilter.click();
 
       // Wait for URL or content to update
       await page.waitForLoadState("networkidle");
@@ -56,10 +57,10 @@ test.describe("Trending Page", () => {
   });
 
   test("should filter by weekly period", async ({ page }) => {
-    const weeklyFilter = page.getByRole("button", { name: /weekly|本周/i });
+    const weekFilter = page.getByRole("button", { name: /this week|本周/i });
 
-    if (await weeklyFilter.isVisible()) {
-      await weeklyFilter.click();
+    if (await weekFilter.isVisible()) {
+      await weekFilter.click();
       await page.waitForLoadState("networkidle");
       expect(page.url()).toBeDefined();
     }

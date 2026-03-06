@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import { topics, products, productTopics } from '@good-trending/database';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, count, inArray } from 'drizzle-orm';
 import {
   CreateTopicDto,
   UpdateTopicDto,
@@ -54,20 +54,26 @@ export class TopicService {
     const totalResult = await db.select({ count: count() }).from(topics);
     const total = totalResult[0]?.count ?? 0;
 
-    // 获取每个分类的商品数量
-    const topicsWithCount = await Promise.all(
-      topicsData.map(async (topic) => {
-        const productCountResult = await db
-          .select({ count: count() })
-          .from(productTopics)
-          .where(eq(productTopics.topicId, topic.id));
+    // 批量获取所有分类的商品数量（避免 N+1 查询）
+    const topicIds = topicsData.map((topic) => topic.id);
+    const productCounts = await db
+      .select({
+        topicId: productTopics.topicId,
+        count: count(),
+      })
+      .from(productTopics)
+      .where(inArray(productTopics.topicId, topicIds))
+      .groupBy(productTopics.topicId);
 
-        return {
-          ...topic,
-          productCount: productCountResult[0]?.count ?? 0,
-        };
-      }),
+    // 将商品数量映射到分类
+    const countMap = new Map(
+      productCounts.map((item) => [item.topicId, item.count]),
     );
+
+    const topicsWithCount = topicsData.map((topic) => ({
+      ...topic,
+      productCount: countMap.get(topic.id) ?? 0,
+    }));
 
     return {
       data: topicsWithCount,

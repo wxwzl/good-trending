@@ -29,8 +29,23 @@ test.describe("Home Page", () => {
   });
 
   test("should switch language to English", async ({ page }) => {
-    // Navigate to English version
-    await page.goto("/en");
+    // Start from Chinese version
+    await page.goto("/zh");
+
+    // Open language dropdown
+    const langButton = page.getByRole("button", { name: /语言|language/i }).or(
+      page.locator("button").filter({ has: page.locator("svg") }).filter({ hasText: /ZH|zh/i })
+    );
+
+    // Click to open dropdown
+    await langButton.click();
+
+    // Click English option
+    const englishOption = page.getByRole("button", { name: /English|英语/i });
+    await englishOption.click();
+
+    // Wait for navigation
+    await page.waitForLoadState("networkidle");
 
     // Verify URL contains /en
     expect(page.url()).toContain("/en");
@@ -43,12 +58,14 @@ test.describe("Home Page", () => {
   });
 
   test("should toggle dark theme", async ({ page }) => {
+    // Look for theme toggle button using aria-label
+    const themeButton = page.getByRole("button", { name: /theme/i });
+
     // Click theme toggle
-    const themeButton = page
-      .getByRole("button")
-      .filter({ hasText: /sun|moon/i })
-      .first();
     await themeButton.click();
+
+    // Wait a moment for theme to apply
+    await page.waitForTimeout(500);
 
     // Verify dark class is added to html
     const html = page.locator("html");
@@ -71,21 +88,20 @@ test.describe("Home Page", () => {
   });
 
   test("should navigate to trending page", async ({ page }) => {
-    // Look for trending link
-    const trendingLink = page.getByRole("link", { name: /trending|热门/i });
-    if (await trendingLink.isVisible()) {
-      await trendingLink.click();
-      await expect(page).toHaveURL(/.*trending.*/);
-    }
+    // Look for trending link in header nav specifically - use exact match to avoid matching "Good Trending" logo
+    const nav = page.locator("header nav");
+    const trendingLink = nav.getByRole("link", { name: "Trending", exact: true }).or(
+      nav.getByRole("link", { name: "热门", exact: true })
+    );
+    await trendingLink.click();
+    await expect(page).toHaveURL(/.*trending.*/);
   });
 
   test("should navigate to topics page", async ({ page }) => {
-    // Look for topics link
-    const topicsLink = page.getByRole("link", { name: /topics|话题/i });
-    if (await topicsLink.isVisible()) {
-      await topicsLink.click();
-      await expect(page).toHaveURL(/.*topics.*/);
-    }
+    // Look for topics link in header specifically
+    const topicsLink = page.locator("header").getByRole("link", { name: /topics|话题/i });
+    await topicsLink.click();
+    await expect(page).toHaveURL(/.*topics.*/);
   });
 
   test("should be responsive on mobile", async ({ page }) => {

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import { products, productTopics } from '@good-trending/database';
-import { eq, ilike, or, and, desc, count } from 'drizzle-orm';
+import { eq, ilike, or, and, desc, count, inArray } from 'drizzle-orm';
 import {
   SearchQueryDto,
   SearchResponseDto,
@@ -40,19 +40,21 @@ export class SearchService {
 
     if (sourceType) {
       searchConditions.push(
-        eq(products.sourceType, sourceType as 'X_PLATFORM' | 'AMAZON'),
+        eq(
+          products.sourceType,
+          sourceType as (typeof SourceType)[keyof typeof SourceType],
+        ),
       );
     }
 
-    // 如果指定了分类
-    let productIds: string[] | null = null;
+    // 如果指定了分类，筛选该分类下的商品
     if (topicId) {
       const topicProducts = await db
         .select({ productId: productTopics.productId })
         .from(productTopics)
         .where(eq(productTopics.topicId, topicId));
 
-      productIds = topicProducts.map((tp) => tp.productId);
+      const productIds = topicProducts.map((tp) => tp.productId);
       if (productIds.length === 0) {
         return {
           data: [],
@@ -62,6 +64,9 @@ export class SearchService {
           query: q,
         };
       }
+
+      // 将商品 ID 添加到搜索条件
+      searchConditions.push(inArray(products.id, productIds));
     }
 
     // 执行搜索
@@ -101,7 +106,8 @@ export class SearchService {
         description: item.description ?? undefined,
         image: item.image ?? undefined,
         price: item.price ?? undefined,
-        sourceType: item.sourceType as SourceType,
+        sourceType:
+          item.sourceType as (typeof SourceType)[keyof typeof SourceType],
         relevanceScore,
       };
     });

@@ -15,17 +15,6 @@ export interface ApiResponse<T> {
 }
 
 /**
- * 分页响应格式
- */
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-/**
  * 统一响应拦截器
  * 将所有成功响应包装为 { data: ... } 格式
  */

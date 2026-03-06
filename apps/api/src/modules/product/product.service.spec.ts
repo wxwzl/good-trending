@@ -10,10 +10,13 @@ import {
 } from './dto/get-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { CacheService, CacheManager } from '../../common/cache';
 
 describe('ProductService', () => {
   let service: ProductService;
   let repository: jest.Mocked<ProductRepository>;
+  let cacheService: jest.Mocked<CacheService>;
+  let cacheManager: jest.Mocked<CacheManager>;
 
   const mockProduct = {
     id: 'test-id-123',
@@ -41,6 +44,24 @@ describe('ProductService', () => {
     getProductTags: jest.fn(),
   };
 
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    delPattern: jest.fn(),
+    exists: jest.fn(),
+    getTTL: jest.fn(),
+    refreshTTL: jest.fn(),
+  };
+
+  const mockCacheManager = {
+    clearProductCache: jest.fn(),
+    clearTrendingCache: jest.fn(),
+    clearTopicCache: jest.fn(),
+    clearSearchCache: jest.fn(),
+    clearAll: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -49,11 +70,21 @@ describe('ProductService', () => {
           provide: ProductRepository,
           useValue: mockRepository,
         },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
+        },
+        {
+          provide: CacheManager,
+          useValue: mockCacheManager,
+        },
       ],
     }).compile();
 
     service = module.get<ProductService>(ProductService);
     repository = module.get(ProductRepository);
+    cacheService = module.get(CacheService);
+    cacheManager = module.get(CacheManager);
   });
 
   afterEach(() => {
@@ -71,6 +102,8 @@ describe('ProductService', () => {
         limit: 10,
         totalPages: 1,
       };
+      // Cache miss
+      cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue(mockResult);
 
       // Act
@@ -90,11 +123,36 @@ describe('ProductService', () => {
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
       expect(result.totalPages).toBe(1);
+      // Cache should be set
+      expect(cacheService.set).toHaveBeenCalled();
+    });
+
+    it('should_return_cached_products_when_available', async () => {
+      // Arrange
+      const query: GetProductsDto = {};
+      const cachedResult = {
+        data: [mockProduct],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+      // Cache hit
+      cacheService.get.mockResolvedValue(cachedResult);
+
+      // Act
+      const result = await service.getProducts(query);
+
+      // Assert
+      expect(cacheService.get).toHaveBeenCalled();
+      expect(repository.findMany).not.toHaveBeenCalled();
+      expect(result).toEqual(cachedResult);
     });
 
     it('should_apply_pagination_bounds_correctly', async () => {
       // Arrange
       const query: GetProductsDto = { page: -1, limit: 200 };
+      cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
         data: [],
         total: 0,
@@ -118,6 +176,7 @@ describe('ProductService', () => {
     it('should_filter_by_sourceType', async () => {
       // Arrange
       const query: GetProductsDto = { sourceType: SourceType.X_PLATFORM };
+      cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
         data: [mockProduct],
         total: 1,
@@ -140,6 +199,7 @@ describe('ProductService', () => {
     it('should_filter_by_keyword', async () => {
       // Arrange
       const query: GetProductsDto = { keyword: 'test' };
+      cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
         data: [mockProduct],
         total: 1,
@@ -163,6 +223,7 @@ describe('ProductService', () => {
   describe('getProductById', () => {
     it('should_return_product_when_found', async () => {
       // Arrange
+      cacheService.get.mockResolvedValue(null); // Cache miss
       repository.findById.mockResolvedValue(mockProduct);
 
       // Act
@@ -172,10 +233,38 @@ describe('ProductService', () => {
       expect(repository.findById).toHaveBeenCalledWith('test-id-123');
       expect(result.id).toBe('test-id-123');
       expect(result.name).toBe('Test Product');
+      expect(cacheService.set).toHaveBeenCalled();
+    });
+
+    it('should_return_cached_product_when_available', async () => {
+      // Arrange
+      const cachedProduct = {
+        id: 'test-id-123',
+        name: 'Test Product',
+        description: 'Test Description',
+        image: 'https://example.com/image.jpg',
+        price: '99.99',
+        currency: 'USD',
+        sourceUrl: 'https://example.com/product',
+        sourceId: 'source-123',
+        sourceType: SourceType.X_PLATFORM,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      };
+      cacheService.get.mockResolvedValue(cachedProduct); // Cache hit
+
+      // Act
+      const result = await service.getProductById('test-id-123');
+
+      // Assert
+      expect(cacheService.get).toHaveBeenCalled();
+      expect(repository.findById).not.toHaveBeenCalled();
+      expect(result).toEqual(cachedProduct);
     });
 
     it('should_throw_NotFoundException_when_product_not_found', async () => {
       // Arrange
+      cacheService.get.mockResolvedValue(null);
       repository.findById.mockResolvedValue(null);
 
       // Act & Assert
@@ -231,6 +320,8 @@ describe('ProductService', () => {
       );
       expect(repository.create).toHaveBeenCalled();
       expect(result.name).toBe('New Product');
+      // Cache should be cleared
+      expect(cacheManager.clearProductCache).toHaveBeenCalled();
     });
 
     it('should_throw_ConflictException_when_sourceUrl_exists', async () => {
@@ -242,6 +333,7 @@ describe('ProductService', () => {
         ConflictException,
       );
       expect(repository.create).not.toHaveBeenCalled();
+      expect(cacheManager.clearProductCache).not.toHaveBeenCalled();
     });
   });
 
@@ -271,6 +363,10 @@ describe('ProductService', () => {
         currency: undefined,
       });
       expect(result.name).toBe('Updated Product');
+      // Cache should be cleared
+      expect(cacheManager.clearProductCache).toHaveBeenCalledWith(
+        'test-id-123',
+      );
     });
 
     it('should_throw_NotFoundException_for_empty_id', async () => {
@@ -279,6 +375,7 @@ describe('ProductService', () => {
         NotFoundException,
       );
       expect(repository.update).not.toHaveBeenCalled();
+      expect(cacheManager.clearProductCache).not.toHaveBeenCalled();
     });
   });
 
@@ -292,6 +389,10 @@ describe('ProductService', () => {
 
       // Assert
       expect(repository.delete).toHaveBeenCalledWith('test-id-123');
+      // Cache should be cleared
+      expect(cacheManager.clearProductCache).toHaveBeenCalledWith(
+        'test-id-123',
+      );
     });
 
     it('should_throw_NotFoundException_for_empty_id', async () => {
@@ -300,6 +401,7 @@ describe('ProductService', () => {
         NotFoundException,
       );
       expect(repository.delete).not.toHaveBeenCalled();
+      expect(cacheManager.clearProductCache).not.toHaveBeenCalled();
     });
   });
 

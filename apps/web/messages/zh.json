@@ -14,7 +14,8 @@
     "search": "搜索",
     "filter": "筛选",
     "sort": "排序",
-    "share": "分享"
+    "share": "分享",
+    "viewAll": "查看全部"
   },
   "theme": {
     "title": "主题",
@@ -31,7 +32,23 @@
     "title": "发现热门趋势",
     "subtitle": "每日追踪 X 平台和亚马逊的热门商品",
     "viewTrending": "查看热门",
-    "browseTopics": "浏览分类"
+    "browseTopics": "浏览分类",
+    "topProducts": "当前热门商品",
+    "browseByCategory": "按分类浏览",
+    "features": {
+      "xPlatform": {
+        "title": "X 平台",
+        "description": "实时追踪 X 平台上讨论的热门商品"
+      },
+      "amazon": {
+        "title": "亚马逊",
+        "description": "发现亚马逊每日更新的畅销商品"
+      },
+      "smartRanking": {
+        "title": "智能排名",
+        "description": "基于提及、评论和情感的智能算法"
+      }
+    }
   },
   "trending": {
     "title": "热门商品",
@@ -55,20 +72,68 @@
   "topics": {
     "title": "浏览分类",
     "subtitle": "按分类探索商品",
-    "productCount": "{count} 个商品"
+    "productCount": "{count} 个商品",
+    "noResults": "暂无分类"
   },
   "product": {
     "price": "价格",
     "source": "来源",
     "viewOriginal": "查看原文",
     "trendHistory": "趋势历史",
-    "rankHistory": "排名历史"
+    "rankHistory": "排名历史",
+    "notFound": "商品未找到",
+    "description": "商品描述",
+    "sourceLabels": {
+      "x_platform": "X 平台",
+      "amazon": "亚马逊"
+    }
+  },
+  "productCard": {
+    "score": "热度: {score}",
+    "sourceLabels": {
+      "x_platform": "X",
+      "amazon": "亚马逊"
+    }
+  },
+  "topicCard": {
+    "products": "{count} 个商品"
   },
   "search": {
     "title": "搜索",
     "placeholder": "搜索商品...",
     "noResults": "未找到 \"{query}\" 相关商品",
-    "results": "找到 {count} 个 \"{query}\" 相关结果"
+    "results": "找到 {count} 个 \"{query}\" 相关结果",
+    "emptyPlaceholder": "输入关键词搜索商品"
+  },
+  "pagination": {
+    "previous": "上一页",
+    "next": "下一页",
+    "pageInfo": "第 {current} 页，共 {total} 页"
+  },
+  "about": {
+    "title": "关于",
+    "features": {
+      "realTimeDiscovery": {
+        "title": "实时发现",
+        "description": "实时追踪 X 平台和亚马逊的热门商品"
+      },
+      "smartRanking": {
+        "title": "智能排名",
+        "description": "基于提及、评论和情感的智能算法"
+      },
+      "topicBrowsing": {
+        "title": "分类浏览",
+        "description": "按分类和主题浏览筛选商品"
+      },
+      "multiLanguage": {
+        "title": "多语言",
+        "description": "完整支持中英文国际化"
+      }
+    },
+    "contact": {
+      "title": "联系我们",
+      "description": "有问题或建议？我们很乐意听取您的意见。请联系 {email}"
+    }
   },
   "footer": {
     "copyright": "© {year} 好物趋势. 保留所有权利."

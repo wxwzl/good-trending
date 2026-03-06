@@ -7,6 +7,7 @@ import {
   IsInt,
   Min,
   Max,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -48,6 +49,7 @@ export class CreateTopicDto {
   })
   @IsOptional()
   @IsString()
+  @IsUrl({}, { message: 'imageUrl must be a valid URL' })
   imageUrl?: string;
 }
 

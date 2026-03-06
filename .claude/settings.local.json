@@ -11,7 +11,17 @@
       "Bash(pnpm:*)",
       "Bash(head:*)",
       "Bash(curl:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__get_console_message",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(cd D:/repository/ai-projects/claude/good-trending/apps/tests && npx playwright test --project=web-chrome --reporter=list 2>&1)",
+      "Bash(cd D:/repository/ai-projects/claude/good-trending/apps/tests && npx playwright test --project=api --reporter=list 2>&1)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__close_page",
+      "mcp__chrome-devtools__list_network_requests"
     ]
   }
 }

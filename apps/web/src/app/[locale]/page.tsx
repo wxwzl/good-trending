@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,75 +7,80 @@ import { ProductCard } from "@/components/features/product-card";
 import { TopicCard } from "@/components/features/topic-card";
 import { SearchBar } from "@/components/features/search-bar";
 import { Link } from "@/i18n/routing";
+import { generatePageMetadata } from "@/lib/seo";
+import { type Locale } from "@/i18n/config";
 
-// Placeholder data - will be replaced with API data
-const featuredTopics = [
-  { slug: "electronics", name: "Electronics", description: "Gadgets & Tech", productCount: 128 },
-  { slug: "fashion", name: "Fashion", description: "Style & Apparel", productCount: 95 },
-  {
-    slug: "home-garden",
-    name: "Home & Garden",
-    description: "Living essentials",
-    productCount: 82,
-  },
-  { slug: "sports", name: "Sports", description: "Fitness & Outdoor", productCount: 67 },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
 
-const trendingProducts = [
-  {
-    id: "1",
-    name: "Wireless Bluetooth Earbuds with Noise Cancellation",
-    slug: "wireless-bluetooth-earbuds-1",
-    price: 79.99,
-    currency: "$",
-    rating: 4.5,
-    reviewCount: 1234,
-    source: "amazon" as const,
-    trendingScore: 95,
-    rank: 1,
-  },
-  {
-    id: "2",
-    name: "Smart Watch Fitness Tracker",
-    slug: "smart-watch-fitness-tracker-2",
-    price: 149.99,
-    currency: "$",
-    rating: 4.3,
-    reviewCount: 856,
-    source: "amazon" as const,
-    trendingScore: 88,
-    rank: 2,
-  },
-  {
-    id: "3",
-    name: "Portable Power Bank 20000mAh",
-    slug: "portable-power-bank-3",
-    price: 39.99,
-    currency: "$",
-    rating: 4.7,
-    reviewCount: 2341,
-    source: "x_platform" as const,
-    trendingScore: 82,
-    rank: 3,
-  },
-  {
-    id: "4",
-    name: "Mechanical Gaming Keyboard RGB",
-    slug: "mechanical-gaming-keyboard-4",
-    price: 89.99,
-    currency: "$",
-    rating: 4.4,
-    reviewCount: 567,
-    source: "amazon" as const,
-    trendingScore: 78,
-    rank: 4,
-  },
-];
+// Type definitions
+interface TrendingItem {
+  id: string;
+  product?: {
+    id: string;
+    name: string;
+    image?: string;
+    price?: string;
+    currency?: string;
+    sourceType?: string;
+  };
+  name: string;
+  score?: number;
+  rank?: number;
+}
 
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+interface Topic {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  productCount?: number;
+}
+
+interface HomePageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const currentLocale = locale as Locale;
+
+  const title = locale === "zh" ? "发现热门趋势" : "Discover What's Trending";
+  const description =
+    locale === "zh"
+      ? "每日追踪 X 平台和亚马逊的热门商品"
+      : "Track the hottest products from X Platform and Amazon daily";
+
+  return generatePageMetadata({
+    title,
+    description,
+    path: "",
+    locale: currentLocale,
+    keywords: locale === "zh" ? ["热门商品", "趋势", "发现"] : ["trending", "discover", "products"],
+  });
+}
+
+// Enable dynamic rendering for this page
+export const dynamic = "force-dynamic";
+export const revalidate = 300; // Revalidate every 5 minutes
+
+export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
+
+  // Fetch data from API
+  const [trendingResponse, topicsResponse] = await Promise.all([
+    fetch(`${API_BASE_URL}/trending?limit=4`, { next: { revalidate: 300 } })
+      .then((res) => res.json())
+      .catch(() => ({ data: { data: [], total: 0 } })),
+    fetch(`${API_BASE_URL}/topics?limit=4`, { next: { revalidate: 3600 } })
+      .then((res) => res.json())
+      .catch(() => ({ data: { data: [], total: 0 } })),
+  ]);
+
+  // API returns { data: { data: [...], total: number } }
+  const trendingProducts = trendingResponse.data?.data || [];
+  const featuredTopics = topicsResponse.data?.data || [];
 
   return (
     <div className="flex flex-col">
@@ -149,9 +155,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <path d="m4.9 4.9 2.9 2.9" />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold">{t("trending.source.x_platform")}</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t("home.features.xPlatform.title")}</h3>
               <p className="text-sm text-muted-foreground">
-                Track trending products discussed on X Platform in real-time
+                {t("home.features.xPlatform.description")}
               </p>
             </Card>
 
@@ -173,9 +179,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold">{t("trending.source.amazon")}</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t("home.features.amazon.title")}</h3>
               <p className="text-sm text-muted-foreground">
-                Discover best-selling products from Amazon updated daily
+                {t("home.features.amazon.description")}
               </p>
             </Card>
 
@@ -196,9 +202,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <path d="m19 9-5 5-4-4-3 3" />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold">{t("trending.score")}</h3>
+              <h3 className="mb-2 text-lg font-semibold">
+                {t("home.features.smartRanking.title")}
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Smart ranking algorithm based on mentions, reviews and sentiment
+                {t("home.features.smartRanking.description")}
               </p>
             </Card>
           </div>
@@ -211,18 +219,37 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold">{t("navigation.trending")}</h2>
-              <p className="text-muted-foreground mt-1">Top products right now</p>
+              <p className="text-muted-foreground mt-1">{t("home.topProducts")}</p>
             </div>
             <Link href="/trending">
-              <Button variant="outline">View All</Button>
+              <Button variant="outline">{t("actions.viewAll")}</Button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {trendingProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {trendingProducts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {trendingProducts.map((item: TrendingItem) => (
+                <ProductCard
+                  key={item.id}
+                  product={{
+                    id: item.product?.id || item.id,
+                    name: item.product?.name || item.name,
+                    slug: item.product?.id || item.id,
+                    image: item.product?.image,
+                    price: item.product?.price ? parseFloat(item.product.price) : undefined,
+                    currency: item.product?.currency,
+                    source: item.product?.sourceType === "X_PLATFORM" ? "x_platform" : "amazon",
+                    trendingScore: item.score,
+                    rank: item.rank,
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">{t("trending.noResults")}</p>
+            </div>
+          )}
         </Container>
       </section>
 
@@ -232,18 +259,32 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold">{t("navigation.topics")}</h2>
-              <p className="text-muted-foreground mt-1">Browse by category</p>
+              <p className="text-muted-foreground mt-1">{t("home.browseByCategory")}</p>
             </div>
             <Link href="/topics">
-              <Button variant="outline">View All</Button>
+              <Button variant="outline">{t("actions.viewAll")}</Button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredTopics.map((topic) => (
-              <TopicCard key={topic.slug} topic={topic} />
-            ))}
-          </div>
+          {featuredTopics.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredTopics.map((topic: Topic) => (
+                <TopicCard
+                  key={topic.id}
+                  topic={{
+                    slug: topic.slug,
+                    name: topic.name,
+                    description: topic.description,
+                    productCount: topic.productCount || 0,
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">{t("topics.noResults")}</p>
+            </div>
+          )}
         </Container>
       </section>
     </div>

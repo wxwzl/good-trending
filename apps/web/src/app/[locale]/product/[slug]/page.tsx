@@ -1,10 +1,15 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { generateProductMetadata, baseUrl } from "@/lib/seo";
+import { type Locale } from "@/i18n/config";
+import Image from "next/image";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005/api/v1";
 
@@ -24,12 +29,16 @@ interface Product {
 
 async function getProduct(id: string): Promise<Product | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`, { cache: "no-store" });
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+      next: { revalidate: 3600 }, // Revalidate every hour
+    });
     if (!response.ok) {
       if (response.status === 404) return null;
       throw new Error(`HTTP ${response.status}`);
     }
-    return response.json();
+    const json = await response.json();
+    // API returns { data: Product }
+    return json.data || json;
   } catch (error) {
     console.error("Failed to fetch product:", error);
     return null;
@@ -40,28 +49,35 @@ interface ProductPageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export async function generateMetadata({ params }: ProductPageProps) {
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const product = await getProduct(slug);
 
   if (!product) {
-    return { title: "Product Not Found" };
+    return {
+      title: "Product Not Found",
+      description: "The product you are looking for does not exist.",
+    };
   }
 
-  return {
-    title: product.name,
-    description: product.description?.slice(0, 160),
-    openGraph: {
-      title: product.name,
-      description: product.description?.slice(0, 160),
-      type: "product",
-      images: product.image ? [product.image] : [],
-    },
-  };
+  return generateProductMetadata({
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    price: product.price,
+    currency: product.currency,
+    productId: slug,
+    locale: locale as Locale,
+  });
 }
+
+// Enable dynamic rendering for this page
+export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { locale, slug } = await params;
+  const currentLocale = locale as Locale;
   setRequestLocale(locale);
   const t = await getTranslations();
 
@@ -71,34 +87,71 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const sourceLabels = {
-    X_PLATFORM: "X Platform",
-    AMAZON: "Amazon",
+  const getSourceLabel = (sourceType: string) => {
+    return sourceType === "X_PLATFORM"
+      ? t("product.sourceLabels.x_platform")
+      : t("product.sourceLabels.amazon");
   };
+
+  // Breadcrumb items for structured data
+  const breadcrumbItems = [
+    { name: t("navigation.home"), url: `${baseUrl}/${locale}` },
+    { name: t("navigation.trending"), url: `${baseUrl}/${locale}/trending` },
+    { name: product.name, url: `${baseUrl}/${locale}/product/${slug}` },
+  ];
 
   return (
     <div className="py-8">
+      {/* Structured Data */}
+      <ProductJsonLd
+        id={slug}
+        name={product.name}
+        description={product.description}
+        image={product.image}
+        price={product.price}
+        currency={product.currency}
+        sourceType={product.sourceType}
+        sourceUrl={product.sourceUrl}
+        locale={currentLocale}
+      />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+
       <Container>
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            {t("navigation.home")}
-          </Link>
-          <span className="mx-2">/</span>
-          <Link href="/trending" className="hover:text-foreground transition-colors">
-            {t("navigation.trending")}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-foreground">{product.name}</span>
+        <nav className="mb-6 text-sm text-muted-foreground" aria-label="Breadcrumb">
+          <ol className="flex items-center flex-wrap gap-1">
+            <li>
+              <Link href="/" className="hover:text-foreground transition-colors">
+                {t("navigation.home")}
+              </Link>
+            </li>
+            <li className="before:content-['/'] before:mx-2">
+              <Link href="/trending" className="hover:text-foreground transition-colors">
+                {t("navigation.trending")}
+              </Link>
+            </li>
+            <li className="before:content-['/'] before:mx-2">
+              <span className="text-foreground" aria-current="page">
+                {product.name}
+              </span>
+            </li>
+          </ol>
         </nav>
 
         {/* Product Detail */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <article className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Image */}
           <div className="relative aspect-square rounded-lg bg-muted overflow-hidden">
             {product.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+                unoptimized // External images may not be optimized
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <svg
@@ -112,6 +165,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-muted-foreground/30"
+                  aria-hidden="true"
                 >
                   <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                   <circle cx="9" cy="9" r="2" />
@@ -125,7 +179,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-col">
             {/* Source */}
             <Badge variant="secondary" className="w-fit mb-3">
-              {sourceLabels[product.sourceType]}
+              {getSourceLabel(product.sourceType)}
             </Badge>
 
             {/* Name */}
@@ -133,7 +187,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Price */}
             {product.price && (
-              <div className="text-3xl font-bold text-primary mb-6">
+              <div className="text-3xl font-bold text-primary mb-6" itemProp="price">
                 {product.currency || "$"}
                 {parseFloat(product.price).toFixed(2)}
               </div>
@@ -142,7 +196,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {/* Description */}
             {product.description && (
               <Card className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">Description</h2>
+                <h2 className="text-lg font-semibold mb-2">{t("product.description")}</h2>
                 <p className="text-muted-foreground whitespace-pre-line">{product.description}</p>
               </Card>
             )}
@@ -162,7 +216,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </Button>
             </div>
           </div>
-        </div>
+        </article>
       </Container>
     </div>
   );

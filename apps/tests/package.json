@@ -11,7 +11,9 @@
     "test:api": "vitest run --config vitest.config.ts",
     "test:api:watch": "vitest --config vitest.config.ts",
     "test:api:coverage": "vitest run --coverage --config vitest.config.ts",
-    "test:all": "pnpm run test:api && pnpm run test:e2e",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration:watch": "vitest --config vitest.integration.config.ts",
+    "test:all": "pnpm run test:api && pnpm run test:integration && pnpm run test:e2e",
     "playwright:install": "playwright install",
     "playwright:report": "playwright show-report"
   },

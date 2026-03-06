@@ -15,12 +15,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@good-trending/shared": ["../../packages/shared/src"],
-      "@good-trending/database": ["../../packages/database/src"]
+      "@/*": ["./src/*"]
     },
     "types": ["node"]
   },

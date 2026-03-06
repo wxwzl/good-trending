@@ -5,26 +5,42 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
-import { GetProductsDto, SortField, SortOrder } from './dto/get-products.dto';
+import {
+  GetProductsDto,
+  SortField,
+  SortOrder,
+  SourceType,
+} from './dto/get-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import {
   PaginatedProductResponseDto,
   ProductResponseDto,
 } from './dto/product-response.dto';
+import {
+  CacheService,
+  CacheKeys,
+  CacheTTLConfig,
+  CacheManager,
+} from '../../common/cache';
 
 /**
  * 商品服务层
- * 负责业务逻辑处理
+ * 负责业务逻辑处理，包含缓存优化
  */
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
 
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly cacheService: CacheService,
+    private readonly cacheManager: CacheManager,
+  ) {}
 
   /**
    * 获取商品列表（分页）
+   * 使用缓存优化频繁查询
    *
    * @param query 查询参数
    * @returns 分页商品列表
@@ -45,6 +61,18 @@ export class ProductService {
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100);
 
+    // 构建缓存键
+    const filters = JSON.stringify({ sourceType, keyword, sortBy, order });
+    const cacheKey = CacheKeys.PRODUCT_LIST(safePage, safeLimit, filters);
+
+    // 尝试从缓存获取
+    const cached =
+      await this.cacheService.get<PaginatedProductResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for products list: ${cacheKey}`);
+      return cached;
+    }
+
     this.logger.debug(
       `Fetching products: page=${safePage}, limit=${safeLimit}, sourceType=${sourceType}`,
     );
@@ -58,17 +86,23 @@ export class ProductService {
       order,
     });
 
-    return {
+    const response: PaginatedProductResponseDto = {
       data: result.data.map(this.mapToResponseDto),
       total: result.total,
       page: result.page,
       limit: result.limit,
       totalPages: result.totalPages,
     };
+
+    // 缓存结果（5分钟）
+    await this.cacheService.set(cacheKey, response, CacheTTLConfig.MEDIUM);
+
+    return response;
   }
 
   /**
    * 根据 ID 获取商品详情
+   * 使用缓存优化单个商品查询
    *
    * @param id 商品 ID
    * @returns 商品详情
@@ -79,17 +113,33 @@ export class ProductService {
       throw new NotFoundException('Invalid product ID');
     }
 
-    const product = await this.productRepository.findById(id.trim());
+    const trimmedId = id.trim();
+    const cacheKey = CacheKeys.PRODUCT_DETAIL(trimmedId);
+
+    // 尝试从缓存获取
+    const cached = await this.cacheService.get<ProductResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for product detail: ${cacheKey}`);
+      return cached;
+    }
+
+    const product = await this.productRepository.findById(trimmedId);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return this.mapToResponseDto(product);
+    const response = this.mapToResponseDto(product);
+
+    // 缓存结果（1小时）
+    await this.cacheService.set(cacheKey, response, CacheTTLConfig.LONG);
+
+    return response;
   }
 
   /**
    * 创建商品
+   * 创建后清除商品列表缓存
    *
    * @param dto 创建商品 DTO
    * @returns 创建的商品
@@ -119,11 +169,15 @@ export class ProductService {
       sourceType: dto.sourceType,
     });
 
+    // 清除商品列表缓存
+    await this.cacheManager.clearProductCache();
+
     return this.mapToResponseDto(product);
   }
 
   /**
    * 更新商品
+   * 更新后清除相关缓存
    *
    * @param id 商品 ID
    * @param dto 更新商品 DTO
@@ -148,11 +202,15 @@ export class ProductService {
       currency: dto.currency,
     });
 
+    // 清除该商品详情缓存和列表缓存
+    await this.cacheManager.clearProductCache(id.trim());
+
     return this.mapToResponseDto(product);
   }
 
   /**
    * 删除商品
+   * 删除后清除相关缓存
    *
    * @param id 商品 ID
    */
@@ -165,6 +223,9 @@ export class ProductService {
     this.logger.log(`Deleting product: ${id}`);
 
     await this.productRepository.delete(id.trim());
+
+    // 清除该商品详情缓存和列表缓存
+    await this.cacheManager.clearProductCache(id.trim());
   }
 
   /**
@@ -206,7 +267,7 @@ export class ProductService {
       currency: product.currency,
       sourceUrl: product.sourceUrl,
       sourceId: product.sourceId,
-      sourceType: product.sourceType,
+      sourceType: product.sourceType as SourceType,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };

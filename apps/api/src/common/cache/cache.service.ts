@@ -100,7 +100,11 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
       return JSON.parse(value) as T;
     } catch (error) {
-      this.logger.error(`Cache get error for key ${key}: ${error}`);
+      if (error instanceof SyntaxError) {
+        this.logger.error(`Cache parse error for key ${key}: Invalid JSON`);
+      } else {
+        this.logger.error(`Cache get error for key ${key}: ${error}`);
+      }
       return null;
     }
   }

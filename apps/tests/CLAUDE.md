@@ -31,7 +31,7 @@
 
 ```
 1. 访问 Swagger 文档
-   - 开发环境: http://localhost:3001/api-docs
+   - 开发环境: http://localhost:3015/api-docs
    - 查看 API 的请求参数、响应格式、状态码
 
 2. 根据 Swagger 定义编写测试

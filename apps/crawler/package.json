@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "dev": "dotenv -e ../../.env.dev -- tsx watch src/index.ts",
     "start": "node dist/index.js",
     "build": "tsup",
     "crawl:twitter": "tsx src/index.ts --source twitter",

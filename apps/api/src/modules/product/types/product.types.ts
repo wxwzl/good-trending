@@ -13,6 +13,7 @@ export interface ProductQueryOptions {
 
 export interface ProductCreateInput {
   name: string;
+  slug?: string;
   description?: string;
   image?: string;
   price?: number;

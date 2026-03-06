@@ -180,7 +180,7 @@ export const handlers = [
       imageUrl: "https://example.com/image.jpg",
       sourceUrl: body.sourceUrl,
       sourceId: body.sourceId,
-      sourceType: body.sourceType as "TWITTER" | "AMAZON",
+      sourceType: body.sourceType as "X_PLATFORM" | "AMAZON",
       price: body.price ?? null,
       currency: body.currency || "USD",
       rating: null,

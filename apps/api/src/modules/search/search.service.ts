@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import { products, productTopics } from '@good-trending/database';
 import { eq, ilike, or, and, desc, count, inArray } from 'drizzle-orm';
@@ -24,18 +24,41 @@ export class SearchService {
   async search(query: SearchQueryDto): Promise<SearchResponseDto> {
     const { q, page = 1, limit = 10, sourceType, topicId } = query;
 
+    // Validate search query
+    if (!q || q.trim().length === 0) {
+      throw new BadRequestException('Search query cannot be empty');
+    }
+
+    if (q.length > 100) {
+      throw new BadRequestException(
+        'Search query must be less than 100 characters',
+      );
+    }
+
+    // Sanitize query - remove special characters that could cause issues
+    const sanitizedQuery = q.trim().replace(/[<>"'%;()&+]/g, '');
+
+    if (sanitizedQuery.length === 0) {
+      throw new BadRequestException(
+        'Search query contains only invalid characters',
+      );
+    }
+
     // 参数边界检查
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100);
     const offset = (safePage - 1) * safeLimit;
 
     this.logger.debug(
-      `Searching products: q=${q}, page=${safePage}, limit=${safeLimit}`,
+      `Searching products: q=${sanitizedQuery}, page=${safePage}, limit=${safeLimit}`,
     );
 
     // 构建搜索条件
     const searchConditions = [
-      or(ilike(products.name, `%${q}%`), ilike(products.description, `%${q}%`)),
+      or(
+        ilike(products.name, `%${sanitizedQuery}%`),
+        ilike(products.description, `%${sanitizedQuery}%`),
+      ),
     ];
 
     if (sourceType) {
@@ -90,7 +113,7 @@ export class SearchService {
       // 简单的相关度计算：名称完全匹配得高分，部分匹配得中等分
       let relevanceScore = 0.5;
       const lowerName = item.name.toLowerCase();
-      const lowerQuery = q.toLowerCase();
+      const lowerQuery = sanitizedQuery.toLowerCase();
 
       if (lowerName === lowerQuery) {
         relevanceScore = 1.0;
@@ -126,7 +149,7 @@ export class SearchService {
       total: totalResult[0]?.count ?? 0,
       page: safePage,
       limit: safeLimit,
-      query: q,
+      query: sanitizedQuery,
     };
   }
 

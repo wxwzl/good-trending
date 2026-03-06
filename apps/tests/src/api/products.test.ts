@@ -40,13 +40,13 @@ describe("Products API", () => {
 
     it("should_filter_products_by_source_type", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/products?sourceType=TWITTER`);
+      const response = await fetch(`${API_BASE}/products?sourceType=X_PLATFORM`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
       result.data.data.forEach((product: { sourceType: string }) => {
-        expect(product.sourceType).toBe("TWITTER");
+        expect(product.sourceType).toBe("X_PLATFORM");
       });
     });
 
@@ -353,7 +353,7 @@ describe("Products API", () => {
         expect(typeof product.name).toBe("string");
         expect(product.slug).toBeDefined();
         expect(typeof product.slug).toBe("string");
-        expect(["TWITTER", "AMAZON"]).toContain(product.sourceType);
+        expect(["X_PLATFORM", "AMAZON"]).toContain(product.sourceType);
       }
     });
 

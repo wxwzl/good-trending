@@ -123,13 +123,30 @@ export class ProductRepository {
   }
 
   /**
+   * 根据 slug 查询商品
+   */
+  async findBySlug(slug: string) {
+    const result = await db
+      .select()
+      .from(products)
+      .where(eq(products.slug, slug))
+      .limit(1);
+
+    return result[0] ?? null;
+  }
+
+  /**
    * 创建商品
    */
   async create(input: ProductCreateInput) {
+    // Auto-generate slug from name if not provided
+    const slug = input.slug || this.generateSlug(input.name);
+
     const result = await db
       .insert(products)
       .values({
         name: input.name,
+        slug,
         description: input.description,
         image: input.image,
         price: input.price?.toString(),
@@ -142,6 +159,17 @@ export class ProductRepository {
       .returning();
 
     return result[0];
+  }
+
+  /**
+   * 生成 URL 友好的 slug
+   */
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 100); // Limit length
   }
 
   /**

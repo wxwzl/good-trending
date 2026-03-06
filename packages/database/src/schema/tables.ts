@@ -28,6 +28,7 @@ export const products = pgTable(
       .primaryKey()
       .$defaultFn(() => createId()),
     name: text("name").notNull(),
+    slug: text("slug").unique().notNull(),
     description: text("description"),
     image: text("image"),
     price: decimal("price", { precision: 10, scale: 2 }),
@@ -41,6 +42,7 @@ export const products = pgTable(
   (table) => [
     index("product_source_idx").on(table.sourceType, table.sourceId),
     index("product_created_at_idx").on(table.createdAt),
+    index("product_slug_idx").on(table.slug),
   ]
 );
 

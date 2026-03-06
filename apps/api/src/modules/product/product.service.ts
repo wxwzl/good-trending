@@ -138,6 +138,42 @@ export class ProductService {
   }
 
   /**
+   * 根据 slug 获取商品详情
+   *
+   * @param slug 商品 slug
+   * @returns 商品详情
+   */
+  async getProductBySlug(slug: string): Promise<ProductResponseDto> {
+    // Slug 格式验证
+    if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
+      throw new NotFoundException('Invalid product slug');
+    }
+
+    const trimmedSlug = slug.trim();
+    const cacheKey = `product:slug:${trimmedSlug}`;
+
+    // 尝试从缓存获取
+    const cached = await this.cacheService.get<ProductResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for product slug: ${cacheKey}`);
+      return cached;
+    }
+
+    const product = await this.productRepository.findBySlug(trimmedSlug);
+
+    if (!product) {
+      throw new NotFoundException(`Product with slug "${slug}" not found`);
+    }
+
+    const response = this.mapToResponseDto(product);
+
+    // 缓存结果（1小时）
+    await this.cacheService.set(cacheKey, response, CacheTTLConfig.LONG);
+
+    return response;
+  }
+
+  /**
    * 创建商品
    * 创建后清除商品列表缓存
    *

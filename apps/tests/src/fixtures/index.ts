@@ -57,7 +57,7 @@ export function createProductFixture(overrides: Partial<ProductFixture> = {}): P
     description: faker.commerce.productDescription(),
     imageUrl: faker.image.url(),
     sourceUrl: faker.internet.url(),
-    sourceType: faker.helpers.arrayElement(["TWITTER", "AMAZON"]),
+    sourceType: faker.helpers.arrayElement(["X_PLATFORM", "AMAZON"]),
     sourceId: faker.string.alphanumeric(10),
     price: faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }),
     currency: "USD",

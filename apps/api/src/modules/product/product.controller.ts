@@ -77,6 +77,35 @@ export class ProductController {
   }
 
   /**
+   * 通过 slug 获取商品
+   * GET /api/v1/products/slug/:slug
+   */
+  @Get('slug/:slug')
+  @ApiOperation({
+    summary: '通过 slug 获取商品',
+    description: '根据 URL 友好的 slug 获取单个商品详情',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: '商品 slug',
+    example: 'wireless-bluetooth-headphones',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '成功返回商品详情',
+    type: ProductResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: '商品不存在',
+  })
+  async getProductBySlug(
+    @Param('slug') slug: string,
+  ): Promise<ProductResponseDto> {
+    return this.productService.getProductBySlug(slug);
+  }
+
+  /**
    * 创建商品
    * POST /api/v1/products
    */

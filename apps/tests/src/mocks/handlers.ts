@@ -172,7 +172,10 @@ export const handlers = [
     const newProduct = {
       id: `new-${Date.now()}`,
       name: body.name,
-      slug: body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      slug: body.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, ""),
       description: body.description || "",
       imageUrl: "https://example.com/image.jpg",
       sourceUrl: body.sourceUrl,
@@ -431,7 +434,12 @@ export const handlers = [
       );
     }
 
-    const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const slug =
+      body.slug ||
+      body.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 
     // Check for duplicate slug
     if (mockTopics.find((t) => t.slug === slug)) {

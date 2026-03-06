@@ -218,10 +218,7 @@ describe("Database Integration Tests", () => {
   describe("Product-Topic Relations", () => {
     it("should_query_product_topics", async () => {
       // Query product-topic relationships
-      const relations = await db
-        .select()
-        .from(schema.productTopics)
-        .limit(10);
+      const relations = await db.select().from(schema.productTopics).limit(10);
 
       expect(Array.isArray(relations)).toBe(true);
     });
@@ -274,10 +271,9 @@ describe("Database Integration Tests", () => {
         await client.query("ROLLBACK");
 
         // Verify product doesn't exist
-        const checkResult = await client.query(
-          `SELECT id FROM "product" WHERE id = $1`,
-          [productId]
-        );
+        const checkResult = await client.query(`SELECT id FROM "product" WHERE id = $1`, [
+          productId,
+        ]);
 
         expect(checkResult.rows.length).toBe(0);
       } finally {
@@ -295,17 +291,22 @@ describe("Database Integration Tests", () => {
         const insertResult = await client.query(
           `INSERT INTO "product" (name, source_url, source_id, source_type, currency)
            VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          ["Commit Test", `https://commit-test-${Date.now()}.example.com`, "commit-test", "AMAZON", "USD"]
+          [
+            "Commit Test",
+            `https://commit-test-${Date.now()}.example.com`,
+            "commit-test",
+            "AMAZON",
+            "USD",
+          ]
         );
 
         productId = insertResult.rows[0].id;
         await client.query("COMMIT");
 
         // Verify product exists
-        const checkResult = await client.query(
-          `SELECT id FROM "product" WHERE id = $1`,
-          [productId]
-        );
+        const checkResult = await client.query(`SELECT id FROM "product" WHERE id = $1`, [
+          productId,
+        ]);
 
         expect(checkResult.rows.length).toBe(1);
 

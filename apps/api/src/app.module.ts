@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { CacheModule } from './common/cache';
 import {
   ThrottlerConfigService,
@@ -37,9 +35,8 @@ import { MonitoringModule } from './modules/monitoring';
     SearchModule,
     MonitoringModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     // 全局频率限制守卫
     {
       provide: APP_GUARD,

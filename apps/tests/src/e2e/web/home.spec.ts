@@ -34,7 +34,10 @@ test.describe("Home Page", () => {
 
     // Open language dropdown
     const langButton = page.getByRole("button", { name: /语言|language/i }).or(
-      page.locator("button").filter({ has: page.locator("svg") }).filter({ hasText: /ZH|zh/i })
+      page
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .filter({ hasText: /ZH|zh/i })
     );
 
     // Click to open dropdown
@@ -90,9 +93,9 @@ test.describe("Home Page", () => {
   test("should navigate to trending page", async ({ page }) => {
     // Look for trending link in header nav specifically - use exact match to avoid matching "Good Trending" logo
     const nav = page.locator("header nav");
-    const trendingLink = nav.getByRole("link", { name: "Trending", exact: true }).or(
-      nav.getByRole("link", { name: "热门", exact: true })
-    );
+    const trendingLink = nav
+      .getByRole("link", { name: "Trending", exact: true })
+      .or(nav.getByRole("link", { name: "热门", exact: true }));
     await trendingLink.click();
     await expect(page).toHaveURL(/.*trending.*/);
   });

@@ -6,8 +6,13 @@ import { config } from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
-// 加载环境变量
+// 根据环境加载对应的 .env 文件
+// 优先级：.env.{NODE_ENV} > .env
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const env = process.env.NODE_ENV || "development";
+const envFile = env === "production" ? ".env" : `.env.${env}`;
+
+config({ path: resolve(__dirname, "../../../", envFile) });
 config({ path: resolve(__dirname, "../../../.env") });
 
 import { logger } from "./utils/logger";

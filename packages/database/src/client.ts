@@ -5,7 +5,16 @@
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// 尝试从多个位置加载 .env 文件（在模块导入时立即执行）
+// 根据环境加载对应的 .env 文件
+// 优先级：.env.{NODE_ENV} > .env
+const env = process.env.NODE_ENV || "development";
+const isDev = env === "development";
+const envFile = env === "production" ? ".env" : `.env.${env}`;
+
+// 加载环境特定的配置文件
+config({ path: resolve(__dirname, "../../../", envFile) });
+
+// 回退到默认配置
 config({ path: resolve(__dirname, "../../../.env") });
 config({ path: resolve(__dirname, "../../../../.env") });
 
@@ -42,8 +51,6 @@ function getPool(): Pool {
     if (!connectionString) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
-
-    const isDev = process.env.NODE_ENV !== "production";
 
     pool = new Pool({
       connectionString,
@@ -96,8 +103,6 @@ function getPool(): Pool {
  */
 function getDb() {
   if (!dbInstance) {
-    const isDev = process.env.NODE_ENV !== "production";
-
     dbInstance = drizzle(getPool(), {
       schema,
       // 开发环境启用查询日志

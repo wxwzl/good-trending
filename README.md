@@ -448,6 +448,96 @@ pnpm docker:logs
 
 ### 环境变量配置
 
+项目支持多环境配置，根据 `NODE_ENV` 自动加载对应的环境文件。
+
+#### 配置文件规则
+
+```
+.env.{NODE_ENV}  >  .env
+```
+
+| NODE_ENV      | 加载的文件              | 说明             |
+| ------------- | ----------------------- | ---------------- |
+| `development` | `.env.dev` → `.env`     | 开发环境（默认） |
+| `test`        | `.env.test` → `.env`    | 测试环境         |
+| `staging`     | `.env.staging` → `.env` | 预发布环境       |
+| `production`  | `.env`                  | 生产环境         |
+
+**加载优先级：**
+
+1. 首先加载 `.env.{NODE_ENV}`（如果存在）
+2. 然后加载 `.env`（作为回退和补充）
+
+**示例：**
+
+```bash
+# 开发环境（默认）
+pnpm dev
+
+# 指定测试环境
+NODE_ENV=test pnpm test
+
+# 指定预发布环境
+NODE_ENV=staging pnpm start
+```
+
+#### 配置文件创建
+
+在项目的根目录创建以下文件：
+
+```bash
+# 开发环境配置
+touch .env.dev
+
+# 测试环境配置
+touch .env.test
+
+# 预发布环境配置
+touch .env.staging
+
+# 生产环境配置
+touch .env
+```
+
+**示例 `.env.dev`：**
+
+```bash
+# 数据库配置（开发环境使用本地 Docker）
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/good_trending_dev"
+
+# Redis 配置
+REDIS_URL="redis://localhost:6379/0"
+
+# API 配置
+API_PORT=3015
+API_URL="http://localhost:3015/api/v1"
+
+# Web 配置
+WEB_PORT=3010
+NEXT_PUBLIC_API_URL="http://localhost:3015/api/v1"
+
+# 日志级别
+LOG_LEVEL=debug
+```
+
+**示例 `.env.test`：**
+
+```bash
+# 数据库配置（测试环境使用独立数据库）
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/good_trending_test"
+
+# Redis 配置
+REDIS_URL="redis://localhost:6379/1"
+
+# API 配置
+API_PORT=3016
+
+# Web 配置
+WEB_PORT=3011
+```
+
+#### 必备环境变量
+
 参考 `.env.example` 文件配置以下环境变量：
 
 | 变量名       | 说明                  | 示例                                |

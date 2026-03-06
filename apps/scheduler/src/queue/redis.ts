@@ -6,7 +6,12 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import Redis from "ioredis";
 
-// 加载环境变量
+// 根据环境加载对应的 .env 文件
+// 优先级：.env.{NODE_ENV} > .env
+const env = process.env.NODE_ENV || "development";
+const envFile = env === "production" ? ".env" : `.env.${env}`;
+
+config({ path: resolve(__dirname, "../../../../", envFile) });
 config({ path: resolve(__dirname, "../../../../.env") });
 
 /**

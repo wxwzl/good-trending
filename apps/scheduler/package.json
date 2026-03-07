@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@good-trending/crawler": "workspace:*",
     "@good-trending/database": "workspace:*",
     "@good-trending/shared": "workspace:*",
     "bullmq": "^5.4.2",

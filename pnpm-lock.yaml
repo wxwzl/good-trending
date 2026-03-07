@@ -260,6 +260,9 @@ importers:
 
   apps/scheduler:
     dependencies:
+      '@good-trending/crawler':
+        specifier: workspace:*
+        version: link:../crawler
       '@good-trending/database':
         specifier: workspace:*
         version: link:../../packages/database

@@ -103,11 +103,10 @@ async function logCrawlerRun(params: {
  * 避免在模块加载时初始化 Playwright
  */
 async function importCrawlers() {
-  // 使用相对路径导入爬虫模块
-  const crawlerBasePath = "../../crawler/src";
-  const { CrawlerManager } = await import(`${crawlerBasePath}/manager`);
-  const { AmazonCrawler } = await import(`${crawlerBasePath}/crawlers/amazon`);
-  const { TwitterCrawler } = await import(`${crawlerBasePath}/crawlers/twitter`);
+  // 使用 workspace 包导入
+  const { CrawlerManager } = await import("@good-trending/crawler/manager");
+  const { AmazonCrawler } = await import("@good-trending/crawler/crawlers/amazon");
+  const { TwitterCrawler } = await import("@good-trending/crawler/crawlers/twitter");
   return { CrawlerManager, AmazonCrawler, TwitterCrawler };
 }
 

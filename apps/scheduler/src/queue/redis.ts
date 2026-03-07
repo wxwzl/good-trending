@@ -10,9 +10,8 @@ import Redis from "ioredis";
 // 优先级：.env.{NODE_ENV} > .env
 const env = process.env.NODE_ENV || "development";
 const envFile = env === "production" ? ".env" : `.env.${env}`;
-
-config({ path: resolve(__dirname, "../../../../", envFile) });
 config({ path: resolve(__dirname, "../../../../.env") });
+config({ path: resolve(__dirname, "../../../../", envFile) });
 
 /**
  * Redis 连接配置

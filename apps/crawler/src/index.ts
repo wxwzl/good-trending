@@ -19,9 +19,11 @@ import { hideBin } from "yargs/helpers";
 import { CrawlerManager, ProductData } from "./manager";
 import { AmazonCrawler } from "./crawlers/amazon";
 import { TwitterCrawler } from "./crawlers/twitter";
-import { db, products, topics, productTopics } from "@good-trending/database";
-import { eq } from "drizzle-orm";
-import { createId } from "@paralleldrive/cuid2";
+import {
+  createProductsBatch,
+  type CreateProductInput,
+  type SourceType,
+} from "@good-trending/database";
 import { Queue } from "bullmq";
 
 /**
@@ -97,67 +99,6 @@ async function triggerTrendingUpdate(source: string, productCount: number): Prom
   }
 }
 
-// 生成 slug 的辅助函数
-// 支持 Unicode 字符（包括中文）
-function generateSlug(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .trim()
-      // 将空格和特殊字符替换为 -
-      .replace(/[\s\p{P}\p{S}]+/gu, "-")
-      // 移除连续的 -
-      .replace(/-+/g, "-")
-      // 移除开头和结尾的 -
-      .replace(/^-|-$/g, "")
-      .substring(0, 100)
-  );
-}
-
-// 生成唯一 slug 的辅助函数
-// 如果 slug 已存在，则添加数字后缀
-// 如果 100 次都失败，使用 productId 作为 fallback
-async function generateUniqueSlug(
-  db: any,
-  name: string,
-  productId: string,
-  maxAttempts: number = 100
-): Promise<string> {
-  const baseSlug = generateSlug(name);
-
-  // 首先尝试基础 slug
-  const existing = await db
-    .select({ slug: products.slug })
-    .from(products)
-    .where(eq(products.slug, baseSlug))
-    .limit(1);
-
-  if (existing.length === 0) {
-    return baseSlug;
-  }
-
-  // 基础 slug 冲突，添加数字后缀
-  for (let i = 2; i <= maxAttempts; i++) {
-    const suffix = `-${i}`;
-    // 预留后缀空间，避免超过 100 字符
-    const slugWithSuffix = baseSlug.substring(0, 100 - suffix.length) + suffix;
-
-    const check = await db
-      .select({ slug: products.slug })
-      .from(products)
-      .where(eq(products.slug, slugWithSuffix))
-      .limit(1);
-
-    if (check.length === 0) {
-      return slugWithSuffix;
-    }
-  }
-
-  // 所有尝试都失败，使用 productId 作为 fallback
-  // 取 productId 前 8 字符作为后缀，确保唯一性
-  const idSuffix = `-${productId.substring(0, 8)}`;
-  return baseSlug.substring(0, 100 - idSuffix.length) + idSuffix;
-}
 import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({
@@ -176,112 +117,38 @@ const logger = createLogger({
 });
 
 /**
- * 确保分类存在，返回分类ID映射
- */
-async function ensureTopics(topicSlugs: string[]): Promise<Map<string, string>> {
-  const topicMap = new Map<string, string>();
-
-  for (const slug of topicSlugs) {
-    // 检查分类是否已存在
-    const existing = await db
-      .select({ id: topics.id })
-      .from(topics)
-      .where(eq(topics.slug, slug))
-      .limit(1);
-
-    if (existing.length > 0) {
-      topicMap.set(slug, existing[0].id);
-    } else {
-      // 创建新分类
-      const topicId = createId();
-      const name = slug
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-
-      try {
-        await db.insert(topics).values({
-          id: topicId,
-          name,
-          slug,
-          description: `Auto-created topic for ${slug}`,
-        });
-        topicMap.set(slug, topicId);
-        logger.info(`Created new topic: ${slug}`);
-      } catch (error) {
-        logger.warn(`Failed to create topic ${slug}: ${error}`);
-      }
-    }
-  }
-
-  return topicMap;
-}
-
-/**
  * 将爬取的产品数据保存到数据库
+ * 使用共享的数据库模块
  */
 async function saveProductsToDatabase(productDataList: ProductData[]): Promise<number> {
-  let savedCount = 0;
+  // 转换为统一的输入格式
+  const inputs: CreateProductInput[] = productDataList.map((productData) => ({
+    name: productData.name,
+    description: productData.description,
+    image: productData.image,
+    price: productData.price,
+    currency: productData.currency,
+    sourceUrl: productData.sourceUrl,
+    sourceId: productData.sourceId,
+    sourceType: productData.sourceType as SourceType,
+    topics: productData.topics,
+  }));
 
-  for (const productData of productDataList) {
-    try {
-      // 检查是否已存在
-      const existing = await db
-        .select()
-        .from(products)
-        .where(eq(products.sourceId, productData.sourceId))
-        .limit(1);
+  // 使用共享的批量创建函数
+  const result = await createProductsBatch(inputs);
 
-      if (existing.length > 0) {
-        logger.info(`Product already exists: ${productData.sourceId}`);
-        continue;
-      }
-
-      const productId = createId();
-
-      // 生成唯一 slug
-      const slug = await generateUniqueSlug(db, productData.name, productId);
-
-      // 插入新产品
-      await db.insert(products).values({
-        id: productId,
-        name: productData.name,
-        slug,
-        description: productData.description,
-        image: productData.image,
-        price: productData.price ? productData.price.toString() : null,
-        currency: productData.currency ?? "USD",
-        sourceUrl: productData.sourceUrl,
-        sourceId: productData.sourceId,
-        sourceType: productData.sourceType as "X_PLATFORM" | "AMAZON",
-      });
-
-      // 处理分类关联
-      if (productData.topics && productData.topics.length > 0) {
-        const topicMap = await ensureTopics(productData.topics);
-
-        // 创建商品-分类关联
-        for (const [slug, topicId] of topicMap) {
-          try {
-            await db.insert(productTopics).values({
-              productId,
-              topicId,
-            });
-            logger.debug(`Linked product ${productData.name} to topic ${slug}`);
-          } catch (error) {
-            logger.warn(`Failed to link product to topic ${slug}: ${error}`);
-          }
-        }
-      }
-
-      savedCount++;
-      logger.info(`Saved product: ${productData.name}`);
-    } catch (error) {
-      logger.error(`Failed to save product ${productData.name}: ${error}`);
-    }
+  // 记录结果
+  if (result.savedCount > 0) {
+    logger.info(`Saved ${result.savedCount} products to database`);
+  }
+  if (result.skippedCount > 0) {
+    logger.info(`Skipped ${result.skippedCount} existing products`);
+  }
+  if (result.failedCount > 0) {
+    logger.error(`Failed to save ${result.failedCount} products`, result.errors);
   }
 
-  return savedCount;
+  return result.savedCount;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { db } from '@good-trending/database';
+import { db, generateUniqueSlug } from '@good-trending/database';
 import { products, productTopics, productTags } from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
@@ -145,7 +145,7 @@ export class ProductRepository {
 
     // Auto-generate unique slug from name if not provided
     const slug =
-      input.slug || (await this.generateUniqueSlug(input.name, productId));
+      input.slug || (await generateUniqueSlug(input.name, productId));
 
     const result = await db
       .insert(products)
@@ -165,71 +165,6 @@ export class ProductRepository {
       .returning();
 
     return result[0];
-  }
-
-  /**
-   * 生成 URL 友好的 slug
-   * 支持 Unicode 字符（包括中文）
-   */
-  private generateSlug(name: string): string {
-    return (
-      name
-        .toLowerCase()
-        .trim()
-        // 将空格和特殊字符替换为 -
-        .replace(/[\s\p{P}\p{S}]+/gu, '-')
-        // 移除连续的 -
-        .replace(/-+/g, '-')
-        // 移除开头和结尾的 -
-        .replace(/^-|-$/g, '')
-        .substring(0, 100)
-    );
-  }
-
-  /**
-   * 生成唯一的 slug
-   * 如果 slug 已存在，则添加数字后缀
-   * 如果 100 次都失败，使用 productId 作为 fallback
-   */
-  private async generateUniqueSlug(
-    name: string,
-    productId: string,
-    maxAttempts: number = 100,
-  ): Promise<string> {
-    const baseSlug = this.generateSlug(name);
-
-    // 首先尝试基础 slug
-    const existing = await db
-      .select({ slug: products.slug })
-      .from(products)
-      .where(eq(products.slug, baseSlug))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return baseSlug;
-    }
-
-    // 基础 slug 冲突，添加数字后缀
-    for (let i = 2; i <= maxAttempts; i++) {
-      const suffix = `-${i}`;
-      // 预留后缀空间，避免超过 100 字符
-      const slugWithSuffix =
-        baseSlug.substring(0, 100 - suffix.length) + suffix;
-
-      const check = await db
-        .select({ slug: products.slug })
-        .from(products)
-        .where(eq(products.slug, slugWithSuffix))
-        .limit(1);
-
-      if (check.length === 0) {
-        return slugWithSuffix;
-      }
-    }
-
-    // 所有尝试都失败，使用 productId 前 8 字符作为 fallback
-    const idSuffix = `-${productId.substring(0, 8)}`;
-    return baseSlug.substring(0, 100 - idSuffix.length) + idSuffix;
   }
 
   /**

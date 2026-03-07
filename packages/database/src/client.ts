@@ -11,12 +11,10 @@ const env = process.env.NODE_ENV || "development";
 const isDev = env === "development";
 const envFile = env === "production" ? ".env" : `.env.${env}`;
 
-// 加载环境特定的配置文件
-config({ path: resolve(__dirname, "../../../", envFile) });
-
-// 回退到默认配置
 config({ path: resolve(__dirname, "../../../.env") });
 config({ path: resolve(__dirname, "../../../../.env") });
+// 加载环境特定的配置文件
+config({ path: resolve(__dirname, "../../../", envFile) });
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";

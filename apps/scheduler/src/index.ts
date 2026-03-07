@@ -11,9 +11,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const env = process.env.NODE_ENV || "development";
 const envFile = env === "production" ? ".env" : `.env.${env}`;
-
-config({ path: resolve(__dirname, "../../../", envFile) });
 config({ path: resolve(__dirname, "../../../.env") });
+config({ path: resolve(__dirname, "../../../", envFile) });
+console.log(`Loaded environment variables from ${envFile}`);
 
 import { logger } from "./utils/logger";
 import { closeRedisConnection, getRedisConnection } from "./queue/redis";

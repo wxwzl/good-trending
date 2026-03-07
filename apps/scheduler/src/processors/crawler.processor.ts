@@ -16,43 +16,8 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
 
 /**
  * 将爬取的产品数据保存到数据库
- *
- * @param productDataList - 产品数据列表
- * @param _sourceType - 数据源类型 (未使用，保留用于未来扩展)
- * @returns 保存的产品数量
+ * 使用共享的数据库模块
  */
-/**
- * 生成 URL 友好的 slug
- * 将名称转换为小写，替换特殊字符为连字符
- */
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-") // 非字母数字替换为连字符
-    .replace(/^-|-$/g, "") // 去除首尾连字符
-    .substring(0, 100); // 限制长度
-}
-
-/**
- * 生成唯一的 slug
- * 如果 slug 已存在，追加随机字符串
- */
-async function generateUniqueSlug(db: any, products: any, name: string): Promise<string> {
-  const { eq } = await import("drizzle-orm");
-  let slug = generateSlug(name);
-
-  // 检查是否已存在
-  const existing = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
-
-  if (existing.length > 0) {
-    // 如果已存在，追加时间戳后缀
-    const timestamp = Date.now().toString(36).slice(-6);
-    slug = `${slug}-${timestamp}`;
-  }
-
-  return slug;
-}
-
 async function saveProductsToDatabase(
   productDataList: Array<{
     name: string;
@@ -63,53 +28,41 @@ async function saveProductsToDatabase(
     sourceUrl: string;
     sourceId: string;
     sourceType: "X_PLATFORM" | "AMAZON";
+    topics?: string[];
   }>,
   _sourceType: string
 ): Promise<number> {
   // 动态导入数据库模块
-  const { db, products } = await import("@good-trending/database");
-  const { eq } = await import("drizzle-orm");
+  const { createProductsBatch } = await import("@good-trending/database");
 
-  let savedCount = 0;
+  // 转换为统一的输入格式
+  const inputs = productDataList.map((productData) => ({
+    name: productData.name,
+    description: productData.description,
+    image: productData.image,
+    price: productData.price,
+    currency: productData.currency,
+    sourceUrl: productData.sourceUrl,
+    sourceId: productData.sourceId,
+    sourceType: productData.sourceType,
+    topics: productData.topics,
+  }));
 
-  for (const productData of productDataList) {
-    try {
-      // 检查是否已存在
-      const existing = await db
-        .select()
-        .from(products)
-        .where(eq(products.sourceId, productData.sourceId))
-        .limit(1);
+  // 使用共享的批量创建函数
+  const result = await createProductsBatch(inputs);
 
-      if (existing.length > 0) {
-        logger.debug(`Product already exists: ${productData.sourceId}`);
-        continue;
-      }
-
-      // 生成唯一 slug
-      const slug = await generateUniqueSlug(db, products, productData.name);
-
-      // 插入新产品
-      await db.insert(products).values({
-        name: productData.name,
-        slug,
-        description: productData.description,
-        image: productData.image,
-        price: productData.price ? productData.price.toString() : null,
-        currency: productData.currency ?? "USD",
-        sourceUrl: productData.sourceUrl,
-        sourceId: productData.sourceId,
-        sourceType: productData.sourceType as "X_PLATFORM" | "AMAZON",
-      });
-
-      savedCount++;
-      logger.debug(`Saved product: ${productData.name}`);
-    } catch (error) {
-      logger.error(`Failed to save product ${productData.name}: ${error}`);
-    }
+  // 记录结果
+  if (result.savedCount > 0) {
+    logger.debug(`Saved ${result.savedCount} products to database`);
+  }
+  if (result.skippedCount > 0) {
+    logger.debug(`Skipped ${result.skippedCount} existing products`);
+  }
+  if (result.failedCount > 0) {
+    logger.error(`Failed to save ${result.failedCount} products`, result.errors);
   }
 
-  return savedCount;
+  return result.savedCount;
 }
 
 /**

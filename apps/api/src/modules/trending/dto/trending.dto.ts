@@ -96,6 +96,12 @@ export class TrendingItemDto {
   productId: string;
 
   @ApiProperty({
+    description: '商品 Slug',
+    example: 'apple-airpods-pro-2',
+  })
+  productSlug: string;
+
+  @ApiProperty({
     description: '商品名称',
     example: 'Apple AirPods Pro 2',
   })

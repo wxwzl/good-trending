@@ -171,7 +171,7 @@ jobs:
           NODE_ENV: test
           DATABASE_URL: postgresql://test:test@localhost:5432/good_trending_test
           REDIS_URL: redis://localhost:6379
-          E2E_API_URL: http://localhost:3001
+          E2E_API_URL: http://localhost:3015
           E2E_WEB_URL: http://localhost:3000
 
       - name: Upload Playwright report

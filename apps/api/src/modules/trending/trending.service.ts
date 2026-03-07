@@ -73,6 +73,7 @@ export class TrendingService {
     // 根据 period 选择不同的查询策略
     let trendData: Array<{
       productId: string;
+      productSlug: string;
       productName: string;
       productImage: string | null;
       productPrice: string | null;
@@ -113,6 +114,7 @@ export class TrendingService {
       items: trendData.map((item, index) => ({
         rank: item.rank ?? (safePage - 1) * safeLimit + index + 1,
         productId: item.productId,
+        productSlug: item.productSlug || item.productId,
         productName: item.productName,
         productImage: item.productImage ?? undefined,
         productPrice: item.productPrice ?? undefined,
@@ -148,6 +150,7 @@ export class TrendingService {
   ): Promise<{
     items: Array<{
       productId: string;
+      productSlug: string;
       productName: string;
       productImage: string | null;
       productPrice: string | null;
@@ -187,6 +190,7 @@ export class TrendingService {
     const trendData = await db
       .select({
         productId: trends.productId,
+        productSlug: products.slug,
         productName: products.name,
         productImage: products.image,
         productPrice: products.price,
@@ -230,6 +234,7 @@ export class TrendingService {
   ): Promise<{
     items: Array<{
       productId: string;
+      productSlug: string;
       productName: string;
       productImage: string | null;
       productPrice: string | null;
@@ -274,6 +279,7 @@ export class TrendingService {
     const aggregatedData = await db
       .select({
         productId: trends.productId,
+        productSlug: sql<string>`MAX(${products.slug})`.as('product_slug'),
         productName: sql<string>`MAX(${products.name})`.as('product_name'),
         productImage: sql<string | null>`MAX(${products.image})`.as(
           'product_image',
@@ -324,8 +330,14 @@ export class TrendingService {
       const completenessPenalty = Math.min(dataDays / expectedDays, 1);
       score = score * (0.7 + 0.3 * completenessPenalty);
 
+      // 从 SQL 别名获取 productSlug
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const productSlug =
+        (item as any).productSlug || (item as any).product_slug;
+
       return {
         productId: item.productId,
+        productSlug: productSlug || item.productId,
         productName: item.productName,
         productImage: item.productImage,
         productPrice: item.productPrice,

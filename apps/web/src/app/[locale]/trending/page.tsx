@@ -21,11 +21,11 @@ async function getTrendingProducts(period?: string) {
   const apiPeriod = period ? periodMap[period] || "daily" : "daily";
   const result = await trendingApi.list({
     period: apiPeriod,
-    limit: 20,
+    limit: 10,
   });
 
   return {
-    data: result.data || [],
+    data: result.items || [],
     total: result.total || 0,
     page: result.page || 1,
     limit: result.limit || 20,
@@ -57,10 +57,6 @@ export async function generateMetadata({ params }: TrendingPageProps): Promise<M
   });
 }
 
-// Enable dynamic rendering for this page
-export const dynamic = "force-dynamic";
-export const revalidate = 300; // Revalidate every 5 minutes
-
 export default async function TrendingPage({ params, searchParams }: TrendingPageProps) {
   const { locale } = await params;
   const { period } = await searchParams;
@@ -80,7 +76,7 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
   const itemListItems = trendingData.data.map((item, index) => ({
     id: item.productId,
     name: item.productName,
-    url: `${baseUrl}/${locale}/product/${item.productId}`,
+    url: `${baseUrl}/${locale}/product/${item.productSlug || item.productId}`,
     image: item.productImage ?? undefined,
     position: index + 1,
   }));
@@ -130,7 +126,7 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
                     product={{
                       id: item.productId,
                       name: item.productName,
-                      slug: item.productId,
+                      slug: item.productSlug || item.productId,
                       image: item.productImage ?? undefined,
                       price: item.productPrice ? parseFloat(item.productPrice) : undefined,
                       currency: "USD",

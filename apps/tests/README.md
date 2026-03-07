@@ -180,7 +180,7 @@ Create a `.env.test` file in the root directory:
 
 ```env
 E2E_WEB_URL=http://localhost:3000
-E2E_API_URL=http://localhost:3001
+E2E_API_URL=http://localhost:3015
 DATABASE_URL="postgresql://user:password@localhost:5432/good_trending_test"
 ```
 

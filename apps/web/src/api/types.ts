@@ -37,6 +37,7 @@ export interface Topic {
 export interface TrendingItem {
   id: string;
   productId: string;
+  productSlug: string;
   productName: string;
   productImage: string | null;
   productPrice: string | null;
@@ -49,7 +50,7 @@ export interface TrendingItem {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
   limit: number;

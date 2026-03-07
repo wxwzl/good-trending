@@ -29,7 +29,7 @@ interface HealthCheckResponse {
  * 检查 API 服务健康状态
  */
 async function checkApiHealth(): Promise<ApiHealthResponse> {
-  const apiBaseUrl = process.env.API_URL || "http://localhost:3001";
+  const apiBaseUrl = process.env.API_URL || "http://localhost:3015";
 
   try {
     const start = Date.now();

@@ -174,7 +174,7 @@ describe("Products API - 根据 Swagger 文档编写", () => {
 // apps/tests/src/e2e/api/products.spec.ts
 import { test, expect } from "@playwright/test";
 
-const API_BASE = process.env.E2E_API_URL || "http://localhost:3001";
+const API_BASE = process.env.E2E_API_URL || "http://localhost:3015";
 
 test.describe("Products API - E2E Tests (根据 Swagger)", () => {
   // 根据 Swagger 的 GET /api/v1/products 编写

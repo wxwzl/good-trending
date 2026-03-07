@@ -7,7 +7,8 @@ import { ProductCard } from "@/components/features/product-card";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { topicApi, productApi, type Topic, type Product } from "@/lib/api";
+import { getTopic, getTopicProducts, listTopics } from "@/api/topic";
+import type { Topic, Product } from "@/api/types";
 
 interface TopicWithProducts extends Topic {
   products: Product[];
@@ -16,14 +17,14 @@ interface TopicWithProducts extends Topic {
 async function getTopicBySlug(slug: string): Promise<TopicWithProducts | null> {
   try {
     // Get topic info
-    const topic = await topicApi.get(slug);
+    const topic = await getTopic(slug);
     if (!topic) {
       return null;
     }
 
     // Get products for this topic
-    const productsResult = await topicApi.products(slug, { limit: 20 });
-    const products = productsResult.data || [];
+    const productsResult = await getTopicProducts(slug, { limit: 20 });
+    const products = productsResult.items || [];
 
     return {
       ...topic,
@@ -40,9 +41,9 @@ interface TopicPageProps {
 }
 
 export async function generateStaticParams() {
-  const result = await topicApi.list();
+  const result = await listTopics();
 
-  return (result.data || []).map((topic) => ({
+  return (result.items || []).map((topic) => ({
     slug: topic.slug,
   }));
 }
@@ -52,8 +53,8 @@ export async function generateMetadata({ params }: TopicPageProps): Promise<Meta
   const currentLocale = locale as Locale;
 
   try {
-    // Fetch topic for metadata using unified API client
-    const topic = await topicApi.get(slug);
+    // Fetch topic for metadata
+    const topic = await getTopic(slug);
 
     if (!topic) {
       return {

@@ -14,13 +14,11 @@ interface ListTopicsParams {
  * 获取分类列表
  * GET /api/v1/topics
  */
-export async function listTopics(params: ListTopicsParams = {}): Promise<Topic[]> {
+export async function listTopics(params: ListTopicsParams = {}): Promise<PaginatedResponse<Topic>> {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set("page", String(params.page));
   if (params.limit) searchParams.set("limit", String(params.limit));
-
-  const response = await fetchApi<PaginatedResponse<Topic>>(`/topics?${searchParams}`);
-  return response.data;
+  return await fetchApi<PaginatedResponse<Topic>>(`/topics?${searchParams}`);
 }
 
 /**

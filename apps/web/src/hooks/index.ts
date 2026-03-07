@@ -4,16 +4,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getProduct, listProducts } from "@/api/product";
+import { listTopics, getTopic, getTopicProducts } from "@/api/topic";
 import {
-  productApi,
-  topicApi,
-  trendingApi,
-  searchApi,
-  type Product,
-  type Topic,
-  type TrendingItem,
-  type PaginatedResponse,
-} from "@/lib/api";
+  listTrending,
+  getDailyTrending,
+  getWeeklyTrending,
+  getMonthlyTrending,
+} from "@/api/trending";
+import { searchProducts } from "@/api/search";
+import type { Product, Topic, TrendingItem, PaginatedResponse } from "@/api/types";
 
 // ============================================
 // Generic hook for async data fetching
@@ -59,7 +59,7 @@ function useAsync<T>(asyncFn: () => Promise<T>, deps: unknown[] = []): AsyncResu
 // ============================================
 
 export function useProduct(id: string): AsyncResult<Product> {
-  return useAsync(() => productApi.get(id), [id]);
+  return useAsync(() => getProduct(id), [id]);
 }
 
 export function useProducts(params: {
@@ -69,7 +69,7 @@ export function useProducts(params: {
   topicId?: string;
 }): AsyncResult<PaginatedResponse<Product>> {
   return useAsync(
-    () => productApi.list(params),
+    () => listProducts(params),
     [params.page, params.limit, params.sourceType, params.topicId]
   );
 }
@@ -83,28 +83,28 @@ export function useTrending(params?: {
   limit?: number;
   period?: "daily" | "weekly" | "monthly";
 }): AsyncResult<PaginatedResponse<TrendingItem>> {
-  return useAsync(() => trendingApi.list(params), [params?.page, params?.limit, params?.period]);
+  return useAsync(() => listTrending(params), [params?.page, params?.limit, params?.period]);
 }
 
 export function useDailyTrending(params?: {
   page?: number;
   limit?: number;
 }): AsyncResult<PaginatedResponse<TrendingItem>> {
-  return useAsync(() => trendingApi.daily(params), [params?.page, params?.limit]);
+  return useAsync(() => getDailyTrending(params), [params?.page, params?.limit]);
 }
 
 export function useWeeklyTrending(params?: {
   page?: number;
   limit?: number;
 }): AsyncResult<PaginatedResponse<TrendingItem>> {
-  return useAsync(() => trendingApi.weekly(params), [params?.page, params?.limit]);
+  return useAsync(() => getWeeklyTrending(params), [params?.page, params?.limit]);
 }
 
 export function useMonthlyTrending(params?: {
   page?: number;
   limit?: number;
 }): AsyncResult<PaginatedResponse<TrendingItem>> {
-  return useAsync(() => trendingApi.monthly(params), [params?.page, params?.limit]);
+  return useAsync(() => getMonthlyTrending(params), [params?.page, params?.limit]);
 }
 
 // ============================================
@@ -118,8 +118,8 @@ export function useSearchProducts(
   return useAsync(
     () =>
       query
-        ? searchApi.products({ q: query, ...params })
-        : Promise.resolve({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 }),
+        ? searchProducts({ q: query, ...params })
+        : Promise.resolve({ items: [], total: 0, page: 1, limit: 10, totalPages: 0 }),
     [query, params?.page, params?.limit]
   );
 }
@@ -129,18 +129,18 @@ export function useSearchProducts(
 // ============================================
 
 export function useTopics(): AsyncResult<PaginatedResponse<Topic>> {
-  return useAsync(() => topicApi.list(), []);
+  return useAsync(() => listTopics(), []);
 }
 
 export function useTopic(slug: string): AsyncResult<Topic> {
-  return useAsync(() => topicApi.get(slug), [slug]);
+  return useAsync(() => getTopic(slug), [slug]);
 }
 
 export function useTopicProducts(
   slug: string,
   params?: { page?: number; limit?: number }
 ): AsyncResult<PaginatedResponse<Product>> {
-  return useAsync(() => topicApi.products(slug, params), [slug, params?.page, params?.limit]);
+  return useAsync(() => getTopicProducts(slug, params), [slug, params?.page, params?.limit]);
 }
 
 // ============================================

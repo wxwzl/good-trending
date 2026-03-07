@@ -6,7 +6,8 @@ import { ProductCard } from "@/components/features/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { searchApi, type Product } from "@/lib/api";
+import { searchProducts } from "@/api/search";
+import type { Product } from "@/api/types";
 
 interface SearchResponse {
   data: Product[];
@@ -16,11 +17,11 @@ interface SearchResponse {
   totalPages: number;
 }
 
-async function searchProducts(query: string, page: number = 1): Promise<SearchResponse> {
+async function fetchSearchResults(query: string, page: number = 1): Promise<SearchResponse> {
   try {
-    const result = await searchApi.products({ q: query, page });
+    const result = await searchProducts({ q: query, page });
     return {
-      data: result.data || [],
+      data: result.items || [],
       total: result.total || 0,
       page: result.page || 1,
       limit: result.limit || 10,
@@ -81,7 +82,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
   const t = await getTranslations();
 
   const currentPage = parseInt(page || "1", 10);
-  const searchResult = query ? await searchProducts(query, currentPage) : null;
+  const searchResult = query ? await fetchSearchResults(query, currentPage) : null;
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [

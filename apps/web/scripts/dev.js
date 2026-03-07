@@ -26,7 +26,8 @@ if (fs.existsSync(envDevPath)) {
 }
 
 // 先加载 .env.dev 环境变量，然后启动 Next.js
-const command = `npx dotenv -e ../../.env.dev -- next dev --turbopack --port ${port}`;
+const type = process.env.NEXT_PRIVATE_DEBUG_CACHE === "1" ? "start" : "dev";
+const command = `npx dotenv -e ../../.env.dev -- next ${type} --turbopack --port ${port}`;
 
 console.log(`[dev] 启动 Web 开发服务器: http://localhost:${port}`);
 

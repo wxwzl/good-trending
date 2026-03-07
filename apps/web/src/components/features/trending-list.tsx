@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ProductCard } from "./product-card";
-import { trendingApi, type TrendingItem } from "@/lib/api";
+import { listTrending } from "@/api/trending";
 import { useTranslations } from "next-intl";
+import { TrendingItem } from "@/api/types";
 
 interface TrendingListProps {
   initialItems: TrendingItem[];
@@ -44,7 +45,7 @@ export function TrendingList({
     setIsLoading(true);
     try {
       const nextPage = currentPage + 1;
-      const result = await trendingApi.list({
+      const result = await listTrending({
         period: getApiPeriod(period),
         page: nextPage,
         limit: 10,

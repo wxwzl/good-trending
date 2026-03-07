@@ -9,12 +9,13 @@ import { Link } from "@/i18n/routing";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generateProductMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { productApi, type Product } from "@/lib/api";
+import { getProductBySlug } from "@/api/product";
+import type { Product } from "@/api/types";
 import Image from "next/image";
 
 async function getProduct(slug: string): Promise<Product | null> {
   try {
-    const result = await productApi.getBySlug(slug);
+    const result = await getProductBySlug(slug);
     return result || null;
   } catch (error) {
     console.error("Failed to fetch product:", error);

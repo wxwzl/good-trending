@@ -9,7 +9,9 @@ import { SearchBar } from "@/components/features/search-bar";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { trendingApi, topicApi, type TrendingItem, type Topic } from "@/lib/api";
+import { listTrending } from "@/api/trending";
+import { listTopics } from "@/api/topic";
+import type { TrendingItem, Topic } from "@/api/types";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -43,14 +45,14 @@ export default async function HomePage({ params }: HomePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  // Fetch data from API using unified client
+  // Fetch data from API
   const [trendingResult, topicsResult] = await Promise.all([
-    trendingApi.list({ limit: 4 }),
-    topicApi.list({ limit: 4 }),
+    listTrending({ limit: 4 }),
+    listTopics({ limit: 4 }),
   ]);
 
-  const trendingProducts = trendingResult.data || [];
-  const featuredTopics = topicsResult.data || [];
+  const trendingProducts = trendingResult.items || [];
+  const featuredTopics = topicsResult.items || [];
 
   return (
     <div className="flex flex-col">

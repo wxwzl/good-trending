@@ -5,12 +5,13 @@ import { TopicCard } from "@/components/features/topic-card";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { topicApi, type Topic } from "@/lib/api";
+import { listTopics } from "@/api/topic";
+import type { Topic } from "@/api/types";
 
 async function getTopics(): Promise<Topic[]> {
   try {
-    const result = await topicApi.list();
-    return result.data || [];
+    const result = await listTopics();
+    return result.items || [];
   } catch (error) {
     console.error("Failed to fetch topics:", error);
     return [];

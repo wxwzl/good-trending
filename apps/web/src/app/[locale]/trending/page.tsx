@@ -7,7 +7,8 @@ import { TrendingList } from "@/components/features/trending-list";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { trendingApi, type TrendingItem } from "@/lib/api";
+import { listTrending } from "@/api/trending";
+import type { TrendingItem } from "@/api/types";
 
 // 将 URL 参数映射到 API 参数
 const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
@@ -18,7 +19,7 @@ const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
 
 async function getTrendingProducts(period?: string, page?: number) {
   const apiPeriod = period ? periodMap[period] || "daily" : "daily";
-  const result = await trendingApi.list({
+  const result = await listTrending({
     period: apiPeriod,
     page: page || 1,
     limit: 10,

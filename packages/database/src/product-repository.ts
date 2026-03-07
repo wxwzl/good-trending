@@ -3,7 +3,7 @@
  * 提供统一的商品入库、查询、slug生成等功能
  * 被 API、爬虫、调度器共享使用
  */
-import { eq, inArray, type InferSelectModel } from "drizzle-orm";
+import { eq, inArray, and, type InferSelectModel } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { db } from "./client";
 import { products, productTopics } from "./schema";
@@ -163,13 +163,32 @@ export async function generateUniqueSlug(
 }
 
 /**
- * 检查商品是否已存在（基于 sourceId）
+ * 检查商品是否已存在（基于 sourceType + sourceId 组合）
  */
-export async function checkProductExists(sourceId: string): Promise<boolean> {
+export async function checkProductExists(
+  sourceType: SourceType,
+  sourceId: string
+): Promise<boolean> {
   const existing = await db
     .select({ id: products.id })
     .from(products)
-    .where(eq(products.sourceId, sourceId))
+    .where(and(eq(products.sourceType, sourceType), eq(products.sourceId, sourceId)))
+    .limit(1);
+
+  return existing.length > 0;
+}
+
+/**
+ * 检查 sourceUrl 是否已存在（基于 sourceType + sourceUrl 组合）
+ */
+export async function checkSourceUrlExists(
+  sourceType: SourceType,
+  sourceUrl: string
+): Promise<boolean> {
+  const existing = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.sourceType, sourceType), eq(products.sourceUrl, sourceUrl)))
     .limit(1);
 
   return existing.length > 0;
@@ -177,15 +196,21 @@ export async function checkProductExists(sourceId: string): Promise<boolean> {
 
 /**
  * 创建单个商品
- * 如果 sourceId 已存在，则跳过
+ * 如果 (sourceType, sourceId) 或 (sourceType, sourceUrl) 组合已存在，则跳过
  *
  * @param input 商品输入数据
  * @returns 创建的商品，如果已存在则返回 null
  */
 export async function createProduct(input: CreateProductInput): Promise<Product | null> {
-  // 检查是否已存在
-  const exists = await checkProductExists(input.sourceId);
-  if (exists) {
+  // 检查 sourceId 是否已存在（基于 sourceType + sourceId 组合）
+  const idExists = await checkProductExists(input.sourceType, input.sourceId);
+  if (idExists) {
+    return null;
+  }
+
+  // 检查 sourceUrl 是否已存在（基于 sourceType + sourceUrl 组合）
+  const urlExists = await checkSourceUrlExists(input.sourceType, input.sourceUrl);
+  if (urlExists) {
     return null;
   }
 
@@ -272,13 +297,17 @@ export async function createProductsBatch(
 }
 
 /**
- * 根据 sourceId 列表批量检查商品是否存在
+ * 批量检查 sourceId 是否存在（基于 sourceType + sourceId 组合）
  * 用于批量导入前快速去重
  *
+ * @param sourceType 数据源类型
  * @param sourceIds sourceId 列表
  * @returns 已存在的 sourceId 集合
  */
-export async function getExistingSourceIds(sourceIds: string[]): Promise<Set<string>> {
+export async function getExistingSourceIds(
+  sourceType: SourceType,
+  sourceIds: string[]
+): Promise<Set<string>> {
   if (sourceIds.length === 0) {
     return new Set();
   }
@@ -292,7 +321,7 @@ export async function getExistingSourceIds(sourceIds: string[]): Promise<Set<str
     const rows = await db
       .select({ sourceId: products.sourceId })
       .from(products)
-      .where(inArray(products.sourceId, batch));
+      .where(and(eq(products.sourceType, sourceType), inArray(products.sourceId, batch)));
 
     for (const row of rows) {
       existing.add(row.sourceId);
@@ -303,10 +332,52 @@ export async function getExistingSourceIds(sourceIds: string[]): Promise<Set<str
 }
 
 /**
- * 根据 sourceId 查询商品
+ * 批量检查 sourceUrl 是否存在（基于 sourceType + sourceUrl 组合）
+ * 用于批量导入前快速去重
+ *
+ * @param sourceType 数据源类型
+ * @param sourceUrls sourceUrl 列表
+ * @returns 已存在的 sourceUrl 集合
  */
-export async function findProductBySourceId(sourceId: string): Promise<Product | null> {
-  const result = await db.select().from(products).where(eq(products.sourceId, sourceId)).limit(1);
+export async function getExistingSourceUrls(
+  sourceType: SourceType,
+  sourceUrls: string[]
+): Promise<Set<string>> {
+  if (sourceUrls.length === 0) {
+    return new Set();
+  }
+
+  // 分批查询避免 SQL 参数过多
+  const batchSize = 1000;
+  const existing = new Set<string>();
+
+  for (let i = 0; i < sourceUrls.length; i += batchSize) {
+    const batch = sourceUrls.slice(i, i + batchSize);
+    const rows = await db
+      .select({ sourceUrl: products.sourceUrl })
+      .from(products)
+      .where(and(eq(products.sourceType, sourceType), inArray(products.sourceUrl, batch)));
+
+    for (const row of rows) {
+      existing.add(row.sourceUrl);
+    }
+  }
+
+  return existing;
+}
+
+/**
+ * 根据 sourceType + sourceId 查询商品
+ */
+export async function findProductBySource(
+  sourceType: SourceType,
+  sourceId: string
+): Promise<Product | null> {
+  const result = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.sourceType, sourceType), eq(products.sourceId, sourceId)))
+    .limit(1);
 
   return result[0] ?? null;
 }

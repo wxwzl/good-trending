@@ -1,5 +1,5 @@
 {
-  "id": "91670c91-df72-4a16-8704-66b48f2d889a",
+  "id": "9ef672d3-c23c-4113-af8a-6a7f924e1111",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -440,6 +440,48 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "product_source_type_id_unique": {
+          "name": "product_source_type_id_unique",
+          "columns": [
+            {
+              "expression": "source_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "product_source_type_url_unique": {
+          "name": "product_source_type_url_unique",
+          "columns": [
+            {
+              "expression": "source_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_url",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -449,11 +491,6 @@
           "name": "product_slug_unique",
           "nullsNotDistinct": false,
           "columns": ["slug"]
-        },
-        "product_source_url_unique": {
-          "name": "product_source_url_unique",
-          "nullsNotDistinct": false,
-          "columns": ["source_url"]
         }
       },
       "policies": {},

@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { db, generateUniqueSlug } from '@good-trending/database';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
+import {
+  db,
+  createProduct,
+  type SourceType as DbSourceType,
+} from '@good-trending/database';
 import { products, productTopics, productTags } from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
 import { SourceType } from './dto/get-products.dto';
 import {
   ProductQueryOptions,
@@ -138,33 +145,29 @@ export class ProductRepository {
 
   /**
    * 创建商品
+   * 使用共享的数据库模块
+   * 如果 sourceId 已存在，抛出 ConflictException
    */
   async create(input: ProductCreateInput) {
-    // 生成 productId
-    const productId = createId();
+    const product = await createProduct({
+      name: input.name,
+      slug: input.slug,
+      description: input.description,
+      image: input.image,
+      price: input.price,
+      currency: input.currency,
+      sourceUrl: input.sourceUrl,
+      sourceId: input.sourceId,
+      sourceType: input.sourceType as DbSourceType,
+    });
 
-    // Auto-generate unique slug from name if not provided
-    const slug =
-      input.slug || (await generateUniqueSlug(input.name, productId));
+    if (product === null) {
+      throw new ConflictException(
+        `Product with sourceType ${input.sourceType} and sourceId ${input.sourceId} already exists`,
+      );
+    }
 
-    const result = await db
-      .insert(products)
-      .values({
-        id: productId,
-        name: input.name,
-        slug,
-        description: input.description,
-        image: input.image,
-        price: input.price?.toString(),
-        currency: input.currency ?? 'USD',
-        sourceUrl: input.sourceUrl,
-        sourceId: input.sourceId,
-        sourceType:
-          input.sourceType as (typeof SourceType)[keyof typeof SourceType],
-      })
-      .returning();
-
-    return result[0];
+    return product;
   }
 
   /**

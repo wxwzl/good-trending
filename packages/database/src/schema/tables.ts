@@ -33,7 +33,7 @@ export const products = pgTable(
     image: text("image"),
     price: decimal("price", { precision: 10, scale: 2 }),
     currency: text("currency").default("USD").notNull(),
-    sourceUrl: text("source_url").unique().notNull(),
+    sourceUrl: text("source_url").notNull(),
     sourceId: text("source_id").notNull(),
     sourceType: sourceTypeEnum("source_type").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -43,6 +43,8 @@ export const products = pgTable(
     index("product_source_idx").on(table.sourceType, table.sourceId),
     index("product_created_at_idx").on(table.createdAt),
     index("product_slug_idx").on(table.slug),
+    uniqueIndex("product_source_type_id_unique").on(table.sourceType, table.sourceId),
+    uniqueIndex("product_source_type_url_unique").on(table.sourceType, table.sourceUrl),
   ]
 );
 

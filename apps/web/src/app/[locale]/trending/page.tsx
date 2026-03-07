@@ -2,9 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
-import { ProductCard } from "@/components/features/product-card";
 import { TrendingFilters } from "@/components/features/trending-filters";
-import { Button } from "@/components/ui/button";
+import { TrendingList } from "@/components/features/trending-list";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
@@ -17,10 +16,11 @@ const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
   month: "monthly",
 };
 
-async function getTrendingProducts(period?: string) {
+async function getTrendingProducts(period?: string, page?: number) {
   const apiPeriod = period ? periodMap[period] || "daily" : "daily";
   const result = await trendingApi.list({
     period: apiPeriod,
+    page: page || 1,
     limit: 10,
   });
 
@@ -28,14 +28,14 @@ async function getTrendingProducts(period?: string) {
     data: result.items || [],
     total: result.total || 0,
     page: result.page || 1,
-    limit: result.limit || 20,
+    limit: result.limit || 10,
     totalPages: result.totalPages || 0,
   };
 }
 
 interface TrendingPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; page?: string }>;
 }
 
 export async function generateMetadata({ params }: TrendingPageProps): Promise<Metadata> {
@@ -59,11 +59,12 @@ export async function generateMetadata({ params }: TrendingPageProps): Promise<M
 
 export default async function TrendingPage({ params, searchParams }: TrendingPageProps) {
   const { locale } = await params;
-  const { period } = await searchParams;
+  const { period, page } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const trendingData = await getTrendingProducts(period);
+  const currentPage = parseInt(page || "1", 10);
+  const trendingData = await getTrendingProducts(period, currentPage);
   const lastUpdated = new Date().toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
@@ -116,41 +117,14 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
           <TrendingFilters />
         </nav>
 
-        {/* Product Grid */}
-        {trendingData.data.length > 0 ? (
-          <section aria-label="Trending products list">
-            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {trendingData.data.map((item) => (
-                <li key={item.productId}>
-                  <ProductCard
-                    product={{
-                      id: item.productId,
-                      name: item.productName,
-                      slug: item.productSlug || item.productId,
-                      image: item.productImage ?? undefined,
-                      price: item.productPrice ? parseFloat(item.productPrice) : undefined,
-                      currency: "USD",
-                      source: "amazon",
-                      trendingScore: item.score,
-                      rank: item.rank,
-                    }}
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">{t("trending.noResults")}</p>
-          </div>
-        )}
-
-        {/* Load More */}
-        {trendingData.totalPages > 1 && (
-          <div className="mt-12 flex justify-center">
-            <Button variant="outline">{t("actions.loadMore")}</Button>
-          </div>
-        )}
+        {/* Product Grid with Infinite Scroll */}
+        <TrendingList
+          initialItems={trendingData.data}
+          initialPage={currentPage}
+          totalPages={trendingData.totalPages}
+          period={period}
+          locale={locale}
+        />
       </Container>
     </div>
   );

@@ -17,6 +17,10 @@
     "share": "Share",
     "viewAll": "View All"
   },
+  "common": {
+    "loading": "Loading...",
+    "noMore": "No more data"
+  },
   "theme": {
     "title": "Theme",
     "light": "Light",

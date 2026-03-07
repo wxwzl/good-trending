@@ -268,6 +268,140 @@ export class GetProductsDto {
 }
 ```
 
+### 1.3 API 类型规范（强制）
+
+**所有接口的请求参数和响应参数类型必须使用和写在 `@good-trending/dto` 包中，禁止在 apps/api 项目中重复定义接口类型。**
+
+#### DTO 实现方式
+
+NestJS 的 DTO 类需要实现 `@good-trending/dto` 中的接口，并添加 Swagger 装饰器：
+
+```typescript
+// src/modules/product/dto/get-products.dto.ts
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  SourceType,
+  SortOrder,
+  type GetProductsRequest,
+} from '@good-trending/dto';
+
+// 重新导出枚举，以便其他模块可以继续从当前文件导入
+export { SourceType, SortOrder } from '@good-trending/dto';
+
+/**
+ * 获取商品列表 DTO
+ * 实现 @good-trending/dto 的 GetProductsRequest 接口
+ */
+export class GetProductsDto implements GetProductsRequest {
+  @ApiPropertyOptional({
+    description: '页码',
+    default: 1,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: '每页数量',
+    default: 10,
+    minimum: 1,
+    maximum: 100,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 10;
+
+  @ApiPropertyOptional({
+    description: '数据来源类型筛选',
+    enum: SourceType,
+    example: SourceType.X_PLATFORM,
+  })
+  @IsOptional()
+  @IsEnum(SourceType)
+  sourceType?: SourceType;
+}
+```
+
+```typescript
+// src/modules/product/dto/product-response.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  SourceType,
+  type ProductResponse,
+  type PaginatedProductsResponse,
+} from '@good-trending/dto';
+
+/**
+ * 商品响应 DTO
+ * 实现 @good-trending/dto 的 ProductResponse 接口
+ * 用于 Swagger 文档生成
+ */
+export class ProductResponseDto implements ProductResponse {
+  @ApiProperty({
+    description: '商品 ID',
+    example: 'clh1234567890abcdef',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: '商品名称',
+    example: 'Apple AirPods Pro 2',
+  })
+  name: string;
+
+  // ... 其他字段
+
+  @ApiProperty({
+    description: '数据来源类型',
+    enum: SourceType,
+    example: SourceType.X_PLATFORM,
+  })
+  sourceType: SourceType;
+
+  @ApiProperty({
+    description: '创建时间',
+    example: '2026-03-05T12:00:00.000Z',
+  })
+  createdAt: string;
+}
+```
+
+#### 类型转换注意事项
+
+服务层返回的数据需要转换为接口定义的类型（特别是 Date 类型需转为 ISO string）：
+
+```typescript
+// src/modules/product/product.service.ts
+private mapToResponse(product: Product): ProductResponse {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    // ...
+    sourceType: product.sourceType as SourceType,
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+  };
+}
+```
+
+#### 类型导入路径
+
+| 子路径                        | 说明                         | 示例                                                                   |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| `@good-trending/dto`          | 主入口，导出所有类型         | `import type { ProductResponse } from '@good-trending/dto'`            |
+| `@good-trending/dto/common`   | 公共类型（枚举、分页参数等） | `import { SourceType, Period } from '@good-trending/dto/common'`       |
+| `@good-trending/dto/request`  | 请求参数类型                 | `import type { GetProductsRequest } from '@good-trending/dto/request'` |
+| `@good-trending/dto/response` | 响应数据类型                 | `import type { ProductResponse } from '@good-trending/dto/response'`   |
+
 ---
 
 ## 2. 数据库规范
@@ -354,4 +488,4 @@ export const products = pgTable(
 
 ---
 
-_最后更新: 2026-03-04_
+_最后更新: 2026-03-07_

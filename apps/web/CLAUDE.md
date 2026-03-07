@@ -179,6 +179,71 @@ messages/
 
 ---
 
+## 5. API 类型规范
+
+### 5.1 使用 @good-trending/dto 包
+
+**所有 API 请求参数和响应参数类型必须使用 `@good-trending/dto` 包中定义的类型，禁止在项目中重复定义。**
+
+```typescript
+// ✅ 正确：从 @good-trending/dto 导入类型
+import type {
+  ProductResponse,
+  PaginatedProductsResponse,
+  GetProductsRequest,
+} from "@good-trending/dto";
+
+async function getProducts(params: GetProductsRequest): Promise<PaginatedProductsResponse> {
+  const response = await fetchApi<PaginatedProductsResponse>("/products", {
+    params,
+  });
+  return response;
+}
+
+// ❌ 错误：在项目中重复定义 API 类型
+interface Product {
+  id: string;
+  name: string;
+  // ...
+}
+
+interface GetProductsParams {
+  page?: number;
+  limit?: number;
+  // ...
+}
+```
+
+### 5.2 类型导入路径
+
+`@good-trending/dto` 包提供以下子路径导出：
+
+| 子路径                        | 说明                         | 示例                                                                   |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| `@good-trending/dto`          | 主入口，导出所有类型         | `import type { ProductResponse } from "@good-trending/dto"`            |
+| `@good-trending/dto/common`   | 公共类型（枚举、分页参数等） | `import { SourceType, Period } from "@good-trending/dto/common"`       |
+| `@good-trending/dto/request`  | 请求参数类型                 | `import type { GetProductsRequest } from "@good-trending/dto/request"` |
+| `@good-trending/dto/response` | 响应数据类型                 | `import type { ProductResponse } from "@good-trending/dto/response"`   |
+
+### 5.3 类型复用与别名
+
+如需为类型创建别名以保持向后兼容，使用 `type` 导出：
+
+```typescript
+// src/api/types.ts
+// 统一从 dto 包重新导出类型，供项目内部使用
+export type {
+  ProductResponse,
+  PaginatedProductsResponse,
+  // ...
+} from "@good-trending/dto/response";
+
+// 向后兼容的别名
+export type { ProductResponse as Product } from "@good-trending/dto/response";
+```
+
+---
+
 ## 参考
 
 - [项目代码宪法](../../CLAUDE.md)
@@ -187,4 +252,4 @@ messages/
 
 ---
 
-_最后更新: 2026-03-04_
+_最后更新: 2026-03-07_

@@ -2,6 +2,15 @@
  * 手动触发趋势数据生成
  * 直接执行，不依赖 BullMQ 队列
  */
+import { config } from "dotenv";
+import { resolve } from "path";
+
+// 加载环境变量（作为独立脚本运行时）
+const env = process.env.NODE_ENV || "development";
+const envFile = env === "production" ? ".env" : `.env.${env}`;
+config({ path: resolve(process.cwd(), "../../.env") });
+config({ path: resolve(process.cwd(), "../../", envFile) });
+
 import { db, products, trends, productHistories } from "@good-trending/database";
 import { eq, desc, and } from "drizzle-orm";
 import { count } from "drizzle-orm";

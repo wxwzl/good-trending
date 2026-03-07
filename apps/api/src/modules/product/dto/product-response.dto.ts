@@ -1,10 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SourceType } from './get-products.dto';
+import {
+  SourceType,
+  type ProductResponse,
+  type PaginatedProductsResponse,
+} from '@good-trending/dto';
 
 /**
  * 商品响应 DTO
+ * 实现 @good-trending/dto 的 ProductResponse 接口
+ * 用于 Swagger 文档生成
  */
-export class ProductResponseDto {
+export class ProductResponseDto implements ProductResponse {
   @ApiProperty({
     description: '商品 ID',
     example: 'clh1234567890abcdef',
@@ -70,20 +76,21 @@ export class ProductResponseDto {
     description: '创建时间',
     example: '2026-03-05T12:00:00.000Z',
   })
-  createdAt: Date;
+  createdAt: string;
 
   @ApiProperty({
     description: '更新时间',
     example: '2026-03-05T12:00:00.000Z',
   })
-  updatedAt: Date;
+  updatedAt: string;
 }
 
 /**
  * 分页商品响应 DTO
+ * 实现 @good-trending/dto 的 PaginatedProductsResponse 接口
  * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
-export class PaginatedProductResponseDto {
+export class PaginatedProductResponseDto implements PaginatedProductsResponse {
   @ApiProperty({
     description: '商品列表',
     type: [ProductResponseDto],

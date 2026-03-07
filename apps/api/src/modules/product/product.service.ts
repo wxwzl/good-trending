@@ -306,8 +306,8 @@ export class ProductService {
       sourceUrl: product.sourceUrl,
       sourceId: product.sourceId,
       sourceType: product.sourceType as SourceType,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
     };
   }
 }

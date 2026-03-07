@@ -1,0 +1,45 @@
+{
+  "name": "@good-trending/dto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "前后端共享的 API 请求和响应类型定义",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./request": {
+      "require": "./dist/request/index.js",
+      "types": "./dist/request/index.d.ts",
+      "import": "./dist/request/index.mjs"
+    },
+    "./response": {
+      "require": "./dist/response/index.js",
+      "types": "./dist/response/index.d.ts",
+      "import": "./dist/response/index.mjs"
+    },
+    "./common": {
+      "require": "./dist/common/index.js",
+      "types": "./dist/common/index.d.ts",
+      "import": "./dist/common/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3"
+  }
+}

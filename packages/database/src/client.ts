@@ -1,27 +1,17 @@
 /**
  * 数据库连接模块
- * 使用 dotenv 显式加载环境变量，确保在模块导入时可用
+ * 依赖已设置好的环境变量，不自行加载 .env 文件
+ * 调用方（scheduler/api）负责在启动时加载环境变量
  */
-import { config } from "dotenv";
-import { resolve } from "path";
-
-// 根据环境加载对应的 .env 文件
-// 优先级：.env.{NODE_ENV} > .env
-const env = process.env.NODE_ENV || "development";
-const isDev = env === "development";
-const envFile = env === "production" ? ".env" : `.env.${env}`;
-
-config({ path: resolve(__dirname, "../../../.env") });
-config({ path: resolve(__dirname, "../../../../.env") });
-// 加载环境特定的配置文件
-config({ path: resolve(__dirname, "../../../", envFile) });
-
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
 let pool: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
+
+const env = process.env.NODE_ENV || "development";
+const isDev = env === "development";
 
 /**
  * 数据库配置常量

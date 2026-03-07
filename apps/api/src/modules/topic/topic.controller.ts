@@ -16,6 +16,8 @@ import {
   GetTopicProductsDto,
   TopicResponseDto,
   TopicWithProductCountDto,
+  PaginatedTopicResponseDto,
+  PaginatedTopicProductsResponseDto,
 } from './dto/topic.dto';
 
 @ApiTags('topics')
@@ -35,8 +37,11 @@ export class TopicController {
   @ApiResponse({
     status: 200,
     description: '成功返回分类列表',
+    type: PaginatedTopicResponseDto,
   })
-  async getTopics(@Query() query: GetTopicsDto) {
+  async getTopics(
+    @Query() query: GetTopicsDto,
+  ): Promise<PaginatedTopicResponseDto> {
     return this.topicService.getTopics(query);
   }
 
@@ -86,6 +91,7 @@ export class TopicController {
   @ApiResponse({
     status: 200,
     description: '成功返回商品列表',
+    type: PaginatedTopicProductsResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -94,7 +100,7 @@ export class TopicController {
   async getProductsByTopic(
     @Param('slug') slug: string,
     @Query() query: GetTopicProductsDto,
-  ) {
+  ): Promise<PaginatedTopicProductsResponseDto> {
     return this.topicService.getProductsByTopic(slug, query);
   }
 

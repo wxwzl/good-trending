@@ -17,9 +17,11 @@ const getApiBaseUrl = (): string => {
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3015/api/v1";
 };
 
-interface FetchOptions extends RequestInit {
+export interface FetchOptions extends RequestInit {
   locale?: string;
-  revalidate?: number; // Next.js revalidate (秒)
+  next?: {
+    revalidate?: number; // Next.js revalidate (秒)
+  };
 }
 
 /**
@@ -44,7 +46,7 @@ export class ApiError extends Error {
  * @throws ApiError 请求失败时抛出
  */
 export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { locale = "en", revalidate, ...fetchOptions } = options;
+  const { locale = "en", ...fetchOptions } = options;
 
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}${endpoint}`;
@@ -59,12 +61,8 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
     },
   };
 
-  // 服务端渲染时添加 revalidate 选项
-  const nextOptions = revalidate ? { next: { revalidate } } : undefined;
-
   const response = await fetch(url, {
     ...requestInit,
-    ...nextOptions,
   });
 
   if (!response.ok) {

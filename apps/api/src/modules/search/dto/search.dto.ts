@@ -10,12 +10,19 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SourceType } from '../../product/dto/get-products.dto';
+import {
+  SourceType,
+  type SearchProductsRequest,
+  type SearchResultItem,
+  type SearchProductsResponse,
+  type SearchSuggestion,
+} from '@good-trending/dto';
 
 /**
  * 搜索查询 DTO
+ * 实现 @good-trending/dto 的 SearchProductsRequest 接口
  */
-export class SearchQueryDto {
+export class SearchQueryDto implements SearchProductsRequest {
   @ApiProperty({
     description: '搜索关键词',
     example: 'airpods',
@@ -69,8 +76,9 @@ export class SearchQueryDto {
 
 /**
  * 搜索结果项 DTO
+ * 实现 @good-trending/dto 的 SearchResultItem 接口
  */
-export class SearchResultItemDto {
+export class SearchResultItemDto implements SearchResultItem {
   @ApiProperty({
     description: '商品 ID',
     example: 'clh1234567890abcdef',
@@ -116,9 +124,10 @@ export class SearchResultItemDto {
 
 /**
  * 搜索结果响应 DTO
+ * 实现 @good-trending/dto 的 SearchProductsResponse 接口
  * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
-export class SearchResponseDto {
+export class SearchResponseDto implements SearchProductsResponse {
   @ApiProperty({
     description: '搜索结果列表',
     type: [SearchResultItemDto],
@@ -144,6 +153,12 @@ export class SearchResponseDto {
   limit: number;
 
   @ApiProperty({
+    description: '总页数',
+    example: 10,
+  })
+  totalPages: number;
+
+  @ApiProperty({
     description: '搜索关键词',
     example: 'airpods',
   })
@@ -152,8 +167,9 @@ export class SearchResponseDto {
 
 /**
  * 搜索建议 DTO
+ * 实现 @good-trending/dto 的 SearchSuggestion 接口
  */
-export class SearchSuggestionDto {
+export class SearchSuggestionDto implements SearchSuggestion {
   @ApiProperty({
     description: '建议关键词',
     example: 'airpods pro',

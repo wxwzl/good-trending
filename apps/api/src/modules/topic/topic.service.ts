@@ -7,6 +7,7 @@ import {
 import { db } from '@good-trending/database';
 import { topics, products, productTopics } from '@good-trending/database';
 import { eq, desc, count, inArray } from 'drizzle-orm';
+import { SourceType } from '@good-trending/dto';
 import {
   CreateTopicDto,
   UpdateTopicDto,
@@ -73,10 +74,12 @@ export class TopicService {
     const topicsWithCount = topicsData.map((topic) => ({
       ...topic,
       productCount: countMap.get(topic.id) ?? 0,
+      createdAt: topic.createdAt.toISOString(),
+      updatedAt: topic.updatedAt.toISOString(),
     }));
 
     return {
-      data: topicsWithCount,
+      items: topicsWithCount,
       total,
       page: safePage,
       limit: safeLimit,
@@ -112,6 +115,8 @@ export class TopicService {
     return {
       ...topic[0],
       productCount: productCountResult[0]?.count ?? 0,
+      createdAt: topic[0].createdAt.toISOString(),
+      updatedAt: topic[0].updatedAt.toISOString(),
     };
   }
 
@@ -169,13 +174,26 @@ export class TopicService {
 
     const total = totalResult[0]?.count ?? 0;
 
+    // 转换日期为字符串
+    const items = productsData.map((product) => ({
+      ...product,
+      sourceType: product.sourceType as SourceType,
+      createdAt:
+        product.createdAt instanceof Date
+          ? product.createdAt.toISOString()
+          : product.createdAt,
+      updatedAt:
+        product.updatedAt instanceof Date
+          ? product.updatedAt.toISOString()
+          : product.updatedAt,
+    }));
+
     return {
-      data: productsData,
+      items,
       total,
       page: safePage,
       limit: safeLimit,
       totalPages: Math.ceil(total / safeLimit),
-      topic: topic[0],
     };
   }
 
@@ -217,7 +235,12 @@ export class TopicService {
       })
       .returning();
 
-    return result[0];
+    return {
+      ...result[0],
+      productCount: 0,
+      createdAt: result[0].createdAt.toISOString(),
+      updatedAt: result[0].updatedAt.toISOString(),
+    };
   }
 
   /**
@@ -253,6 +276,17 @@ export class TopicService {
       .where(eq(topics.id, topic[0].id))
       .returning();
 
-    return result[0];
+    // 获取商品数量
+    const productCountResult = await db
+      .select({ count: count() })
+      .from(productTopics)
+      .where(eq(productTopics.topicId, result[0].id));
+
+    return {
+      ...result[0],
+      productCount: productCountResult[0]?.count ?? 0,
+      createdAt: result[0].createdAt.toISOString(),
+      updatedAt: result[0].updatedAt.toISOString(),
+    };
   }
 }

@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
 import { ProductCard } from "@/components/features/product-card";
 import { Link } from "@/i18n/routing";
-import { generatePageMetadata, baseUrl } from "@/lib/seo";
+import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { getTopic, getTopicProducts, listTopics } from "@/api/topic";
 import type { Topic, Product } from "@/api/types";
@@ -40,10 +40,12 @@ interface TopicPageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const result = await listTopics();
 
-  return (result.items || []).map((topic) => ({
+  return (result.items || []).map((topic: Topic) => ({
     slug: topic.slug,
   }));
 }

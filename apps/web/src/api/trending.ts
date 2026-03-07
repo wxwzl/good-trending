@@ -24,7 +24,7 @@ export async function listTrending(
   if (params.period) searchParams.set("period", params.period);
 
   return fetchApi<PaginatedResponse<TrendingItem>>(`/trending?${searchParams}`, {
-    revalidate: 300, // 5分钟缓存
+    next: { revalidate: 300 }, // 5分钟缓存
   });
 }
 

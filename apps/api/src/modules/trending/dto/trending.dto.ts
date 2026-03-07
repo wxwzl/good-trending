@@ -8,20 +8,21 @@ import {
   IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  Period,
+  type GetTrendingRequest,
+  type TrendingItem,
+  type PaginatedTrendingResponse,
+} from '@good-trending/dto';
 
-/**
- * 时间范围枚举
- */
-export enum Period {
-  DAILY = 'daily',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly',
-}
+// 重新导出 Period，以便其他模块可以继续从当前文件导入
+export { Period } from '@good-trending/dto';
 
 /**
  * 获取趋势数据 DTO
+ * 实现 @good-trending/dto 的 GetTrendingRequest 接口
  */
-export class GetTrendingDto {
+export class GetTrendingDto implements GetTrendingRequest {
   @ApiPropertyOptional({
     description: '页码',
     default: 1,
@@ -81,8 +82,15 @@ export class GetTrendingDto {
 
 /**
  * 趋势项 DTO
+ * 实现 @good-trending/dto 的 TrendingItem 接口
  */
-export class TrendingItemDto {
+export class TrendingItemDto implements TrendingItem {
+  @ApiProperty({
+    description: '趋势记录 ID',
+    example: 'clh1234567890abcdef',
+  })
+  id: string;
+
   @ApiProperty({
     description: '排名',
     example: 1,
@@ -111,13 +119,13 @@ export class TrendingItemDto {
     description: '商品图片',
     example: 'https://example.com/image.jpg',
   })
-  productImage?: string;
+  productImage: string | null;
 
   @ApiPropertyOptional({
     description: '商品价格',
     example: '249.99',
   })
-  productPrice?: string;
+  productPrice: string | null;
 
   @ApiProperty({
     description: '趋势分数',
@@ -152,9 +160,10 @@ export class TrendingItemDto {
 
 /**
  * 分页趋势响应 DTO
+ * 实现 @good-trending/dto 的 PaginatedTrendingResponse 接口
  * 注意：Service 返回此结构，最终通过 TransformInterceptor 包装为 { data: { items, total, ... } }
  */
-export class PaginatedTrendingResponseDto {
+export class PaginatedTrendingResponseDto implements PaginatedTrendingResponse {
   @ApiProperty({
     description: '趋势列表',
     type: [TrendingItemDto],

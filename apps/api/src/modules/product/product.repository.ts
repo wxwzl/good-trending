@@ -154,7 +154,7 @@ export class ProductRepository {
       slug: input.slug,
       description: input.description,
       image: input.image,
-      price: input.price,
+      price: input.price ? parseFloat(input.price) : undefined,
       currency: input.currency,
       sourceUrl: input.sourceUrl,
       sourceId: input.sourceId,
@@ -182,7 +182,7 @@ export class ProductRepository {
     if (input.description !== undefined)
       updateData.description = input.description;
     if (input.image !== undefined) updateData.image = input.image;
-    if (input.price !== undefined) updateData.price = input.price.toString();
+    if (input.price !== undefined) updateData.price = parseFloat(input.price);
     if (input.currency !== undefined) updateData.currency = input.currency;
 
     const result = await db

@@ -2,7 +2,7 @@
  * Topic API
  * 分类相关接口
  */
-import { fetchApi } from "@/lib/fetch";
+import { fetchApi, FetchOptions } from "@/lib/fetch";
 import type { Topic, Product, PaginatedResponse } from "./types";
 
 interface ListTopicsParams {
@@ -25,8 +25,8 @@ export async function listTopics(params: ListTopicsParams = {}): Promise<Paginat
  * 获取单个分类
  * GET /api/v1/topics/:slug
  */
-export async function getTopic(slug: string): Promise<Topic> {
-  return fetchApi<Topic>(`/topics/${slug}`);
+export async function getTopic(slug: string, option?: FetchOptions): Promise<Topic> {
+  return fetchApi<Topic>(`/topics/${slug}`, option);
 }
 
 /**

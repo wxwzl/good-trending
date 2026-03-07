@@ -19,11 +19,11 @@ const path = require("path");
 require("dotenv").config();
 
 // 获取 NODE_ENV，默认为 development
-const nodeEnv = process.env.NODE_ENV || "development";
+const nodeEnv = process.env.APP_ENV || "development";
 
 // 定义环境文件映射
 const envFiles = {
-  development: ".env",
+  development: ".env.development",
   test: ".env.test",
   production: ".env.production",
 };

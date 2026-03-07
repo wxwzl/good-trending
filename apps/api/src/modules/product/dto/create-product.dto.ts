@@ -4,19 +4,16 @@ import {
   IsNotEmpty,
   IsOptional,
   IsUrl,
-  IsNumber,
   IsEnum,
   MaxLength,
-  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-
-import { SourceType } from './get-products.dto';
+import { SourceType, type CreateProductRequest } from '@good-trending/dto';
 
 /**
  * 创建商品 DTO
+ * 实现 @good-trending/dto 的 CreateProductRequest 接口
  */
-export class CreateProductDto {
+export class CreateProductDto implements CreateProductRequest {
   @ApiProperty({
     description: '商品名称',
     example: 'Apple AirPods Pro 2',
@@ -26,6 +23,16 @@ export class CreateProductDto {
   @IsNotEmpty()
   @MaxLength(500)
   name: string;
+
+  @ApiProperty({
+    description: '商品 slug',
+    example: 'apple-airpods-pro-2',
+    maxLength: 500,
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  slug: string;
 
   @ApiPropertyOptional({
     description: '商品描述',
@@ -45,14 +52,11 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: '商品价格',
-    example: 249.99,
-    minimum: 0,
+    example: '249.99',
   })
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  price?: number;
+  @IsString()
+  price?: string;
 
   @ApiPropertyOptional({
     description: '货币单位',

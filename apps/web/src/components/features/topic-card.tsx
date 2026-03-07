@@ -145,7 +145,7 @@ export function TopicCard({ topic, showCount = true }: TopicCardProps) {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
             {topic.name}
           </h3>
           {topic.description && (

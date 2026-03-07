@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@good-trending/database": "workspace:*",
+    "@good-trending/dto": "workspace:*",
     "@good-trending/shared": "workspace:*",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^10.3.0",

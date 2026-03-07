@@ -1,14 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsInt, Min, Max, IsEnum, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  SourceType,
+  SortOrder,
+  type GetProductsRequest,
+} from '@good-trending/dto';
 
-/**
- * 数据来源类型
- */
-export enum SourceType {
-  X_PLATFORM = 'X_PLATFORM',
-  AMAZON = 'AMAZON',
-}
+// 重新导出 SourceType 和 SortOrder，以便其他模块可以继续从当前文件导入
+export { SourceType, SortOrder } from '@good-trending/dto';
 
 /**
  * 排序字段
@@ -20,17 +20,10 @@ export enum SortField {
 }
 
 /**
- * 排序方向
- */
-export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
-}
-
-/**
  * 获取商品列表 DTO
+ * 实现 @good-trending/dto 的 GetProductsRequest 接口
  */
-export class GetProductsDto {
+export class GetProductsDto implements GetProductsRequest {
   @ApiPropertyOptional({
     description: '页码',
     default: 1,

@@ -59,7 +59,7 @@ export interface PaginationParams {
 
 // 分页响应
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
   limit: number;

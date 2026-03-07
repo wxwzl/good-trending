@@ -16,7 +16,7 @@ export interface ProductCreateInput {
   slug?: string;
   description?: string;
   image?: string;
-  price?: number;
+  price?: string;
   currency?: string;
   sourceUrl: string;
   sourceId: string;
@@ -27,6 +27,6 @@ export interface ProductUpdateInput {
   name?: string;
   description?: string;
   image?: string;
-  price?: number;
+  price?: string;
   currency?: string;
 }

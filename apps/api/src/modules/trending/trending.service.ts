@@ -9,9 +9,9 @@ import {
 import { eq, desc, and, gte, lte, count, inArray, sql } from 'drizzle-orm';
 import {
   GetTrendingDto,
-  Period,
   PaginatedTrendingResponseDto,
 } from './dto/trending.dto';
+import { Period } from '@good-trending/dto';
 import { CacheService, CacheKeys, CacheTTLConfig } from '../../common/cache';
 
 /**
@@ -112,12 +112,13 @@ export class TrendingService {
 
     const response: PaginatedTrendingResponseDto = {
       items: trendData.map((item, index) => ({
+        id: `${item.productId}-${item.date}`,
         rank: item.rank ?? (safePage - 1) * safeLimit + index + 1,
         productId: item.productId,
         productSlug: item.productSlug || item.productId,
         productName: item.productName,
-        productImage: item.productImage ?? undefined,
-        productPrice: item.productPrice ?? undefined,
+        productImage: item.productImage ?? null,
+        productPrice: item.productPrice ?? null,
         score: Number(item.score),
         mentions: item.mentions,
         views: item.views,

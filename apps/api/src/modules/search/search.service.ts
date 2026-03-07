@@ -8,7 +8,7 @@ import {
   SearchResultItemDto,
   SearchSuggestionDto,
 } from './dto/search.dto';
-import { SourceType } from '../product/dto/get-products.dto';
+import { SourceType } from '@good-trending/dto';
 
 /**
  * 搜索服务层
@@ -85,6 +85,7 @@ export class SearchService {
           total: 0,
           page: safePage,
           limit: safeLimit,
+          totalPages: 0,
           query: q,
         };
       }
@@ -145,12 +146,15 @@ export class SearchService {
       .from(products)
       .where(and(...searchConditions));
 
+    const total = totalResult[0]?.count ?? 0;
+
     // 返回包含 items 的对象，由 controller 统一包装为 { data: { data: items, total, ... } }
     return {
       items: data,
-      total: totalResult[0]?.count ?? 0,
+      total,
       page: safePage,
       limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
       query: sanitizedQuery,
     };
   }

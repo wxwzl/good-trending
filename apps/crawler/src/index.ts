@@ -9,9 +9,10 @@ import { resolve } from "path";
 // 优先级：.env.{NODE_ENV} > .env
 const env = process.env.NODE_ENV || "development";
 const envFile = env === "production" ? ".env" : `.env.${env}`;
-
-config({ path: resolve(__dirname, "../../../", envFile) });
 config({ path: resolve(__dirname, "../../../.env") });
+config({ path: resolve(__dirname, "../../../", envFile) });
+console.log(`Loaded environment variables from ${envFile}`);
+console.log(`process.env.POSTGRES_USER: ${process.env.POSTGRES_USER}`);
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -112,6 +113,51 @@ function generateSlug(name: string): string {
       .substring(0, 100)
   );
 }
+
+// 生成唯一 slug 的辅助函数
+// 如果 slug 已存在，则添加数字后缀
+// 如果 100 次都失败，使用 productId 作为 fallback
+async function generateUniqueSlug(
+  db: any,
+  name: string,
+  productId: string,
+  maxAttempts: number = 100
+): Promise<string> {
+  const baseSlug = generateSlug(name);
+
+  // 首先尝试基础 slug
+  const existing = await db
+    .select({ slug: products.slug })
+    .from(products)
+    .where(eq(products.slug, baseSlug))
+    .limit(1);
+
+  if (existing.length === 0) {
+    return baseSlug;
+  }
+
+  // 基础 slug 冲突，添加数字后缀
+  for (let i = 2; i <= maxAttempts; i++) {
+    const suffix = `-${i}`;
+    // 预留后缀空间，避免超过 100 字符
+    const slugWithSuffix = baseSlug.substring(0, 100 - suffix.length) + suffix;
+
+    const check = await db
+      .select({ slug: products.slug })
+      .from(products)
+      .where(eq(products.slug, slugWithSuffix))
+      .limit(1);
+
+    if (check.length === 0) {
+      return slugWithSuffix;
+    }
+  }
+
+  // 所有尝试都失败，使用 productId 作为 fallback
+  // 取 productId 前 8 字符作为后缀，确保唯一性
+  const idSuffix = `-${productId.substring(0, 8)}`;
+  return baseSlug.substring(0, 100 - idSuffix.length) + idSuffix;
+}
 import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({
@@ -193,11 +239,14 @@ async function saveProductsToDatabase(productDataList: ProductData[]): Promise<n
 
       const productId = createId();
 
+      // 生成唯一 slug
+      const slug = await generateUniqueSlug(db, productData.name, productId);
+
       // 插入新产品
       await db.insert(products).values({
         id: productId,
         name: productData.name,
-        slug: generateSlug(productData.name),
+        slug,
         description: productData.description,
         image: productData.image,
         price: productData.price ? productData.price.toString() : null,

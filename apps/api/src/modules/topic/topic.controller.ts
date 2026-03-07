@@ -13,6 +13,7 @@ import {
   CreateTopicDto,
   UpdateTopicDto,
   GetTopicsDto,
+  GetTopicProductsDto,
   TopicResponseDto,
   TopicWithProductCountDto,
 } from './dto/topic.dto';
@@ -92,7 +93,7 @@ export class TopicController {
   })
   async getProductsByTopic(
     @Param('slug') slug: string,
-    @Query() query: { page?: number; limit?: number },
+    @Query() query: GetTopicProductsDto,
   ) {
     return this.topicService.getProductsByTopic(slug, query);
   }

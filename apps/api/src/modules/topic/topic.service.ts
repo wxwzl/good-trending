@@ -143,6 +143,7 @@ export class TopicService {
       .select({
         id: products.id,
         name: products.name,
+        slug: products.slug,
         description: products.description,
         image: products.image,
         price: products.price,

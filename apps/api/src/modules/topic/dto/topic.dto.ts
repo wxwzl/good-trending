@@ -169,3 +169,32 @@ export class TopicWithProductCountDto extends TopicResponseDto {
   })
   productCount: number;
 }
+
+/**
+ * 获取分类商品列表 DTO
+ */
+export class GetTopicProductsDto {
+  @ApiPropertyOptional({
+    description: '页码',
+    default: 1,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: '每页数量',
+    default: 10,
+    minimum: 1,
+    maximum: 100,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 10;
+}

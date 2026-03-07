@@ -649,6 +649,10 @@ docs: update API documentation for search endpoint
 test: add integration tests for product service
 ```
 
+#### Commit 消息注意事项
+
+- **禁止添加 Co-Authored-By**: 不要在 commit 消息中添加 `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>` 或其他 AI 署名
+
 ### 4.3 常用命令
 
 ```bash

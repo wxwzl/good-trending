@@ -6,7 +6,7 @@
   "scripts": {
     "dev:api": "pnpm --filter @good-trending/api dev",
     "dev:web": "pnpm --filter @good-trending/web dev",
-    "dev:scheduler": "pnpm --filter @good-trending/scheduler dev && pnpm --filter @good-trending/crawler dev",
+    "dev:scheduler": "pnpm --filter @good-trending/scheduler dev",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "start": "turbo run start",

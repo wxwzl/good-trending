@@ -19,8 +19,8 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "dev": " cross-env NODE_ENV=development tsup --watch",
+    "build": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js build",
+    "dev": "cross-env NODE_ENV=development APP_ENV=development node scripts/run.js dev",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",

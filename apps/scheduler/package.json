@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
-    "build": "tsup",
+    "dev": "cross-env NODE_ENV=development APP_ENV=development node scripts/run.js dev",
+    "start": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js start",
+    "build": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js build",
     "worker": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",

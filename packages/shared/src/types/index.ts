@@ -1,83 +1,56 @@
-// 来源类型枚举
-export enum SourceType {
-  X_PLATFORM = "X_PLATFORM",
-  AMAZON = "AMAZON",
-}
+/**
+ * Shared types package
+ * @deprecated 推荐使用 @good-trending/dto 包中的类型定义
+ */
 
-// 商品基础类型
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  price?: number;
-  currency: string;
-  sourceUrl: string;
-  sourceId: string;
-  sourceType: SourceType;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// 从 @good-trending/dto 重新导出共享类型
+export {
+  SourceType,
+  Period,
+  SortOrder,
+  type PaginationParams,
+  type PaginatedResponse,
+  type ApiResponse,
+} from "@good-trending/dto/common";
 
-// 趋势记录类型
-export interface Trend {
-  id: string;
-  productId: string;
-  date: Date;
-  rank: number;
-  score: number;
-  mentions: number;
-  views: number;
-  likes: number;
-  sourceData?: Record<string, unknown>;
-  createdAt: Date;
-}
+// 从 @good-trending/dto 重新导出请求类型
+export type {
+  GetProductsRequest,
+  CreateProductRequest,
+  UpdateProductRequest,
+  GetTrendingRequest,
+  SearchProductsRequest,
+} from "@good-trending/dto/request";
 
-// 分类/Topics 类型
-export interface Topic {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  imageUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// 从 @good-trending/dto 重新导出响应类型
+export type {
+  ProductResponse as Product,
+  TrendingItem as Trend,
+  TopicResponse as Topic,
+  PaginatedProductsResponse,
+  PaginatedTrendingResponse,
+  PaginatedTopicsResponse,
+} from "@good-trending/dto/response";
 
-// 标签类型
+// ==== 以下类型是 shared 包特有的，仅在内部使用 ====
+
+/**
+ * 标签类型
+ * 用于商品标签系统（内部使用）
+ */
 export interface Tag {
   id: string;
   name: string;
   slug: string;
 }
 
-// 分页请求参数
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-}
-
-// 分页响应
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-// API 响应包装
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-// 爬虫日志类型
+/**
+ * 爬虫日志类型
+ * 用于爬虫执行记录（内部使用）
+ */
 export interface CrawlerLog {
   id: string;
-  sourceType: SourceType;
+  sourceType: import("@good-trending/dto/common").SourceType;
   status: "RUNNING" | "COMPLETED" | "FAILED";
   startTime: Date;
   endTime?: Date;

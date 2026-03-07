@@ -42,6 +42,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "@good-trending/dto": "workspace:*"
+  },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/node": "^25.3.3",

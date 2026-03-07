@@ -510,6 +510,10 @@ importers:
         version: 8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
 
   packages/shared:
+    dependencies:
+      '@good-trending/dto':
+        specifier: workspace:*
+        version: link:../dto
     devDependencies:
       '@eslint/js':
         specifier: ^9.18.0

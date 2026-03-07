@@ -284,6 +284,7 @@ export class ProductService {
   private mapToResponseDto(product: {
     id: string;
     name: string;
+    slug: string;
     description: string | null;
     image: string | null;
     price: string | null;
@@ -297,6 +298,7 @@ export class ProductService {
     return {
       id: product.id,
       name: product.name,
+      slug: product.slug,
       description: product.description ?? undefined,
       image: product.image ?? undefined,
       price: product.price ?? undefined,

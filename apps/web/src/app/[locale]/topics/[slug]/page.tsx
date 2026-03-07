@@ -39,13 +39,13 @@ interface TopicPageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-// export async function generateStaticParams() {
-//   const posts = await fetch('https://.../posts').then((res) => res.json())
+export async function generateStaticParams() {
+  const result = await topicApi.list();
 
-//   return posts.map((post) => ({
-//     slug: post.slug,
-//   }))
-// }
+  return (result.data || []).map((topic) => ({
+    slug: topic.slug,
+  }));
+}
 
 export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -134,7 +134,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
                   product={{
                     id: product.id,
                     name: product.name,
-                    slug: product.id,
+                    slug: product.slug,
                     image: product.image,
                     price: product.price ? parseFloat(product.price) : undefined,
                     currency: product.currency,

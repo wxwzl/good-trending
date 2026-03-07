@@ -17,6 +17,12 @@ export class ProductResponseDto {
   })
   name: string;
 
+  @ApiProperty({
+    description: '商品 slug',
+    example: 'apple-airpods-pro-2',
+  })
+  slug: string;
+
   @ApiPropertyOptional({
     description: '商品描述',
     example: 'Active Noise Cancellation wireless earbuds',

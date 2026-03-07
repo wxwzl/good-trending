@@ -4,6 +4,9 @@
   "private": true,
   "description": "商品趋势追踪平台 - 发现 X 平台和亚马逊的热门商品趋势",
   "scripts": {
+    "dev:api": "pnpm --filter @good-trending/api dev",
+    "dev:web": "pnpm --filter @good-trending/web dev",
+    "dev:scheduler": "pnpm --filter @good-trending/scheduler dev",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "start": "turbo run start",

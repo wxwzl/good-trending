@@ -97,12 +97,20 @@ async function triggerTrendingUpdate(source: string, productCount: number): Prom
 }
 
 // 生成 slug 的辅助函数
+// 支持 Unicode 字符（包括中文）
 function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .substring(0, 100);
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      // 将空格和特殊字符替换为 -
+      .replace(/[\s\p{P}\p{S}]+/gu, "-")
+      // 移除连续的 -
+      .replace(/-+/g, "-")
+      // 移除开头和结尾的 -
+      .replace(/^-|-$/g, "")
+      .substring(0, 100)
+  );
 }
 import { createLogger, format, transports } from "winston";
 

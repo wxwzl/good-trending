@@ -163,13 +163,21 @@ export class ProductRepository {
 
   /**
    * 生成 URL 友好的 slug
+   * 支持 Unicode 字符（包括中文）
    */
   private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 100); // Limit length
+    return (
+      name
+        .toLowerCase()
+        .trim()
+        // 将空格和特殊字符替换为 -
+        .replace(/[\s\p{P}\p{S}]+/gu, '-')
+        // 移除连续的 -
+        .replace(/-+/g, '-')
+        // 移除开头和结尾的 -
+        .replace(/^-|-$/g, '')
+        .substring(0, 100)
+    );
   }
 
   /**

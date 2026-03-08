@@ -1,0 +1,14 @@
+# 部署包日志文件
+logs/
+*.log
+
+# 本地环境文件
+.env.local
+.env.production.local
+
+# Node modules
+node_modules/
+
+# 临时文件
+*.tmp
+*.temp

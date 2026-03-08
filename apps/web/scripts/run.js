@@ -26,32 +26,34 @@ if (process.env.APP_ENV) {
   console.log(`[${command}] 使用外部设置的 APP_ENV: ${process.env.APP_ENV}`);
 }
 
-// 加载环境文件的优先级（从高到低）
+// 加载环境文件的优先级（从低到高，后加载的覆盖先加载的）
 const rootDir = path.resolve(__dirname, "../../..");
 const envFiles = [
-  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件 (使用 APP_ENV)
+  ".env",                   // 默认（最低优先级）
   ".env.local",             // 本地覆盖
   `.env.${appEnv}`,         // 特定环境 (使用 APP_ENV)
-  ".env",                   // 默认
+  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件
 ];
 
 // 加载环境变量
 const dotenv = require("dotenv");
-let loadedEnvFile = null;
+const loadedEnvFiles = [];
 
 for (const envFile of envFiles) {
   const envPath = path.resolve(rootDir, envFile);
   if (fs.existsSync(envPath)) {
     const result = dotenv.config({ path: envPath });
     if (!result.error) {
-      loadedEnvFile = envFile;
-      console.log(`[${command}] 已加载环境文件: ${envFile}`);
-      break;
+      loadedEnvFiles.push(envFile);
     }
   }
 }
 
-if (!loadedEnvFile) {
+const loadedEnvFile = loadedEnvFiles.length > 0 ? loadedEnvFiles.join(", ") : null;
+
+if (loadedEnvFiles.length > 0) {
+  console.log(`[${command}] 已加载环境文件: ${loadedEnvFiles.join(" -> ")}`);
+} else {
   console.log(`[${command}] 警告: 未找到环境文件，使用系统环境变量`);
 }
 

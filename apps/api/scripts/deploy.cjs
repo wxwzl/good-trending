@@ -138,7 +138,7 @@ async function main() {
 
   // 4. 构建项目
   log("INFO", "开始构建项目...");
-  if (!execCommand("node scripts/run.js build")) {
+  if (!execCommand("npx nest build")) {
     log("ERROR", "构建失败");
     process.exit(1);
   }
@@ -185,8 +185,8 @@ async function main() {
     private: true,
     type: "commonjs",
     scripts: {
-      start: "node dist/main.js",
-      "start:log": "node scripts/deploy-server.js",
+      start: "cross-env NODE_ENV=production APP_ENV=production node dist/main.js",
+      "start:log": "cross-env NODE_ENV=production APP_ENV=production node scripts/deploy-server.js",
     },
     dependencies: deployDependencies,
   };

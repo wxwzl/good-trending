@@ -5,10 +5,10 @@
   "author": "wxwzl",
   "private": true,
   "scripts": {
-    "build": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js build",
+    "build": "cross-env NODE_ENV=production APP_ENV=production nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "dev": "cross-env NODE_ENV=development APP_ENV=development node scripts/run.js dev",
-    "start": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js start",
+    "dev": "cross-env NODE_ENV=development APP_ENV=development nest start --watch",
+    "start": "cross-env NODE_ENV=production APP_ENV=production node dist/main",
     "deploy:build": "cross-env NODE_ENV=production APP_ENV=production node scripts/deploy.cjs",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",

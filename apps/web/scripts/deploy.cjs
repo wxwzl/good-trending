@@ -213,7 +213,36 @@ async function main() {
     }
   }
 
-  // standalone 模式下只需要 next 依赖用于启动服务器
+  // standalone 模式需要保留的生产依赖
+  // 这些依赖是 Next.js 运行时必须但不包含在 standalone 输出中的
+  const requiredDeps = [
+    "dotenv",
+    "styled-jsx",
+    "react",
+    "react-dom",
+    "next",
+    "@swc/helpers",
+    "client-only",
+    "caniuse-lite",
+    "postcss",
+  ];
+
+  const finalDependencies = {};
+  for (const dep of requiredDeps) {
+    if (deployDependencies[dep]) {
+      finalDependencies[dep] = deployDependencies[dep];
+    }
+  }
+
+  // 确保有默认值
+  if (!finalDependencies["dotenv"]) {
+    finalDependencies["dotenv"] = "^16.6.1";
+  }
+  // styled-jsx 是 Next.js 必需但不包含在 standalone 中的依赖
+  if (!finalDependencies["styled-jsx"]) {
+    finalDependencies["styled-jsx"] = "5.1.6";
+  }
+
   const deployPackageJson = {
     name: originalPackageJson.name,
     version: originalPackageJson.version,
@@ -223,11 +252,7 @@ async function main() {
       start: "node server.js",
       "start:log": "node scripts/deploy-server.js",
     },
-    // standalone 模式下，大部分依赖已经在 standalone/node_modules 中
-    // 只需要保留生产环境必需的依赖
-    dependencies: {
-      "dotenv": deployDependencies["dotenv"] || "^16.6.1",
-    },
+    dependencies: finalDependencies,
   };
   fs.writeFileSync(
     path.join(deployAppDir, "package.json"),

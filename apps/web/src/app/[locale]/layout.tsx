@@ -159,7 +159,7 @@ export default async function LocaleLayout({
         <WebSiteJsonLd locale={currentLocale} name={siteName} description={siteDescription} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col overflow-hidden`}
       >
         <NextTopLoader
           color="#2563eb"
@@ -180,8 +180,10 @@ export default async function LocaleLayout({
         >
           <NextIntlClientProvider messages={messages}>
             <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <main className="flex-1 overflow-y-auto overflow-x-hidden">
+              {children}
+              <Footer />
+            </main>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

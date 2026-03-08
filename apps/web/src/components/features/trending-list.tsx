@@ -29,13 +29,15 @@ export function TrendingList({
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // 映射 period 到 API 参数
-  const getApiPeriod = useCallback((p?: string): "daily" | "weekly" | "monthly" => {
+  const getApiPeriod = useCallback((p?: string): "daily" | "weekly" | "monthly" | undefined => {
     const map: Record<string, "daily" | "weekly" | "monthly"> = {
       day: "daily",
       week: "weekly",
       month: "monthly",
     };
-    return map[p || "day"] || "daily";
+    // 如果 p 为空，返回 undefined（对应 all）
+    if (!p) return undefined;
+    return map[p] || "daily";
   }, []);
 
   // 加载更多数据
@@ -45,8 +47,9 @@ export function TrendingList({
     setIsLoading(true);
     try {
       const nextPage = currentPage + 1;
+      const apiPeriod = getApiPeriod(period);
       const result = await listTrending({
-        period: getApiPeriod(period),
+        ...(apiPeriod && { period: apiPeriod }),
         page: nextPage,
         limit: 10,
       });
@@ -67,13 +70,20 @@ export function TrendingList({
 
   // 使用 Intersection Observer 监听滚动到底部
   useEffect(() => {
+    // 获取 main 滚动容器
+    const mainElement = document.querySelector("main");
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
           loadMore();
         }
       },
-      { threshold: 0.1, rootMargin: "100px" }
+      {
+        threshold: 0.1,
+        rootMargin: "100px",
+        root: mainElement, // 以 main 为滚动容器
+      }
     );
 
     const currentLoader = loaderRef.current;

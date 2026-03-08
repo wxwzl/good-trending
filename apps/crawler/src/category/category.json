@@ -1,0 +1,278 @@
+[
+  {
+    "name": "Alexa Skills",
+    "url": "https://www.amazon.com/gp/bestsellers/alexa-skills",
+    "categoryId": "alexa-skills",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Autos",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-autos",
+    "categoryId": "amazon-autos",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Devices",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-devices",
+    "categoryId": "amazon-devices",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Fresh",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-fresh",
+    "categoryId": "amazon-fresh",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Global Store",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-global-store",
+    "categoryId": "amazon-global-store",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Haul",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-haul",
+    "categoryId": "amazon-haul",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon One Medical",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-one-medical",
+    "categoryId": "amazon-one-medical",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Pharmacy",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-pharmacy",
+    "categoryId": "amazon-pharmacy",
+    "parentCategory": null
+  },
+  {
+    "name": "Amazon Resale",
+    "url": "https://www.amazon.com/gp/bestsellers/amazon-resale",
+    "categoryId": "amazon-resale",
+    "parentCategory": null
+  },
+  {
+    "name": "Appliances",
+    "url": "https://www.amazon.com/gp/bestsellers/appliances",
+    "categoryId": "appliances",
+    "parentCategory": null
+  },
+  {
+    "name": "Apps & Games",
+    "url": "https://www.amazon.com/gp/bestsellers/apps-games",
+    "categoryId": "apps-games",
+    "parentCategory": null
+  },
+  {
+    "name": "Arts, Crafts & Sewing",
+    "url": "https://www.amazon.com/gp/bestsellers/arts-crafts-sewing",
+    "categoryId": "arts-crafts-sewing",
+    "parentCategory": null
+  },
+  {
+    "name": "Audible Books & Originals",
+    "url": "https://www.amazon.com/gp/bestsellers/audible-books-originals",
+    "categoryId": "audible-books-originals",
+    "parentCategory": null
+  },
+  {
+    "name": "Automotive Parts & Accessories",
+    "url": "https://www.amazon.com/gp/bestsellers/automotive-parts-accessories",
+    "categoryId": "automotive-parts-accessories",
+    "parentCategory": null
+  },
+  {
+    "name": "Baby",
+    "url": "https://www.amazon.com/gp/bestsellers/baby",
+    "categoryId": "baby",
+    "parentCategory": null
+  },
+  {
+    "name": "Beauty & Personal Care",
+    "url": "https://www.amazon.com/gp/bestsellers/beauty-personal-care",
+    "categoryId": "beauty-personal-care",
+    "parentCategory": null
+  },
+  {
+    "name": "Books",
+    "url": "https://www.amazon.com/gp/bestsellers/books",
+    "categoryId": "books",
+    "parentCategory": null
+  },
+  {
+    "name": "Cardenas",
+    "url": "https://www.amazon.com/gp/bestsellers/cardenas",
+    "categoryId": "cardenas",
+    "parentCategory": null
+  },
+  {
+    "name": "CDs & Vinyl",
+    "url": "https://www.amazon.com/gp/bestsellers/cds-vinyl",
+    "categoryId": "cds-vinyl",
+    "parentCategory": null
+  },
+  {
+    "name": "Cell Phones & Accessories",
+    "url": "https://www.amazon.com/gp/bestsellers/cell-phones-accessories",
+    "categoryId": "cell-phones-accessories",
+    "parentCategory": null
+  },
+  {
+    "name": "Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/clothing-shoes-jewelry",
+    "categoryId": "clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Women's Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/womens-clothing-shoes-jewelry",
+    "categoryId": "womens-clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Men's Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/mens-clothing-shoes-jewelry",
+    "categoryId": "mens-clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Girl's Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/girls-clothing-shoes-jewelry",
+    "categoryId": "girls-clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Boy's Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/boys-clothing-shoes-jewelry",
+    "categoryId": "boys-clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Baby Clothing, Shoes & Jewelry",
+    "url": "https://www.amazon.com/gp/bestsellers/baby-clothing-shoes-jewelry",
+    "categoryId": "baby-clothing-shoes-jewelry",
+    "parentCategory": null
+  },
+  {
+    "name": "Collectibles & Fine Art",
+    "url": "https://www.amazon.com/gp/bestsellers/collectibles-fine-art",
+    "categoryId": "collectibles-fine-art",
+    "parentCategory": null
+  },
+  {
+    "name": "Computers",
+    "url": "https://www.amazon.com/gp/bestsellers/computers",
+    "categoryId": "computers",
+    "parentCategory": null
+  },
+  {
+    "name": "Credit and Payment Cards",
+    "url": "https://www.amazon.com/gp/bestsellers/credit-and-payment-cards",
+    "categoryId": "credit-and-payment-cards",
+    "parentCategory": null
+  },
+  {
+    "name": "Digital Music",
+    "url": "https://www.amazon.com/gp/bestsellers/digital-music",
+    "categoryId": "digital-music",
+    "parentCategory": null
+  },
+  {
+    "name": "Electronics",
+    "url": "https://www.amazon.com/gp/bestsellers/electronics",
+    "categoryId": "electronics",
+    "parentCategory": null
+  },
+  {
+    "name": "Garden & Outdoor",
+    "url": "https://www.amazon.com/gp/bestsellers/garden-outdoor",
+    "categoryId": "garden-outdoor",
+    "parentCategory": null
+  },
+  {
+    "name": "Gift Cards",
+    "url": "https://www.amazon.com/gp/bestsellers/gift-cards",
+    "categoryId": "gift-cards",
+    "parentCategory": null
+  },
+  {
+    "name": "Grocery & Gourmet Food",
+    "url": "https://www.amazon.com/gp/bestsellers/grocery-gourmet-food",
+    "categoryId": "grocery-gourmet-food",
+    "parentCategory": null
+  },
+  {
+    "name": "Handmade",
+    "url": "https://www.amazon.com/gp/bestsellers/handmade",
+    "categoryId": "handmade",
+    "parentCategory": null
+  },
+  {
+    "name": "Industrial & Scientific",
+    "url": "https://www.amazon.com/gp/bestsellers/industrial-scientific",
+    "categoryId": "industrial-scientific",
+    "parentCategory": null
+  },
+  {
+    "name": "Just for Prime",
+    "url": "https://www.amazon.com/gp/bestsellers/just-for-prime",
+    "categoryId": "just-for-prime",
+    "parentCategory": null
+  },
+  {
+    "name": "Kindle Store",
+    "url": "https://www.amazon.com/gp/bestsellers/kindle-store",
+    "categoryId": "kindle-store",
+    "parentCategory": null
+  },
+  {
+    "name": "Luggage & Travel Gear",
+    "url": "https://www.amazon.com/gp/bestsellers/luggage-travel-gear",
+    "categoryId": "luggage-travel-gear",
+    "parentCategory": null
+  },
+  {
+    "name": "Luxury Stores",
+    "url": "https://www.amazon.com/gp/bestsellers/luxury-stores",
+    "categoryId": "luxury-stores",
+    "parentCategory": null
+  },
+  {
+    "name": "Magazine Subscriptions",
+    "url": "https://www.amazon.com/gp/bestsellers/magazine-subscriptions",
+    "categoryId": "magazine-subscriptions",
+    "parentCategory": null
+  },
+  {
+    "name": "Movies & TV",
+    "url": "https://www.amazon.com/gp/bestsellers/movies-tv",
+    "categoryId": "movies-tv",
+    "parentCategory": null
+  },
+  {
+    "name": "Musical Instruments",
+    "url": "https://www.amazon.com/gp/bestsellers/musical-instruments",
+    "categoryId": "musical-instruments",
+    "parentCategory": null
+  },
+  {
+    "name": "Office Products",
+    "url": "https://www.amazon.com/gp/bestsellers/office-products",
+    "categoryId": "office-products",
+    "parentCategory": null
+  },
+  {
+    "name": "Pet Supplies",
+    "url": "https://www.amazon.com/gp/bestsellers/pet-supplies",
+    "categoryId": "pet-supplies",
+    "parentCategory": null
+  },
+  {
+    "name": "Premium Beauty",
+    "url": "https://www.amazon.com/gp/bestsellers/premium-beauty",
+    "categoryId": "premium-beauty",
+    "parentCategory": null
+  }
+]

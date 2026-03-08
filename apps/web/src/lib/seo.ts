@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from "next";
-import { locales, defaultLocale, type Locale } from "@/i18n/config";
+import { locales, defaultLocale, type Locale, localeMappings } from "@/i18n/config";
 
 export const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://goodtrending.com";
 
@@ -72,11 +72,10 @@ export function generateOpenGraph({
   modifiedTime,
   authors,
 }: OpenGraphOptions): Metadata["openGraph"] {
-  const ogLocale = locale === "zh" ? "zh_CN" : "en_US";
+  const ogLocale = localeMappings.ogLocale[locale];
   const alternateLocales = locales
     .filter((l) => l !== locale)
-    .map((l) => (l === "zh" ? "zh_CN" : "en_US"));
-  // TODO: 这些 locale 映射可以提取到配置中
+    .map((l) => localeMappings.ogLocale[l]);
 
   const og: Metadata["openGraph"] = {
     title,
@@ -133,8 +132,7 @@ export function generateAlternates({
 
   const languages: Record<string, string> = {};
   for (const locale of locales) {
-    const hrefLang = locale === "zh" ? "zh-CN" : "en-US";
-    // TODO: 这些 locale 映射可以提取到配置中
+    const hrefLang = localeMappings.hrefLang[locale];
     languages[hrefLang] = `${baseUrl}/${locale}${currentPath}`;
   }
 

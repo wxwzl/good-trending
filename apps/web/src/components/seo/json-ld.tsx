@@ -5,7 +5,7 @@
  * for SEO optimization. Supports WebSite, Product, ItemList, and BreadcrumbList schemas.
  */
 
-import { locales, type Locale } from "@/i18n/config";
+import { locales, type Locale, localeMappings } from "@/i18n/config";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://goodtrending.com";
 
@@ -26,7 +26,7 @@ export function WebSiteJsonLd({ locale, name, description }: WebSiteJsonLdProps)
     name,
     description,
     url: `${baseUrl}/${locale}`,
-    inLanguage: locale === "zh" ? "zh-CN" : "en-US", // TODO: locale 映射可以提取到配置中
+    inLanguage: localeMappings.inLanguage[locale],
     potentialAction: {
       "@type": "SearchAction",
       target: {

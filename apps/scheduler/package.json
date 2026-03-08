@@ -6,6 +6,7 @@
     "dev": "cross-env NODE_ENV=development APP_ENV=development node scripts/run.js dev",
     "start": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js start",
     "build": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js build",
+    "deploy:build": "cross-env NODE_ENV=production APP_ENV=production node scripts/deploy.cjs",
     "worker": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",

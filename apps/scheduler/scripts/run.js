@@ -52,6 +52,9 @@ if (!loadedEnvFile) {
 
 console.log(`[${command}] NODE_ENV=${nodeEnv}, APP_ENV=${appEnv}`);
 
+// 标记由 run.js 启动，避免 src/index.ts 重复加载环境变量
+process.env.RUN_BY_RUNJS = "true";
+
 // 构建命令
 let args;
 if (command === "dev") {

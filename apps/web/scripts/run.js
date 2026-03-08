@@ -18,7 +18,13 @@ if (!["dev", "build", "start"].includes(command)) {
 }
 
 // 确定环境 (APP_ENV 用于加载自定义环境文件, NODE_ENV 保持标准值给 Next.js)
+// 允许外部覆盖 APP_ENV，用于部署构建场景
 const appEnv = process.env.APP_ENV || (command === "dev" ? "development" : "production");
+
+// 如果外部设置了 APP_ENV，使用外部的值（用于部署构建）
+if (process.env.APP_ENV) {
+  console.log(`[${command}] 使用外部设置的 APP_ENV: ${process.env.APP_ENV}`);
+}
 
 // 加载环境文件的优先级（从高到低）
 const rootDir = path.resolve(__dirname, "../../..");

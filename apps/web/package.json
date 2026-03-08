@@ -6,6 +6,7 @@
     "dev": "cross-env NODE_ENV=development APP_ENV=development node scripts/run.js dev",
     "build": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js build",
     "start": "cross-env NODE_ENV=production APP_ENV=production node scripts/run.js start",
+    "deploy:build": "cross-env NODE_ENV=production APP_ENV=production node scripts/deploy.cjs",
     "clean": "rm -rf .next .turbo node_modules",
     "lint": "eslint",
     "lint:staged": "eslint --fix",

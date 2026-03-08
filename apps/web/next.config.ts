@@ -77,6 +77,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // cacheComponents: true,
   reactCompiler: true,
   // 开启 sourcemap 便于调试
@@ -90,21 +91,18 @@ const nextConfig: NextConfig = {
     ],
   },
   // API 代理配置 - 解决跨域问题
-  async rewrites() {
-    const apiUrl = (process.env.API_URL || "http://localhost:3015").replace(/\/api\/v1$/, "");
-    return [
-      {
-        // 匹配不带 locale 前缀的路径（优先匹配更具体的路径）
-        source: "/backend/api/v1/:path*",
-        destination: `${apiUrl}/api/v1/:path*`,
+  rewrites: isProd
+    ? undefined
+    : async function rewrites() {
+        const apiUrl = (process.env.API_URL || "http://localhost:3015").replace(/\/api\/v1$/, "");
+        return [
+          {
+            // 匹配不带 locale 前缀的路径（优先匹配更具体的路径）
+            source: "/backend/api/v1/:path*",
+            destination: `${apiUrl}/api/v1/:path*`,
+          },
+        ];
       },
-      {
-        // 匹配带 locale 前缀的路径
-        source: "/:locale/backend/api/v1/:path*",
-        destination: `${apiUrl}/api/v1/:path*`,
-      },
-    ];
-  },
   // 安全 Headers 配置
   async headers() {
     return [

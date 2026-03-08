@@ -3,17 +3,22 @@
  * BullMQ 任务调度系统入口
  */
 import { config } from "dotenv";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // 根据环境加载对应的 .env 文件
-// 优先级：.env.{NODE_ENV} > .env
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const env = process.env.NODE_ENV || "development";
-const envFile = env === "production" ? ".env" : `.env.${env}`;
-config({ path: resolve(__dirname, "../../../.env") });
-config({ path: resolve(__dirname, "../../../", envFile) });
-console.log(`Loaded environment variables from ${envFile}`);
+// 注意：开发时（pnpm run dev）run.js 已经加载了环境变量，这里不需要重复加载
+// 只在生产环境（pnpm run start）或独立运行时加载
+const isProduction = process.env.NODE_ENV === "production";
+const isRunByScript = process.env.RUN_BY_RUNJS === "true";
+
+if (isProduction || !isRunByScript) {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const envFile = isProduction ? ".env" : `.env.${process.env.NODE_ENV || "development"}`;
+  config({ path: resolve(__dirname, "../../../.env") });
+  config({ path: resolve(__dirname, "../../../", envFile) });
+  console.log(`[scheduler] Loaded environment variables from ${envFile}`);
+}
 
 import { logger } from "./utils/logger";
 import { closeRedisConnection, getRedisConnection } from "./queue/redis";
@@ -228,8 +233,4 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 }
-
-// 如果直接运行此文件，执行主函数
-if (require.main === module) {
-  main();
-}
+main();

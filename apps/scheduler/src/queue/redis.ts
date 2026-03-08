@@ -2,16 +2,9 @@
  * Redis 连接配置模块
  * 提供单例 Redis 连接，用于 BullMQ 队列
  */
-import { config } from "dotenv";
-import { resolve } from "path";
 import Redis from "ioredis";
 
-// 根据环境加载对应的 .env 文件
-// 优先级：.env.{NODE_ENV} > .env
-const env = process.env.NODE_ENV || "development";
-const envFile = env === "production" ? ".env" : `.env.${env}`;
-config({ path: resolve(__dirname, "../../../../.env") });
-config({ path: resolve(__dirname, "../../../../", envFile) });
+// 注意：环境变量由入口文件 (src/index.ts) 加载，这里不需要重复加载
 
 /**
  * Redis 连接配置

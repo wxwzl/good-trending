@@ -42,7 +42,7 @@ const loadedEnvFiles = [];
 for (const envFile of envFiles) {
   const envPath = path.resolve(rootDir, envFile);
   if (fs.existsSync(envPath)) {
-    const result = dotenv.config({ path: envPath });
+    const result = dotenv.config({ path: envPath, override: true });
     if (!result.error) {
       loadedEnvFiles.push(envFile);
     }

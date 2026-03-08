@@ -9,15 +9,36 @@ import { fileURLToPath } from "node:url";
 // 根据环境加载对应的 .env 文件
 // 注意：开发时（pnpm run dev）run.js 已经加载了环境变量，这里不需要重复加载
 // 只在生产环境（pnpm run start）或独立运行时加载
+// 优先级（从低到高，后加载的覆盖先加载的）
 const isProduction = process.env.NODE_ENV === "production";
 const isRunByScript = process.env.RUN_BY_RUNJS === "true";
 
 if (isProduction || !isRunByScript) {
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  const envFile = isProduction ? ".env" : `.env.${process.env.NODE_ENV || "development"}`;
-  config({ path: resolve(__dirname, "../../../.env") });
-  config({ path: resolve(__dirname, "../../../", envFile) });
-  console.log(`[scheduler] Loaded environment variables from ${envFile}`);
+  const appEnv = process.env.APP_ENV || process.env.NODE_ENV || "development";
+
+  const envFiles = [
+    ".env", // 默认
+    ".env.local", // 本地覆盖
+    `.env.${appEnv}`, // 特定环境
+    `.env.${appEnv}.local`, // 最高优先级
+  ];
+
+  const loadedEnvFiles: string[] = [];
+  for (const envFile of envFiles) {
+    const result = config({ path: resolve(__dirname, "../../../", envFile), override: true });
+    if (!result.error) {
+      loadedEnvFiles.push(envFile);
+    }
+  }
+
+  if (loadedEnvFiles.length > 0) {
+    console.log(`[scheduler] Loaded environment files: ${loadedEnvFiles.join(" -> ")}`);
+  } else {
+    console.log(
+      "[scheduler] Warning: No environment file found, using system environment variables"
+    );
+  }
 }
 
 import { logger } from "./utils/logger";

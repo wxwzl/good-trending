@@ -48,13 +48,43 @@ const deployAppDir = path.join(deployDir, "app", "web");
 const deployLogsDir = path.join(deployAppDir, "logs");
 const standaloneDir = path.join(webDir, ".next", "standalone", "apps", "web");
 
-// 需要复制的环境变量文件
-const envFilesToCopy = [
-  ".env",
-  ".env.production",
-  ".env.production.local",
-  ".env.local",
+// 确定环境 (APP_ENV 用于加载自定义环境文件, NODE_ENV 保持标准值给 Next.js)
+// 允许外部覆盖 APP_ENV，用于部署构建场景
+const appEnv = process.env.APP_ENV || "production";
+
+console.log(`appEnv: ${appEnv}`);
+
+const envFiles = [
+  ".env",                   // 默认（最低优先级）
+  ".env.local",             // 本地覆盖
+  `.env.${appEnv}`,         // 特定环境 (使用 APP_ENV)
+  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件
 ];
+
+// 加载环境变量
+const dotenv = require("dotenv");
+const loadedEnvFiles = [];
+
+for (const envFile of envFiles) {
+  const envPath = path.resolve(rootDir, envFile);
+  if (fs.existsSync(envPath)) {
+    // override: true 确保后面的文件覆盖前面的文件
+    const result = dotenv.config({ path: envPath, override: true });
+    if (!result.error) {
+      loadedEnvFiles.push(envFile);
+    }
+  }
+}
+
+const loadedEnvFile = loadedEnvFiles.length > 0 ? loadedEnvFiles.join(", ") : null;
+
+if (loadedEnvFiles.length > 0) {
+  console.log(` 已加载环境文件: ${loadedEnvFiles.join(" -> ")}`);
+} else {
+  console.log(` 警告: 未找到环境文件，使用系统环境变量`);
+}
+// 需要复制的环境变量文件
+const envFilesToCopy = [".env", ".env.production", ".env.production.local", ".env.local"];
 
 // 确保目录存在
 function ensureDir(dir) {
@@ -243,7 +273,9 @@ async function main() {
   if (!finalDependencies["styled-jsx"]) {
     finalDependencies["styled-jsx"] = "5.1.6";
   }
-
+  console.log(
+    `PORT=${process.env.PORT || 3010} API_URL=${process.env.API_URL} NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL} `
+  );
   const deployPackageJson = {
     name: originalPackageJson.name,
     version: originalPackageJson.version,

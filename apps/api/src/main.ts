@@ -6,32 +6,31 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // 根据 APP_ENV 加载对应的 .env 文件
-// 优先级（从高到低）：
-// 1. .env.{APP_ENV}.local
-// 2. .env.local
-// 3. .env.{APP_ENV}
-// 4. .env
+// 优先级（从低到高，后加载的覆盖先加载的）：
+// 1. .env（默认）
+// 2. .env.local（本地覆盖）
+// 3. .env.{APP_ENV}（特定环境）
+// 4. .env.{APP_ENV}.local（最高优先级）
 const appEnv = process.env.APP_ENV || process.env.NODE_ENV || 'development';
 const rootDir = resolve(__dirname, '../../../');
 
 const envFiles = [
-  `.env.${appEnv}.local`, // 最高优先级: 特定环境的本地文件
+  '.env', // 默认（最低优先级）
   '.env.local', // 本地覆盖
   `.env.${appEnv}`, // 特定环境
-  '.env', // 默认
+  `.env.${appEnv}.local`, // 最高优先级
 ];
 
-let loadedEnvFile = null;
+const loadedEnvFiles: string[] = [];
 for (const envFile of envFiles) {
-  const result = config({ path: resolve(rootDir, envFile) });
+  const result = config({ path: resolve(rootDir, envFile), override: true });
   if (!result.error) {
-    loadedEnvFile = envFile;
-    break;
+    loadedEnvFiles.push(envFile);
   }
 }
 
-if (loadedEnvFile) {
-  console.log(`[api] Loaded environment file: ${loadedEnvFile}`);
+if (loadedEnvFiles.length > 0) {
+  console.log(`[api] Loaded environment files: ${loadedEnvFiles.join(' -> ')}`);
 } else {
   console.log(
     '[api] Warning: No environment file found, using system environment variables',

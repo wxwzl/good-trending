@@ -51,26 +51,26 @@ const dotenv = require("dotenv");
 const envDir = process.env.ENV_DIR || path.resolve(__dirname, "../../../deploy");
 
 const envFiles = [
-  `.env.production.local`,
-  ".env.local",
-  `.env.production`,
-  ".env",
+  ".env", // 默认（最低优先级）
+  ".env.local", // 本地覆盖
+  `.env.production`, // 生产环境
+  `.env.production.local`, // 最高优先级
 ];
 
-let loadedEnvFile = null;
+const loadedEnvFiles = [];
 for (const envFile of envFiles) {
   const envPath = path.join(envDir, envFile);
   if (fs.existsSync(envPath)) {
-    const result = dotenv.config({ path: envPath });
+    const result = dotenv.config({ path: envPath, override: true });
     if (!result.error) {
-      loadedEnvFile = envFile;
-      log("INFO", `[deploy-server] 已加载环境文件: ${envFile}`);
-      break;
+      loadedEnvFiles.push(envFile);
     }
   }
 }
 
-if (!loadedEnvFile) {
+if (loadedEnvFiles.length > 0) {
+  log("INFO", `[deploy-server] 已加载环境文件: ${loadedEnvFiles.join(" -> ")}`);
+} else {
   log("WARN", `[deploy-server] 警告: 未找到环境文件，使用系统环境变量`);
 }
 

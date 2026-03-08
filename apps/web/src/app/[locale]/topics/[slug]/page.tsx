@@ -3,15 +3,16 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
-import { ProductCard } from "@/components/features/product-card";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { getTopic, getTopicProducts, listTopics } from "@/api/topic";
+import { TopicProductsList } from "@/components/features/topic-products-list";
 import type { Topic, Product } from "@/api/types";
 
 interface TopicWithProducts extends Topic {
   products: Product[];
+  totalPages: number;
 }
 
 async function getTopicBySlug(slug: string): Promise<TopicWithProducts | null> {
@@ -22,13 +23,14 @@ async function getTopicBySlug(slug: string): Promise<TopicWithProducts | null> {
       return null;
     }
 
-    // Get products for this topic
-    const productsResult = await getTopicProducts(slug, { limit: 20 });
+    // Get products for this topic (first page)
+    const productsResult = await getTopicProducts(slug, { page: 1, limit: 20 });
     const products = productsResult.items || [];
 
     return {
       ...topic,
       products,
+      totalPages: productsResult.totalPages,
     };
   } catch (error) {
     console.error("Failed to fetch topic:", error);
@@ -130,22 +132,12 @@ export default async function TopicPage({ params }: TopicPageProps) {
         {/* Products Grid */}
         {topic.products.length > 0 ? (
           <section aria-label="Products in this topic">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {topic.products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    slug: product.slug,
-                    image: product.image,
-                    price: product.price ? parseFloat(product.price) : undefined,
-                    currency: product.currency,
-                    source: product.sourceType === "X_PLATFORM" ? "x_platform" : "amazon",
-                  }}
-                />
-              ))}
-            </div>
+            <TopicProductsList
+              initialItems={topic.products}
+              initialPage={1}
+              totalPages={topic.totalPages}
+              topicSlug={slug}
+            />
           </section>
         ) : (
           <Card className="p-8 text-center">

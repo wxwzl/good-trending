@@ -216,6 +216,7 @@ async function main() {
   // standalone 模式需要保留的生产依赖
   // 这些依赖是 Next.js 运行时必须但不包含在 standalone 输出中的
   const requiredDeps = [
+    "cross-env",
     "dotenv",
     "styled-jsx",
     "react",
@@ -249,8 +250,8 @@ async function main() {
     private: true,
     type: "commonjs",
     scripts: {
-      start: "node server.js",
-      "start:log": "node scripts/deploy-server.js",
+      start: `cross-env NODE_ENV=production PORT=${process.env.PORT || 3010} API_URL=${process.env.API_URL} NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL} node server.js`,
+      "start:log": `cross-env NODE_ENV=production PORT=${process.env.PORT || 3010} API_URL=${process.env.API_URL} NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL} APP_ENV=production node scripts/deploy-server.js`,
     },
     dependencies: finalDependencies,
   };

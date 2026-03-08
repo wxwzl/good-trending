@@ -54,6 +54,44 @@
       }
     }
   },
+  "metadata": {
+    "home": {
+      "title": "Discover What's Trending",
+      "description": "Track the hottest products from X Platform and Amazon daily",
+      "keywords": "trending,hot,popular,X Platform,Amazon,discover"
+    },
+    "trending": {
+      "title": "Trending Products",
+      "description": "Discover the hottest trending products from X Platform and Amazon today",
+      "keywords": "trending,hot,popular,X Platform,Amazon"
+    },
+    "topics": {
+      "title": "Browse Topics",
+      "description": "Explore trending products by category",
+      "keywords": "topics,categories,products,trending"
+    },
+    "search": {
+      "title": "Search",
+      "description": "Search for trending products",
+      "keywords": "search,products,trending",
+      "titleWithQuery": "Search: {query}",
+      "descriptionWithQuery": "Search for \"{query}\" trending products"
+    },
+    "about": {
+      "title": "About",
+      "description": "Learn about Good Trending platform",
+      "keywords": "about,information,Good Trending"
+    },
+    "defaultTitle": "Good Trending - Discover What's Trending",
+    "titleTemplate": "%s | Good Trending",
+    "siteName": "Good Trending",
+    "siteDescription": "Track the hottest products from X Platform and Amazon daily",
+    "defaultKeywords": "trending,products,amazon,twitter,x platform,deals",
+    "ogImageAlt": "Good Trending - Discover What's Trending",
+    "locale": "en_US",
+    "alternateLocale": "zh_CN",
+    "hrefLang": "en-US"
+  },
   "trending": {
     "title": "Trending Products",
     "subtitle": "Discover what's hot today",

@@ -54,6 +54,44 @@
       }
     }
   },
+  "metadata": {
+    "home": {
+      "title": "发现热门趋势",
+      "description": "每日追踪 X 平台和亚马逊的热门商品",
+      "keywords": "热门,趋势,商品,X平台,亚马逊,发现"
+    },
+    "trending": {
+      "title": "热门商品",
+      "description": "发现今日 X 平台和亚马逊的热门商品趋势",
+      "keywords": "热门,趋势,商品,X平台,亚马逊"
+    },
+    "topics": {
+      "title": "浏览分类",
+      "description": "按分类探索热门商品",
+      "keywords": "分类,类别,商品,热门"
+    },
+    "search": {
+      "title": "搜索",
+      "description": "搜索热门商品",
+      "keywords": "搜索,商品,热门",
+      "titleWithQuery": "搜索: {query}",
+      "descriptionWithQuery": "搜索 \"{query}\" 相关的热门商品"
+    },
+    "about": {
+      "title": "关于",
+      "description": "了解好物趋势平台",
+      "keywords": "关于,介绍,好物趋势"
+    },
+    "defaultTitle": "好物趋势 - 发现热门趋势",
+    "titleTemplate": "%s | 好物趋势",
+    "siteName": "好物趋势",
+    "siteDescription": "每日追踪 X 平台和亚马逊的热门商品",
+    "defaultKeywords": "热门商品,趋势,亚马逊,X平台,好物推荐",
+    "ogImageAlt": "好物趋势 - 发现热门趋势",
+    "locale": "zh_CN",
+    "alternateLocale": "en_US",
+    "hrefLang": "zh-CN"
+  },
   "trending": {
     "title": "热门商品",
     "subtitle": "发现今日热门趋势",

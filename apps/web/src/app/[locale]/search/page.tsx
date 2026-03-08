@@ -45,22 +45,10 @@ export async function generateMetadata({
   const { locale } = await params;
   const { q: query } = await searchParams;
   const currentLocale = locale as Locale;
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
-  const title = query
-    ? locale === "zh"
-      ? `搜索: ${query}`
-      : `Search: ${query}`
-    : locale === "zh"
-      ? "搜索"
-      : "Search";
-
-  const description = query
-    ? locale === "zh"
-      ? `搜索 "${query}" 相关的热门商品`
-      : `Search for "${query}" trending products`
-    : locale === "zh"
-      ? "搜索热门商品"
-      : "Search for trending products";
+  const title = query ? t("search.titleWithQuery", { query }) : t("search.title");
+  const description = query ? t("search.descriptionWithQuery", { query }) : t("search.description");
 
   return generatePageMetadata({
     title,

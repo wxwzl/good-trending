@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, setRequestLocale, getTranslations } from "next-intl/server";
 import NextTopLoader from "nextjs-toploader";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
@@ -32,13 +32,12 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  const currentLocale = locale as Locale;
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
-  const title =
-    locale === "zh" ? "好物趋势 - 发现热门趋势" : "Good Trending - Discover What's Trending";
-  const description =
-    locale === "zh"
-      ? "每日追踪 X 平台和亚马逊的热门商品"
-      : "Track the hottest products from X Platform and Amazon daily";
+  const title = t("defaultTitle");
+  const description = t("siteDescription");
+  const siteName = t("siteName");
 
   const alternates: Record<string, string> = {};
   for (const l of locales) {
@@ -49,17 +48,14 @@ export async function generateMetadata({
 
   return {
     title: {
-      template: locale === "zh" ? "%s | 好物趋势" : "%s | Good Trending",
+      template: t("titleTemplate"),
       default: title,
     },
     description,
-    keywords:
-      locale === "zh"
-        ? ["热门商品", "趋势", "亚马逊", "X平台", "好物推荐"]
-        : ["trending", "products", "amazon", "twitter", "x platform", "deals"],
-    authors: [{ name: "Good Trending" }],
-    creator: "Good Trending",
-    publisher: "Good Trending",
+    keywords: t("defaultKeywords").split(","),
+    authors: [{ name: siteName }],
+    creator: siteName,
+    publisher: siteName,
     formatDetection: {
       email: false,
       address: false,
@@ -72,18 +68,18 @@ export async function generateMetadata({
     },
     openGraph: {
       type: "website",
-      locale: locale === "zh" ? "zh_CN" : "en_US",
-      alternateLocale: locale === "zh" ? ["en_US"] : ["zh_CN"],
+      locale: t("locale"),
+      alternateLocale: [t("alternateLocale")],
       title,
       description,
-      siteName: locale === "zh" ? "好物趋势" : "Good Trending",
+      siteName,
       url: `${baseUrl}/${locale}`,
       images: [
         {
           url: `${baseUrl}/og-image.png`,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: t("ogImageAlt"),
         },
       ],
     },
@@ -129,12 +125,10 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
-  // Site name and description for JSON-LD
-  const siteName = locale === "zh" ? "好物趋势" : "Good Trending";
-  const siteDescription =
-    locale === "zh"
-      ? "每日追踪 X 平台和亚马逊的热门商品"
-      : "Track the hottest products from X Platform and Amazon daily";
+  // Get translations for JSON-LD
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
+  const siteName = t("siteName");
+  const siteDescription = t("siteDescription");
 
   return (
     <html lang={locale} suppressHydrationWarning>

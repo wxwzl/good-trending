@@ -26,7 +26,7 @@ export function WebSiteJsonLd({ locale, name, description }: WebSiteJsonLdProps)
     name,
     description,
     url: `${baseUrl}/${locale}`,
-    inLanguage: locale === "zh" ? "zh-CN" : "en-US",
+    inLanguage: locale === "zh" ? "zh-CN" : "en-US", // TODO: locale 映射可以提取到配置中
     potentialAction: {
       "@type": "SearchAction",
       target: {

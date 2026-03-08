@@ -25,17 +25,14 @@ interface TopicsPageProps {
 export async function generateMetadata({ params }: TopicsPageProps): Promise<Metadata> {
   const { locale } = await params;
   const currentLocale = locale as Locale;
-
-  const title = locale === "zh" ? "浏览分类" : "Browse Topics";
-  const description =
-    locale === "zh" ? "按分类探索热门商品" : "Explore trending products by category";
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
   return generatePageMetadata({
-    title,
-    description,
+    title: t("topics.title"),
+    description: t("topics.description"),
     path: "/topics",
     locale: currentLocale,
-    keywords: locale === "zh" ? ["分类", "类别", "商品"] : ["topics", "categories", "products"],
+    keywords: t("topics.keywords").split(","),
   });
 }
 

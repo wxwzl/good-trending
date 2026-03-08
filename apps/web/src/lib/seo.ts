@@ -76,6 +76,7 @@ export function generateOpenGraph({
   const alternateLocales = locales
     .filter((l) => l !== locale)
     .map((l) => (l === "zh" ? "zh_CN" : "en_US"));
+  // TODO: 这些 locale 映射可以提取到配置中
 
   const og: Metadata["openGraph"] = {
     title,
@@ -133,6 +134,7 @@ export function generateAlternates({
   const languages: Record<string, string> = {};
   for (const locale of locales) {
     const hrefLang = locale === "zh" ? "zh-CN" : "en-US";
+    // TODO: 这些 locale 映射可以提取到配置中
     languages[hrefLang] = `${baseUrl}/${locale}${currentPath}`;
   }
 
@@ -177,7 +179,7 @@ export function generatePageMetadata({
     "twitter",
     "x platform",
     "deals",
-    locale === "zh" ? "热门商品" : "hot products",
+    "hot products",
   ];
 
   return {
@@ -258,7 +260,7 @@ export function generateProductMetadata({
   return {
     title,
     description: fullDescription,
-    keywords: [name, "product", "trending", locale === "zh" ? "商品" : "item"],
+    keywords: [name, "product", "trending", "item"],
     authors: [{ name: siteConfig.name }],
     metadataBase: new URL(baseUrl),
     alternates: generateAlternates({ currentPath: path, currentLocale: locale }),

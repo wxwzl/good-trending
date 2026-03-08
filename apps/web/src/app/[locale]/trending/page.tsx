@@ -40,19 +40,14 @@ interface TrendingPageProps {
 export async function generateMetadata({ params }: TrendingPageProps): Promise<Metadata> {
   const { locale } = await params;
   const currentLocale = locale as Locale;
-
-  const title = locale === "zh" ? "热门商品" : "Trending Products";
-  const description =
-    locale === "zh"
-      ? "发现今日 X 平台和亚马逊的热门商品趋势"
-      : "Discover the hottest trending products from X Platform and Amazon today";
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
   return generatePageMetadata({
-    title,
-    description,
+    title: t("trending.title"),
+    description: t("trending.description"),
     path: "/trending",
     locale: currentLocale,
-    keywords: locale === "zh" ? ["热门", "趋势", "商品"] : ["trending", "hot", "popular"],
+    keywords: t("trending.keywords").split(","),
   });
 }
 

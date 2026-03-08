@@ -13,19 +13,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const currentLocale = locale as Locale;
-
-  const title = locale === "zh" ? "关于" : "About";
-  const description =
-    locale === "zh"
-      ? "了解好物趋势 - 实时追踪 X 平台和亚马逊的热门商品"
-      : "Learn about Good Trending - Track trending products from X Platform and Amazon in real-time";
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
   return generatePageMetadata({
-    title,
-    description,
+    title: t("about.title"),
+    description: t("about.description"),
     path: "/about",
     locale: currentLocale,
-    keywords: locale === "zh" ? ["关于", "介绍"] : ["about", "information"],
+    keywords: t("about.keywords").split(","),
   });
 }
 

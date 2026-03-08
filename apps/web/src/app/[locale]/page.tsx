@@ -20,19 +20,14 @@ interface HomePageProps {
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
   const { locale } = await params;
   const currentLocale = locale as Locale;
-
-  const title = locale === "zh" ? "发现热门趋势" : "Discover What's Trending";
-  const description =
-    locale === "zh"
-      ? "每日追踪 X 平台和亚马逊的热门商品"
-      : "Track the hottest products from X Platform and Amazon daily";
+  const t = await getTranslations({ locale: currentLocale, namespace: "metadata" });
 
   return generatePageMetadata({
-    title,
-    description,
+    title: t("home.title"),
+    description: t("home.description"),
     path: "",
     locale: currentLocale,
-    keywords: locale === "zh" ? ["热门商品", "趋势", "发现"] : ["trending", "discover", "products"],
+    keywords: t("home.keywords").split(","),
   });
 }
 

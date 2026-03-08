@@ -47,4 +47,4 @@ test-results
 *.pem
 .vercel
 
-deploy
+deploy/app

@@ -98,10 +98,12 @@ export class SearchService {
     const results = await db
       .select({
         id: products.id,
+        slug: products.slug,
         name: products.name,
         description: products.description,
         image: products.image,
         price: products.price,
+        currency: products.currency,
         sourceType: products.sourceType,
       })
       .from(products)
@@ -127,10 +129,12 @@ export class SearchService {
 
       return {
         id: item.id,
+        slug: item.slug,
         name: item.name,
         description: item.description ?? undefined,
         image: item.image ?? undefined,
         price: item.price ?? undefined,
+        currency: item.currency ?? undefined,
         sourceType:
           item.sourceType as (typeof SourceType)[keyof typeof SourceType],
         relevanceScore,

@@ -3,7 +3,7 @@
  * 搜索相关接口
  */
 import { fetchApi } from "@/lib/fetch";
-import type { Product, PaginatedResponse } from "./types";
+import type { Product, PaginatedResponse, SearchResultItem } from "./types";
 
 interface SearchProductsParams {
   q: string;
@@ -17,11 +17,11 @@ interface SearchProductsParams {
  */
 export async function searchProducts(
   params: SearchProductsParams
-): Promise<PaginatedResponse<Product>> {
+): Promise<PaginatedResponse<SearchResultItem>> {
   const searchParams = new URLSearchParams();
   searchParams.set("q", params.q);
   if (params.page) searchParams.set("page", String(params.page));
   if (params.limit) searchParams.set("limit", String(params.limit));
 
-  return fetchApi<PaginatedResponse<Product>>(`/search?${searchParams}`);
+  return fetchApi<PaginatedResponse<SearchResultItem>>(`/search?${searchParams}`);
 }

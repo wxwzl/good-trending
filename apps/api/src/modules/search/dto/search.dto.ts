@@ -86,6 +86,12 @@ export class SearchResultItemDto implements SearchResultItem {
   id: string;
 
   @ApiProperty({
+    description: '商品 slug',
+    example: 'apple-airpods-pro-2',
+  })
+  slug: string;
+
+  @ApiProperty({
     description: '商品名称',
     example: 'Apple AirPods Pro 2',
   })
@@ -108,6 +114,12 @@ export class SearchResultItemDto implements SearchResultItem {
     example: '249.99',
   })
   price?: string;
+
+  @ApiPropertyOptional({
+    description: '货币单位',
+    example: 'USD',
+  })
+  currency?: string;
 
   @ApiProperty({
     description: '来源类型',

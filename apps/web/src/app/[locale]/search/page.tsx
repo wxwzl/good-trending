@@ -7,10 +7,10 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { searchProducts } from "@/api/search";
-import type { Product } from "@/api/types";
+import type { SearchResultItem } from "@/api/types";
 
 interface SearchResponse {
-  data: Product[];
+  data: SearchResultItem[];
   total: number;
   page: number;
   limit: number;
@@ -122,7 +122,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
                         product={{
                           id: product.id,
                           name: product.name,
-                          slug: product.id,
+                          slug: product.slug,
                           image: product.image,
                           price: product.price ? parseFloat(product.price) : undefined,
                           currency: product.currency,

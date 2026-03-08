@@ -152,6 +152,8 @@ export interface PaginatedTrendingResponse
 export interface SearchResultItem {
   /** 商品 ID */
   id: string;
+  /** 商品 slug */
+  slug: string;
   /** 商品名称 */
   name: string;
   /** 商品描述 */
@@ -160,6 +162,8 @@ export interface SearchResultItem {
   image?: string;
   /** 商品价格 */
   price?: string;
+  /** 货币单位 */
+  currency?: string;
   /** 来源类型 */
   sourceType: SourceType;
   /** 相关度分数 */

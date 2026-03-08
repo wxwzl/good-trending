@@ -2,13 +2,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
-import { TrendingFilters } from "@/components/features/trending-filters";
-import { TrendingList } from "@/components/features/trending-list";
+import { TrendingContainer } from "@/components/features/trending-container";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { listTrending } from "@/api/trending";
-import type { TrendingItem } from "@/api/types";
 
 // 将 URL 参数映射到 API 参数
 const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
@@ -113,17 +111,10 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
           </div>
         </header>
 
-        {/* Filters */}
-        <nav className="mb-8" aria-label="Time period filter">
-          <TrendingFilters />
-        </nav>
-
-        {/* Product Grid with Infinite Scroll */}
-        <TrendingList
+        {/* Client-side Container with Filters and List */}
+        <TrendingContainer
           initialItems={trendingData.data}
-          initialPage={currentPage}
-          totalPages={trendingData.totalPages}
-          period={period}
+          initialPeriod={period}
           locale={locale}
         />
       </Container>

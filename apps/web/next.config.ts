@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+const isProd = process.env.NODE_ENV === "production";
 
 /**
  * 安全 Headers 配置
@@ -78,6 +79,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // cacheComponents: true,
   reactCompiler: true,
+  // 开启 sourcemap 便于调试
+  productionBrowserSourceMaps: isProd ? false : true,
   images: {
     remotePatterns: [
       {
@@ -85,6 +88,22 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
+  },
+  // API 代理配置 - 解决跨域问题
+  async rewrites() {
+    const apiUrl = (process.env.API_URL || "http://localhost:3015").replace(/\/api\/v1$/, "");
+    return [
+      {
+        // 匹配不带 locale 前缀的路径（优先匹配更具体的路径）
+        source: "/backend/api/v1/:path*",
+        destination: `${apiUrl}/api/v1/:path*`,
+      },
+      {
+        // 匹配带 locale 前缀的路径
+        source: "/:locale/backend/api/v1/:path*",
+        destination: `${apiUrl}/api/v1/:path*`,
+      },
+    ];
   },
   // 安全 Headers 配置
   async headers() {

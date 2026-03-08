@@ -9,12 +9,12 @@
  * 客户端使用 NEXT_PUBLIC_API_URL
  */
 const getApiBaseUrl = (): string => {
-  // 服务端渲染 (Node.js 环境)
+  // 服务端渲染 (Node.js 环境) - 需要完整 URL
   if (typeof window === "undefined") {
     return process.env.API_URL || "http://localhost:3015/api/v1";
   }
-  // 浏览器环境
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3015/api/v1";
+  // 浏览器环境 - 使用相对路径，通过 Next.js rewrite 代理到后端
+  return process.env.NEXT_PUBLIC_API_URL || "/backend/api/v1";
 };
 
 export interface FetchOptions extends RequestInit {

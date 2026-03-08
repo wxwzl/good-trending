@@ -13,7 +13,13 @@ import {
   getMonthlyTrending,
 } from "@/api/trending";
 import { searchProducts } from "@/api/search";
-import type { Product, Topic, TrendingItem, PaginatedResponse } from "@/api/types";
+import type {
+  Product,
+  Topic,
+  TrendingItem,
+  PaginatedResponse,
+  SearchResultItem,
+} from "@/api/types";
 
 // ============================================
 // Generic hook for async data fetching
@@ -114,7 +120,7 @@ export function useMonthlyTrending(params?: {
 export function useSearchProducts(
   query: string,
   params?: { page?: number; limit?: number }
-): AsyncResult<PaginatedResponse<Product>> {
+): AsyncResult<PaginatedResponse<SearchResultItem>> {
   return useAsync(
     () =>
       query

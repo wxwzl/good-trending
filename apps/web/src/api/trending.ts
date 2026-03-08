@@ -29,6 +29,23 @@ export async function listTrending(
 }
 
 /**
+ * 获取热门趋势列表（客户端用，无缓存）
+ * GET /api/v1/trending
+ */
+export async function listTrendingClient(
+  params: ListTrendingParams = {}
+): Promise<PaginatedResponse<TrendingItem>> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.limit) searchParams.set("limit", String(params.limit));
+  if (params.period) searchParams.set("period", params.period);
+
+  return fetchApi<PaginatedResponse<TrendingItem>>(`/trending?${searchParams}`, {
+    cache: "no-store",
+  });
+}
+
+/**
  * 获取每日热门
  * GET /api/v1/trending/daily
  */

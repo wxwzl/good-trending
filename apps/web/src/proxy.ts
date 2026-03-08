@@ -8,5 +8,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  matcher: ["/", "/(en|zh)/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
+  // 排除 backend 路径，避免 API 代理被添加 locale 前缀
+  matcher: ["/", "/(en|zh)/:path*", "/((?!api|backend|_next|_vercel|.*\\..*).*)"],
 };

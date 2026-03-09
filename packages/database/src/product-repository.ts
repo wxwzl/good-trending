@@ -5,6 +5,7 @@
  */
 import { eq, inArray, and, type InferSelectModel } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+import { formatDate } from "@good-trending/shared";
 import { db } from "./client";
 import { products, productCategories, type SourceType } from "./schema";
 
@@ -229,7 +230,7 @@ export async function createProduct(input: CreateProductInput): Promise<Product 
       sourceUrl: input.sourceUrl,
       amazonId: input.sourceId,
       discoveredFrom: input.sourceType,
-      firstSeenAt: new Date().toISOString().split("T")[0],
+      firstSeenAt: formatDate(new Date()),
     })
     .returning();
 

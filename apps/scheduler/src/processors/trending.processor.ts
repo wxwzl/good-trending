@@ -4,6 +4,7 @@
  */
 import { Worker, Job } from "bullmq";
 import { createSchedulerLogger } from "../utils/logger";
+import { formatDate } from "@good-trending/shared";
 import { TrendingJobData, TrendingJobResult, QUEUE_NAMES } from "../queue";
 import { redisConnectionOptions } from "../queue/redis";
 
@@ -116,7 +117,7 @@ async function updateTrendingData(): Promise<number> {
 
   logger.info("Starting trending ranks generation...");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatDate(new Date());
   let totalUpdatedCount = 0;
 
   // 为每个周期生成榜单
@@ -253,7 +254,7 @@ async function calculateAllTrendingScores(): Promise<number> {
 
   logger.info("Starting TODAY trending score calculation...");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatDate(new Date());
 
   // 获取最近 30 天的商品
   const thirtyDaysAgo = new Date();

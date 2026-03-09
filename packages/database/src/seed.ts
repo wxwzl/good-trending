@@ -21,6 +21,7 @@ import {
   productHistories,
 } from "./schema";
 import { createId } from "@paralleldrive/cuid2";
+import { formatDate } from "@good-trending/shared";
 
 // 创建数据库连接
 const pool = new Pool({
@@ -253,7 +254,7 @@ async function seed() {
         return {
           id: createId(),
           productId: product.id,
-          date: date.toISOString().split("T")[0],
+          date: formatDate(date),
           rank: index + 1 + Math.floor(Math.random() * 3),
           score: Math.round(baseScore * 100) / 100,
           mentions: Math.floor(Math.random() * 1000) + 100,
@@ -270,7 +271,7 @@ async function seed() {
     const historyData = insertedProducts.map((product, index) => ({
       id: createId(),
       productId: product.id,
-      date: today.toISOString().split("T")[0],
+      date: formatDate(today),
       price: product.price,
       rank: index + 1,
       salesCount: Math.floor(Math.random() * 1000) + 100,

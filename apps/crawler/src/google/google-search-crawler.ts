@@ -599,7 +599,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
 
           // 访问亚马逊获取商品信息
           const productInfo = await this.extractAmazonProductInfo(amazonUrl);
-          if (productInfo) {
+          if (productInfo && !('error' in productInfo)) {
             seenAsins.add(asin);
             products.push({
               name: productInfo.name,
@@ -634,6 +634,88 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   }
 
   /**
+   * 解析短链接获取真实URL
+   * 支持 amzn.to 等短链接服务
+   */
+  private async resolveShortLink(shortUrl: string): Promise<string | null> {
+    try {
+      this.logger.info(`解析短链接: ${shortUrl}`);
+
+      // 使用页面请求获取重定向后的URL
+      const response = await this.page?.evaluate(async (url) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const resp = await fetch(url, {
+            method: 'HEAD',
+            redirect: 'manual',
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+          return resp.headers.get('location') || null;
+        } catch (e) {
+          return null;
+        }
+      }, shortUrl);
+
+      if (response) {
+        this.logger.info(`短链接解析成功: ${shortUrl} -> ${response}`);
+        return response;
+      }
+    } catch (error) {
+      this.logger.warn(`短链接解析失败 ${shortUrl}: ${error}`);
+    }
+    return null;
+  }
+
+  /**
+   * 展开 Reddit 帖子内容
+   * 点击 "Read more" 和 "View entire discussion" 按钮
+   */
+  private async expandRedditContent(): Promise<void> {
+    if (!this.page) return;
+
+    try {
+      // 点击所有 "Read more" 按钮
+      await this.page.evaluate(async () => {
+        const readMoreButtons = document.querySelectorAll(
+          'button[data-click-id="text"], button:has-text("Read more"), .text-neutral-content-weak'
+        );
+        for (const btn of Array.from(readMoreButtons)) {
+          if (btn.textContent?.includes("Read more")) {
+            (btn as HTMLElement).click();
+            await new Promise(r => setTimeout(r, 500));
+          }
+        }
+      });
+
+      // 点击 "View more comments" / "Continue this thread"
+      let moreCommentsExist = true;
+      let attempts = 0;
+      while (moreCommentsExist && attempts < 3) {
+        moreCommentsExist = await this.page.evaluate(() => {
+          const buttons = document.querySelectorAll(
+            'button:has-text("View more comments"), button:has-text("Continue this thread"), [data-testid="more-comments-button"]'
+          );
+          if (buttons.length > 0) {
+            (buttons[0] as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
+        if (moreCommentsExist) {
+          await this.delay(1000);
+          attempts++;
+        }
+      }
+    } catch (error) {
+      this.logger.warn(`展开 Reddit 内容失败: ${error}`);
+    }
+  }
+
+  /**
    * 从Reddit帖子中提取亚马逊商品链接
    * 处理多种链接格式：
    * - 直接亚马逊链接: amazon.com/dp/ASIN
@@ -649,6 +731,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
 
     // 等待页面加载（Reddit使用JavaScript渲染）
     await this.delay(3000);
+
+    // 展开所有 "Read more" 按钮
+    await this.expandRedditContent();
 
     // 提取所有链接
     const rawLinks: string[] = await this.page.evaluate(() => {
@@ -683,6 +768,15 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         });
       }
 
+      // 4. 查找评论中的链接
+      const commentLinks = document.querySelectorAll('[data-testid="comment"] a, .Comment a');
+      commentLinks.forEach((el) => {
+        const href = el.getAttribute("href") || "";
+        if (href && (href.includes("amazon") || href.includes("amzn"))) {
+          links.push(href);
+        }
+      });
+
       return links;
     });
 
@@ -694,6 +788,19 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       // 跳过已处理的
       if (processedLinks.has(link)) continue;
       processedLinks.add(link);
+
+      // 处理短链接 (amzn.to)
+      if (link.includes("amzn.to")) {
+        const resolvedUrl = await this.resolveShortLink(link);
+        if (resolvedUrl) {
+          const cleanUrl = this.normalizeAmazonUrl(resolvedUrl);
+          if (cleanUrl && !processedLinks.has(cleanUrl)) {
+            processedLinks.add(cleanUrl);
+            result.push(cleanUrl);
+          }
+        }
+        continue;
+      }
 
       // 解析链接
       try {
@@ -758,56 +865,91 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    */
   private async extractAmazonProductInfo(url: string): Promise<{
     name: string;
+    brand?: string;
     description?: string;
     price?: string;
     image?: string;
     rating?: string;
     reviewCount?: string;
+    availability?: string;
   } | null> {
     if (!this.page) return null;
 
-    // 检查是否被反爬虫阻止
-    const isBlocked = await this.checkForAntiBot();
-    if (isBlocked) {
-      this.logger.warn("检测到反爬虫阻止，等待后重试...");
-      await this.delay(10000); // 等待10秒
-    }
-
-    const success = await this.navigateWithRetry(url);
-    if (!success) return null;
-
-    // 等待页面加载
-    await this.delay(3000);
-
-    // 检查是否是验证码页面
-    const isCaptcha = await this.page.evaluate(() => {
-      return document.body.textContent?.includes("CAPTCHA") ||
-             document.body.textContent?.includes("captcha") ||
-             document.querySelector('form[action*="/errors/validateCaptcha"]') !== null;
-    });
-
-    if (isCaptcha) {
-      this.logger.error("遇到验证码页面，跳过此商品");
+    // 使用智能重试导航
+    const { success, antiBot } = await this.navigateWithSmartRetry(url, 3);
+    if (!success) {
+      if (antiBot) {
+        this.logger.error(`反爬虫阻止，跳过商品: ${url}`);
+      } else {
+        this.logger.error(`导航失败，跳过商品: ${url}`);
+      }
       return null;
     }
 
     return this.page.evaluate(() => {
-      // 商品名称
-      const nameEl = document.querySelector("#productTitle");
-      const name = nameEl?.textContent?.trim();
+      // 检查页面是否有效（不是错误页面）
+      const errorSelectors = [
+        '#g\ img', // 狗狗图片错误页
+        '[src*="error"]', // 错误图片
+        '.a-box-inner:has-text("not found")', // 商品未找到
+        '.a-box-inner:has-text("unavailable")', // 商品不可用
+      ];
+      for (const sel of errorSelectors) {
+        if (document.querySelector(sel)) {
+          return { error: 'page_error', name: '' };
+        }
+      }
+
+      // 商品名称 - 尝试多种选择器
+      let name: string | undefined;
+      const nameSelectors = [
+        '#productTitle',
+        '#ebooksProductTitle',
+        '.product-title',
+        'h1.a-size-large',
+        '[data-testid="product-title"]',
+      ];
+      for (const selector of nameSelectors) {
+        const el = document.querySelector(selector);
+        if (el?.textContent?.trim()) {
+          name = el.textContent.trim();
+          break;
+        }
+      }
 
       if (!name) return null;
 
-      // 价格 - 尝试多种选择器
+      // 品牌
+      let brand: string | undefined;
+      const brandSelectors = [
+        '#bylineInfo',
+        '.a-link-normal[href*="brand"]',
+        '[data-testid="brand"]',
+        'a[href*="field-brand"]',
+      ];
+      for (const selector of brandSelectors) {
+        const el = document.querySelector(selector);
+        if (el?.textContent?.trim()) {
+          brand = el.textContent.trim().replace('Brand: ', '').replace('Visit the ', '');
+          break;
+        }
+      }
+
+      // 价格 - 尝试更多选择器
       let price: string | undefined;
       const priceSelectors = [
+        '.a-price.a-text-price.a-size-medium.apexPriceToPay .a-offscreen', // 主要价格
         '.a-price .a-offscreen',
         '#priceblock_ourprice',
         '#priceblock_dealprice',
+        '#priceblock_saleprice',
         '.a-price-whole',
         '[data-a-color="price"] .a-offscreen',
         '.a-price-range',
         '.a-color-price',
+        '.a-text-price .a-offscreen',
+        '.kindle-price .a-offscreen', // Kindle价格
+        '[data-testid="price"]',
       ];
       for (const selector of priceSelectors) {
         const priceEl = document.querySelector(selector);
@@ -817,32 +959,64 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         }
       }
 
-      // 图片
+      // 库存状态
+      let availability: string | undefined;
+      const availabilitySelectors = [
+        '#availability span',
+        '.a-color-success',
+        '.a-color-state',
+        '[data-testid="availability-status"]',
+      ];
+      for (const selector of availabilitySelectors) {
+        const el = document.querySelector(selector);
+        if (el?.textContent?.trim()) {
+          const text = el.textContent.trim().toLowerCase();
+          if (text.includes('in stock') || text.includes('available')) {
+            availability = 'in_stock';
+            break;
+          } else if (text.includes('out of stock') || text.includes('unavailable')) {
+            availability = 'out_of_stock';
+            break;
+          }
+        }
+      }
+
+      // 图片 - 优先获取高分辨率
       let image: string | undefined;
       const imgSelectors = [
+        '#landingImage[data-old-hires]', // 高分辨率
         '#landingImage',
         '#imgBlkFront',
+        '#ebooksImgBlkFront',
         '#hiResImage',
         '[data-old-hires]',
         '#main-image',
         '.a-dynamic-image',
+        '.itemNo0.maintain-height img', // 另一种图片容器
       ];
       for (const selector of imgSelectors) {
         const imgEl = document.querySelector(selector);
-        const src = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-old-hires');
-        if (src && !src.includes("data:image")) {
-          image = src;
+        const src = imgEl?.getAttribute('data-old-hires') ||
+                    imgEl?.getAttribute('src') ||
+                    imgEl?.getAttribute('data-src');
+        if (src && !src.includes("data:image") && !src.includes("grey-pixel")) {
+          // 转换为高分辨率URL
+          image = src.replace(/_\w+_\./, '_SL1500_.'); // 尝试获取大图
           break;
         }
       }
 
-      // 商品描述 - 特性列表
+      // 商品描述 - 增强提取
       let description = '';
       const bulletSelectors = [
+        '#feature-bullets ul li span.a-list-item',
         '#feature-bullets ul li',
         '.a-unordered-list.a-nostyle li',
         '#productDescription p',
+        '#productDescription span',
         '[data-feature-name="productDescription"]',
+        '#bookDescription_feature_div', // 图书描述
+        '#aplus_feature_div', // A+内容
       ];
       for (const selector of bulletSelectors) {
         const elements = document.querySelectorAll(selector);
@@ -850,9 +1024,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
           const texts = Array.from(elements)
             .map(el => el.textContent?.trim())
             .filter(text => text && text.length > 10 && !text.includes("Make sure"))
-            .slice(0, 3);
+            .slice(0, 5);
           if (texts.length > 0) {
-            description = texts.join("; ").substring(0, 300);
+            description = texts.join("; ").substring(0, 500);
             break;
           }
         }
@@ -864,6 +1038,8 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         '[data-hook="average-star-rating"] .a-icon-alt',
         '.a-icon-alt[textContent*="out of"]',
         'span[data-hook="rating-out-of-text"]',
+        '[data-testid="reviews-average-rating"]',
+        '.a-size-base.a-color-base',
       ];
       for (const selector of ratingSelectors) {
         const ratingEl = document.querySelector(selector);
@@ -882,6 +1058,8 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         '[data-hook="total-review-count"]',
         'a[href*="#customerReviews"]',
         '.a-size-base.a-color-secondary',
+        '[data-testid="reviews-link"]',
+        '#acrCustomerReviewText',
       ];
       for (const selector of reviewSelectors) {
         const reviewEl = document.querySelector(selector);
@@ -894,35 +1072,82 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         }
       }
 
-      return { name, description, price, image, rating, reviewCount };
+      return { name, brand, description, price, image, rating, reviewCount, availability };
     });
   }
 
   /**
-   * 检查是否触发反爬虫
+   * 检查是否触发反爬虫 - 增强版
+   * 检测多种反爬虫标志
    */
-  private async checkForAntiBot(): Promise<boolean> {
-    if (!this.page) return false;
+  private async checkForAntiBot(): Promise<{ detected: boolean; type: string }> {
+    if (!this.page) return { detected: false, type: "" };
 
-    return this.page.evaluate(() => {
-      const pageContent = document.body?.textContent || "";
+    const indicators = [
+      { selector: 'form[action*="captcha"]', text: "", type: "captcha_form" },
+      { selector: 'h1', text: "Robot Check", type: "robot_check" },
+      { selector: 'h1', text: "Enter the characters you see below", type: "captcha" },
+      { selector: 'body', text: "To discuss automated access", type: "automated_access" },
+      { selector: 'title', text: "503", type: "service_unavailable" },
+      { selector: '.a-box-inner', text: "unusual traffic", type: "unusual_traffic" },
+      { selector: 'body', text: "Sorry, we just need to make sure", type: "verification" },
+      { selector: 'img[src*="captcha"]', text: "", type: "captcha_image" },
+      { selector: 'body', text: "Request throttled", type: "throttled" },
+      { selector: 'body', text: "Amazon.com", type: "page_title" },
+      { selector: '#productTitle', text: "", type: "product_page" },
+    ];
 
-      // 检查常见的反爬虫标志
-      const antiBotSignals = [
-        "robot",
-        "captcha",
-        "CAPTCHA",
-        "automated access",
-        "unusual traffic",
-        "verification",
-        "verify you are a human",
-        "pzo.y6xis3v5j",
-      ];
+    for (const { selector, text, type } of indicators) {
+      const found = await this.page.evaluate((sel, txt) => {
+        const el = document.querySelector(sel);
+        if (!txt) return !!el;
+        return el?.textContent?.includes(txt) || false;
+      }, selector, text);
 
-      return antiBotSignals.some(signal =>
-        pageContent.toLowerCase().includes(signal.toLowerCase())
-      );
-    });
+      if (found) {
+        this.logger.warn(`反爬虫检测: ${type}`);
+        return { detected: true, type };
+      }
+    }
+
+    return { detected: false, type: "" };
+  }
+
+  /**
+   * 智能重试导航（指数退避）
+   */
+  private async navigateWithSmartRetry(
+    url: string,
+    maxRetries = 3
+  ): Promise<{ success: boolean; antiBot: boolean }> {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const success = await this.navigateWithRetry(url);
+        if (!success) continue;
+
+        await this.delay(2000);
+
+        // 检查反爬虫
+        const { detected, type } = await this.checkForAntiBot();
+        if (detected) {
+          const delay = Math.pow(2, i) * 5000; // 5s, 10s, 20s
+          this.logger.warn(`检测到反爬虫 (${type})，等待 ${delay}ms 后重试...`);
+          await this.delay(delay);
+
+          // 尝试刷新页面
+          if (i < maxRetries - 1) {
+            continue;
+          }
+          return { success: false, antiBot: true };
+        }
+
+        return { success: true, antiBot: false };
+      } catch (error) {
+        this.logger.error(`导航失败 (尝试 ${i + 1}/${maxRetries}): ${error}`);
+      }
+    }
+
+    return { success: false, antiBot: false };
   }
 
   /**

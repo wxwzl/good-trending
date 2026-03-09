@@ -207,8 +207,8 @@ test.describe("Trending API", () => {
   });
 
   test("should_get_today_trending", async ({ request }) => {
-    // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/today`);
+    // Arrange & Act - API uses period query parameter
+    const response = await request.get(`${API_BASE}/api/v1/trending?period=TODAY`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
@@ -218,8 +218,8 @@ test.describe("Trending API", () => {
   });
 
   test("should_get_this_week_trending", async ({ request }) => {
-    // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/this-week`);
+    // Arrange & Act - API uses period query parameter
+    const response = await request.get(`${API_BASE}/api/v1/trending?period=THIS_WEEK`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
@@ -229,8 +229,8 @@ test.describe("Trending API", () => {
   });
 
   test("should_get_this_month_trending", async ({ request }) => {
-    // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/this-month`);
+    // Arrange & Act - API uses period query parameter
+    const response = await request.get(`${API_BASE}/api/v1/trending?period=THIS_MONTH`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
@@ -362,8 +362,8 @@ test.describe("Topics API", () => {
       const topicSlug = listData.data.items[0].slug;
       const updateData = { name: `Updated Topic ${Date.now()}` };
 
-      // Act - Use PUT method for updates
-      const response = await request.put(`${API_BASE}/api/v1/topics/${topicSlug}`, {
+      // Act - Use PATCH method for updates
+      const response = await request.patch(`${API_BASE}/api/v1/topics/${topicSlug}`, {
         data: updateData,
       });
 

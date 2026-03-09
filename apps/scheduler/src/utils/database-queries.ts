@@ -56,7 +56,6 @@ export async function getProducts(limit: number): Promise<ProductInfo[]> {
 
   logger.debug(`Fetching up to ${limit} products`);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await (
     db.select().from(products as any) as { limit: (n: number) => Promise<unknown[]> }
   ).limit(limit);
@@ -111,7 +110,6 @@ export async function getTodaySocialStats(statDate: string): Promise<any[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stats = productSocialStats as Record<string, any>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await db
     .select({
       productId: stats.productId,
@@ -157,7 +155,6 @@ export async function getProductCreateTimeMap(productIds: string[]): Promise<Map
 
   const { inArray } = await import("drizzle-orm");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await db
     .select({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

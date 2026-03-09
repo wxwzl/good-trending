@@ -84,11 +84,16 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       maxRetries: searchConfig.maxRetries ?? 3,
       timeout: searchConfig.timeout ?? 30000,
       proxy: searchConfig.proxy ?? "",
+      headers: searchConfig.headers ?? {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
       categoryConfig: {
         concurrency: searchConfig.categoryConfig?.concurrency ?? 1,
         maxResultsPerCategory: searchConfig.categoryConfig?.maxResultsPerCategory ?? 30,
         maxProductsPerCategory: searchConfig.categoryConfig?.maxProductsPerCategory ?? 10,
-        searchDelayRange: searchConfig.categoryConfig?.searchDelayRange ?? [2000, 5000],
+        // 增加延迟范围，降低被检测风险
+        searchDelayRange: searchConfig.categoryConfig?.searchDelayRange ?? [5000, 10000],
       },
       useEnglishResults: searchConfig.useEnglishResults ?? true,
       serpApiKey: searchConfig.serpApiKey ?? process.env.SERPAPI_KEY ?? "",
@@ -645,8 +650,10 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         this.logger.warn(`处理Reddit帖子失败 ${link.url}: ${error}`);
       }
 
-      // 延迟避免被封
-      await this.delay(3000);
+      // 增加延迟避免被封（随机 5-10 秒）
+      const delay = this.getRandomDelay();
+      this.logger.info(`等待 ${delay}ms 后继续...`);
+      await this.delay(delay);
     }
 
     return products;
@@ -754,8 +761,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       return [];
     }
 
-    // 等待页面加载（Reddit使用JavaScript渲染）
-    await this.delay(3000);
+    // 等待页面加载（Reddit使用JavaScript渲染）- 增加随机延迟
+    const pageLoadDelay = Math.floor(Math.random() * 3000) + 4000; // 4-7秒
+    await this.delay(pageLoadDelay);
 
     // 展开所有 "Read more" 按钮
     await this.expandRedditContent();

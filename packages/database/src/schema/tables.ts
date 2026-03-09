@@ -13,6 +13,7 @@ import {
   primaryKey,
   bigint,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 
 // ==================== 枚举 ====================
@@ -144,13 +145,13 @@ export const productAppearanceStats = pgTable(
       .references(() => products.id, { onDelete: "cascade" })
       .unique(),
     // 近7天出现位图 (7位，每天左移)
-    last7DaysBitmap: bigint("last_7_days_bitmap", { mode: "number" }).default(0).notNull(),
+    last7DaysBitmap: bigint("last_7_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
     // 近15天出现位图 (15位)
-    last15DaysBitmap: bigint("last_15_days_bitmap", { mode: "number" }).default(0).notNull(),
+    last15DaysBitmap: bigint("last_15_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
     // 近30天出现位图 (30位)
-    last30DaysBitmap: bigint("last_30_days_bitmap", { mode: "number" }).default(0).notNull(),
+    last30DaysBitmap: bigint("last_30_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
     // 近60天出现位图 (60位)
-    last60DaysBitmap: bigint("last_60_days_bitmap", { mode: "number" }).default(0).notNull(),
+    last60DaysBitmap: bigint("last_60_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
     // 上一次更新时间（用于滑动窗口计算）
     lastUpdateDate: date("last_update_date"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

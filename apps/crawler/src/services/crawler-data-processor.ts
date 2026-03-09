@@ -154,13 +154,13 @@ export async function saveCrawledProducts(
 
       // 初始化 Bitmap 统计
       await db.insert(productAppearanceStats).values({
-        productId,
-        last7DaysBitmap: 1n, // 今天出现
-        last15DaysBitmap: 1n,
-        last30DaysBitmap: 1n,
-        last60DaysBitmap: 1n,
+        productId: productId,
+        last7DaysBitmap: 1n as unknown as number,
+        last15DaysBitmap: 1n as unknown as number,
+        last30DaysBitmap: 1n as unknown as number,
+        last60DaysBitmap: 1n as unknown as number,
         lastUpdateDate: formatDate(productData.firstSeenAt),
-      });
+      } as any);
 
       savedCount++;
       newProductIds.push(productId);
@@ -259,17 +259,17 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
         newBitmap60 = newBitmap60 | 1n;
       }
 
-      // 更新数据库 - bigint 类型可以直接存储
+      // 更新数据库 - 使用类型断言
       await db
         .update(productAppearanceStats)
         .set({
-          last7DaysBitmap: newBitmap7,
-          last15DaysBitmap: newBitmap15,
-          last30DaysBitmap: newBitmap30,
-          last60DaysBitmap: newBitmap60,
+          last7DaysBitmap: newBitmap7 as unknown as number,
+          last15DaysBitmap: newBitmap15 as unknown as number,
+          last30DaysBitmap: newBitmap30 as unknown as number,
+          last60DaysBitmap: newBitmap60 as unknown as number,
           lastUpdateDate: today,
           updatedAt: new Date(),
-        })
+        } as any)
         .where(eq(productAppearanceStats.id, stat.id));
 
       updatedCount++;
@@ -369,11 +369,10 @@ export async function saveProductSocialStats(
 export async function saveCrawlerLog(log: CrawlerLogData): Promise<void> {
   try {
     await db.insert(crawlerLogs).values({
-      id: createId(),
       taskType: log.taskType,
       sourceType: log.sourceType,
       categoryId: log.categoryId || null,
-      status: log.status,
+      status: log.status as "RUNNING" | "COMPLETED" | "FAILED",
       startTime: log.startTime,
       endTime: log.endTime || null,
       duration: log.duration || 0,

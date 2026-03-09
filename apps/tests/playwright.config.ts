@@ -58,20 +58,6 @@ export default defineConfig({
       },
     },
   ],
-  webServer: isCI
-    ? undefined
-    : [
-        {
-          command: "pnpm --filter @good-trending/web dev",
-          url: "http://localhost:3000",
-          reuseExistingServer: !process.env.CI,
-          timeout: 120 * 1000,
-        },
-        {
-          command: "pnpm --filter @good-trending/api dev",
-          url: "http://localhost:3015/health",
-          reuseExistingServer: !process.env.CI,
-          timeout: 120 * 1000,
-        },
-      ],
+  // webServer disabled - tests assume servers are already running
+  // webServer: [...]
 });

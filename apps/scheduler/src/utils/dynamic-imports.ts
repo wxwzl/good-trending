@@ -48,6 +48,7 @@ export async function importDatabase(): Promise<any> {
     categories: db.categories,
     products: db.products,
     productSocialStats: db.productSocialStats,
+    productAppearanceStats: db.productAppearanceStats,
     trendRanks: db.trendRanks,
     getRedisClient: db.getRedisClient,
   };

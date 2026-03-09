@@ -8,6 +8,9 @@ import {
   getTodaySocialStats,
   getProductCreateTimeMap,
   getRecentProducts,
+  getProductAppearanceStats,
+  calculateAppearanceScore,
+  type AppearanceStats,
 } from "../../utils/database-queries.js";
 import { importDatabase } from "../../utils/dynamic-imports.js";
 import { TRENDING_CONFIG, PERIOD_TYPES } from "../../constants/index.js";
@@ -85,23 +88,30 @@ export function getSocialCountsByPeriod(
  * 计算趋势分数
  *
  * @description
- * 基于社交提及数据计算综合热门度分数：
+ * 基于社交提及数据和出现频率计算综合热门度分数：
  * 1. Reddit 提及数（权重 1.0）
  * 2. X 平台提及数（权重 0.8）
- * 3. 时间衰减：越新的商品分数越高
+ * 3. 出现频率：出现天数越多分数越高（权重 0.3）
+ * 4. 时间衰减：越新的商品分数越高
  *
  * @param redditCount - Reddit 提及数
  * @param xCount - X 平台提及数
  * @param createdAt - 商品创建时间
+ * @param appearanceScore - 出现频率得分 (0-1)
  * @returns 趋势分数（非负数）
  */
 export function calculateTrendingScore(
   redditCount: number,
   xCount: number,
-  createdAt: Date
+  createdAt: Date,
+  appearanceScore: number = 0
 ): number {
   // 基础分数：Reddit 提及数 + X 提及数 * 权重
-  let score = redditCount + xCount * TRENDING_CONFIG.X_MENTION_WEIGHT;
+  let baseScore = redditCount + xCount * TRENDING_CONFIG.X_MENTION_WEIGHT;
+
+  // 出现频率加成：出现越频繁，基础分数越高（最高 50% 加成）
+  const appearanceBonus = 1 + appearanceScore * 0.5;
+  let score = baseScore * appearanceBonus;
 
   // 时间衰减因子：越新的商品权重越高
   const daysSinceCreated = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -136,14 +146,22 @@ export async function generateRanksForPeriod(
   }
 
   const productIds = socialStats.map((s) => s.productId);
-  const productCreateTimeMap = await getProductCreateTimeMap(productIds);
+  const [productCreateTimeMap, appearanceStatsMap] = await Promise.all([
+    getProductCreateTimeMap(productIds),
+    getProductAppearanceStats(productIds),
+  ]);
 
   // 计算趋势分数并排序
   const rankedProducts = socialStats
     .map((stat) => {
       const { redditCount, xCount } = getSocialCountsByPeriod(period, stat as SocialStats);
       const createdAt = productCreateTimeMap.get(stat.productId) || new Date();
-      const score = calculateTrendingScore(redditCount, xCount, createdAt);
+
+      // 计算出现频率得分
+      const appearanceStats = appearanceStatsMap.get(stat.productId);
+      const appearanceScore = calculateAppearanceScore(appearanceStats, period);
+
+      const score = calculateTrendingScore(redditCount, xCount, createdAt, appearanceScore);
 
       return {
         productId: stat.productId,
@@ -275,8 +293,11 @@ export async function calculateAllTrendingScores(): Promise<number> {
 
   logger.info(`Found ${recentProducts.length} recent products to calculate`);
 
-  // 获取今天的社交统计数据
-  const socialStats = await getTodaySocialStats(today);
+  // 获取今天的社交统计数据和出现频率统计
+  const [socialStats, appearanceStatsMap] = await Promise.all([
+    getTodaySocialStats(today),
+    getProductAppearanceStats(recentProducts.map((p) => p.id)),
+  ]);
   const socialStatsMap = new Map(socialStats.map((s) => [s.productId, s]));
 
   // 计算每个商品的分数
@@ -284,7 +305,12 @@ export async function calculateAllTrendingScores(): Promise<number> {
     const stat = socialStatsMap.get(product.id);
     const redditCount = stat?.todayRedditCount || 0;
     const xCount = stat?.todayXCount || 0;
-    const score = calculateTrendingScore(redditCount, xCount, product.createdAt);
+
+    // 计算出现频率得分
+    const appearanceStats = appearanceStatsMap.get(product.id);
+    const appearanceScore = calculateAppearanceScore(appearanceStats, "TODAY");
+
+    const score = calculateTrendingScore(redditCount, xCount, product.createdAt, appearanceScore);
 
     return {
       productId: product.id,

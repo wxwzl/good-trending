@@ -1,5 +1,5 @@
 // Types - 从 @good-trending/dto 重新导出共享类型
-// 保留 Tag, CrawlerLog 等内部类型
+// 保留 Tag 等内部类型（CrawlerLog 已迁移到 apps/crawler）
 export * from "./types";
 
 // 注意：constants 和 utils 已清空，相关定义已迁移到各自应用中

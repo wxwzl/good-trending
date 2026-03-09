@@ -1,17 +1,2 @@
-/**
- * 爬虫日志类型
- * 用于爬虫执行记录（内部使用）
- */
-export interface CrawlerLog {
-  id: string;
-  sourceType: import("@good-trending/dto/common").SourceType;
-  status: "RUNNING" | "COMPLETED" | "FAILED";
-  startTime: Date;
-  endTime?: Date;
-  duration?: number;
-  itemsFound: number;
-  itemsSaved: number;
-  errors?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-}
+// Note: CrawlerLog 类型已统一使用 apps/crawler/src/types/crawler.types.ts 中的 CrawlerLogData
+// 请勿在此添加新的日志类型定义

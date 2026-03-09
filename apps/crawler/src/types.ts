@@ -65,28 +65,5 @@ export interface TrendData {
   sourceData?: Record<string, unknown>;
 }
 
-/**
- * 爬虫日志条目
- */
-export interface CrawlerLogEntry {
-  /** 爬虫 ID */
-  id: string;
-  /** 数据源类型 */
-  sourceType: SourceType;
-  /** 状态 */
-  status: "RUNNING" | "COMPLETED" | "FAILED";
-  /** 开始时间 */
-  startTime: Date;
-  /** 结束时间 */
-  endTime?: Date;
-  /** 耗时 (毫秒) */
-  duration?: number;
-  /** 发现的商品数 */
-  itemsFound: number;
-  /** 保存的商品数 */
-  itemsSaved: number;
-  /** 错误信息 */
-  errors?: string[];
-  /** 元数据 */
-  metadata?: Record<string, unknown>;
-}
+// Note: 爬虫日志类型已统一到 crawler.types.ts 中的 CrawlerLogData
+// 使用时请导入: import { CrawlerLogData } from "./types/crawler.types"

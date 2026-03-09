@@ -5,7 +5,7 @@
  * 包含所有 API 接口的请求参数类型
  */
 
-import { PaginationParams, Period, SourceType } from "../common";
+import { PaginationParams, SourceType } from "../common";
 
 // ============================================
 // Product 商品相关请求
@@ -16,9 +16,9 @@ import { PaginationParams, Period, SourceType } from "../common";
  */
 export interface GetProductsRequest extends PaginationParams {
   /** 数据来源筛选 */
-  sourceType?: SourceType;
+  discoveredFrom?: SourceType;
   /** 分类 ID 筛选 */
-  topicId?: string;
+  categoryId?: string;
 }
 
 /**
@@ -39,10 +39,10 @@ export interface CreateProductRequest {
   currency?: string;
   /** 来源 URL */
   sourceUrl: string;
-  /** 来源 ID */
-  sourceId: string;
-  /** 数据来源类型 */
-  sourceType: SourceType;
+  /** 亚马逊商品 ID (ASIN) */
+  amazonId: string;
+  /** 数据来源平台（从哪里发现的） */
+  discoveredFrom: SourceType;
 }
 
 /**
@@ -87,6 +87,8 @@ export interface CreateTopicRequest {
   description?: string;
   /** 分类图片 URL */
   imageUrl?: string;
+  /** 搜索关键词（用于 Google 搜索） */
+  searchKeywords?: string;
 }
 
 /**
@@ -99,6 +101,8 @@ export interface UpdateTopicRequest {
   description?: string;
   /** 分类图片 URL */
   imageUrl?: string;
+  /** 搜索关键词（用于 Google 搜索） */
+  searchKeywords?: string;
 }
 
 // ============================================
@@ -109,10 +113,10 @@ export interface UpdateTopicRequest {
  * 获取趋势数据请求参数
  */
 export interface GetTrendingRequest extends PaginationParams {
-  /** 时间范围 */
-  period?: Period;
+  /** 时间范围: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS */
+  period?: string;
   /** 分类 ID 筛选 */
-  topicId?: string;
+  categoryId?: string;
   /** 开始日期 */
   startDate?: string;
   /** 结束日期 */
@@ -130,9 +134,9 @@ export interface SearchProductsRequest extends PaginationParams {
   /** 搜索关键词 */
   q: string;
   /** 数据来源筛选 */
-  sourceType?: SourceType;
+  discoveredFrom?: SourceType;
   /** 分类 ID 筛选 */
-  topicId?: string;
+  categoryId?: string;
 }
 
 /**

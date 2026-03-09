@@ -5,7 +5,7 @@
  * 包含所有 API 接口的响应数据类型
  */
 
-import { PaginatedResponse, SourceType } from '../common';
+import { PaginatedResponse, SourceType } from "../common";
 
 // ============================================
 // Product 商品相关响应
@@ -31,10 +31,10 @@ export interface ProductBase {
   currency?: string;
   /** 来源 URL */
   sourceUrl: string;
-  /** 来源 ID */
-  sourceId: string;
-  /** 数据来源类型 */
-  sourceType: SourceType;
+  /** 亚马逊商品 ID (ASIN) */
+  amazonId: string;
+  /** 数据来源平台（从哪里发现的） */
+  discoveredFrom: SourceType;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */
@@ -50,8 +50,7 @@ export interface ProductResponse extends ProductBase {}
 /**
  * 分页商品列表响应
  */
-export interface PaginatedProductsResponse
-  extends PaginatedResponse<ProductResponse> {}
+export interface PaginatedProductsResponse extends PaginatedResponse<ProductResponse> {}
 
 // ============================================
 // Topic 分类相关响应
@@ -71,6 +70,8 @@ export interface TopicBase {
   description?: string;
   /** 分类图片 URL */
   imageUrl?: string;
+  /** 搜索关键词（用于 Google 搜索） */
+  searchKeywords?: string;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */
@@ -93,14 +94,12 @@ export interface TopicResponse extends TopicWithProductCount {}
 /**
  * 分页分类列表响应
  */
-export interface PaginatedTopicsResponse
-  extends PaginatedResponse<TopicWithProductCount> {}
+export interface PaginatedTopicsResponse extends PaginatedResponse<TopicWithProductCount> {}
 
 /**
  * 分页分类商品列表响应
  */
-export interface PaginatedTopicProductsResponse
-  extends PaginatedResponse<ProductResponse> {}
+export interface PaginatedTopicProductsResponse extends PaginatedResponse<ProductResponse> {}
 
 // ============================================
 // Trending 趋势相关响应
@@ -122,25 +121,24 @@ export interface TrendingItem {
   productImage: string | null;
   /** 商品价格 */
   productPrice: string | null;
-  /** 日期 */
-  date: string;
+  /** 榜单类型: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS */
+  periodType: string;
+  /** 统计日期 */
+  statDate: string;
   /** 排名 */
   rank: number;
   /** 趋势分数 */
   score: number;
-  /** 提及次数 */
-  mentions: number;
-  /** 浏览次数 */
-  views: number;
-  /** 点赞数 */
-  likes: number;
+  /** Reddit 提及数 */
+  redditMentions: number;
+  /** X 平台提及数 */
+  xMentions: number;
 }
 
 /**
  * 分页趋势列表响应
  */
-export interface PaginatedTrendingResponse
-  extends PaginatedResponse<TrendingItem> {}
+export interface PaginatedTrendingResponse extends PaginatedResponse<TrendingItem> {}
 
 // ============================================
 // Search 搜索相关响应
@@ -164,8 +162,8 @@ export interface SearchResultItem {
   price?: string;
   /** 货币单位 */
   currency?: string;
-  /** 来源类型 */
-  sourceType: SourceType;
+  /** 数据来源平台 */
+  discoveredFrom: SourceType;
   /** 相关度分数 */
   relevanceScore: number;
 }
@@ -173,8 +171,7 @@ export interface SearchResultItem {
 /**
  * 搜索响应数据
  */
-export interface SearchProductsResponse
-  extends PaginatedResponse<SearchResultItem> {
+export interface SearchProductsResponse extends PaginatedResponse<SearchResultItem> {
   /** 搜索关键词 */
   query: string;
 }
@@ -203,7 +200,7 @@ export type SearchSuggestionsResponse = SearchSuggestion[];
  */
 export interface HealthResponse {
   /** 服务状态 */
-  status: 'ok' | 'error';
+  status: "ok" | "error";
   /** 服务名称 */
   service?: string;
   /** 版本信息 */

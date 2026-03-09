@@ -10,6 +10,8 @@
  * 标识商品数据的来源平台
  */
 export enum SourceType {
+  /** Reddit 平台 */
+  REDDIT = "REDDIT",
   /** X 平台（原 Twitter） */
   X_PLATFORM = "X_PLATFORM",
   /** 亚马逊 */

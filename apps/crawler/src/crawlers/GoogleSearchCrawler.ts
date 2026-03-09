@@ -9,7 +9,8 @@
  * 使用 SerpAPI 优先，失败时回退到浏览器爬取
  */
 
-import { createLogger, format, transports, Logger } from "winston";
+import { Logger } from "winston";
+import { createLoggerInstance } from "@good-trending/shared";
 import { BaseCrawler, type CrawlerConfig, type CrawlResult } from "./BaseCrawler";
 import {
   type CategoryHeatResult,
@@ -108,20 +109,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       forceBrowser: this.searchConfig.forceBrowser,
     });
 
-    this.logger = createLogger({
-      level: "info",
-      format: format.combine(
-        format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-        format.printf(({ level, message, timestamp }) => {
-          return `${timestamp} [${level.toUpperCase()}] [GoogleSearch] ${message}`;
-        })
-      ),
-      transports: [
-        new transports.Console({
-          format: format.combine(format.colorize(), format.simple()),
-        }),
-      ],
-    });
+    this.logger = createLoggerInstance("google-search-crawler");
   }
 
   getName(): string {

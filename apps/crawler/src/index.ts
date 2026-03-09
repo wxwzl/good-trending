@@ -11,7 +11,7 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { createLogger, format, transports } from "winston";
+import { createLoggerInstance } from "@good-trending/shared";
 import { db, categories, products } from "@good-trending/database";
 import { sql } from "drizzle-orm";
 import { GoogleSearchCrawler } from "./crawlers/GoogleSearchCrawler";
@@ -25,20 +25,7 @@ import {
 import type { CategoryData, CrawlerLogData } from "./types/crawler.types";
 
 // 创建日志记录器
-const logger = createLogger({
-  level: "info",
-  format: format.combine(
-    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    format.printf(({ level, message, timestamp }) => {
-      return `${timestamp} [${level.toUpperCase()}] ${message}`;
-    })
-  ),
-  transports: [
-    new transports.Console({
-      format: format.combine(format.colorize(), format.simple()),
-    }),
-  ],
-});
+const logger = createLoggerInstance("crawler-cli");
 
 /**
  * 验证数据库连接

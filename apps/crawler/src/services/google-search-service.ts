@@ -4,24 +4,11 @@
  */
 
 import { getJson } from "serpapi";
-import { createLogger, format, transports } from "winston";
+import { createLoggerInstance } from "@good-trending/shared";
 import { chromium, Browser, BrowserContext, Page } from "playwright";
 
 // 创建日志记录器
-const logger = createLogger({
-  level: "info",
-  format: format.combine(
-    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    format.printf(({ level, message, timestamp }) => {
-      return `${timestamp} [${level.toUpperCase()}] [GoogleSearch] ${message}`;
-    })
-  ),
-  transports: [
-    new transports.Console({
-      format: format.combine(format.colorize(), format.simple()),
-    }),
-  ],
-});
+const logger = createLoggerInstance("google-search-service");
 
 /**
  * 搜索结果

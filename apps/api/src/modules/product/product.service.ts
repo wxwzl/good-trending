@@ -80,7 +80,7 @@ export class ProductService {
     const result = await this.productRepository.findMany({
       page: safePage,
       limit: safeLimit,
-      sourceType,
+      sourceType: discoveredFrom,
       keyword,
       sortBy,
       order,
@@ -290,10 +290,11 @@ export class ProductService {
     price: string | null;
     currency: string;
     sourceUrl: string;
-    sourceId: string;
-    sourceType: 'X_PLATFORM' | 'AMAZON';
-    createdAt: Date;
-    updatedAt: Date;
+    amazonId: string;
+    discoveredFrom: 'X_PLATFORM' | 'AMAZON' | 'REDDIT';
+    firstSeenAt: Date | string;
+    createdAt: Date | string;
+    updatedAt: Date | string;
   }): ProductResponseDto {
     return {
       id: product.id,
@@ -304,10 +305,20 @@ export class ProductService {
       price: product.price ?? undefined,
       currency: product.currency,
       sourceUrl: product.sourceUrl,
-      sourceId: product.sourceId,
-      sourceType: product.sourceType as SourceType,
-      createdAt: product.createdAt.toISOString(),
-      updatedAt: product.updatedAt.toISOString(),
+      amazonId: product.amazonId,
+      discoveredFrom: product.discoveredFrom as SourceType,
+      firstSeenAt:
+        product.firstSeenAt instanceof Date
+          ? product.firstSeenAt.toISOString()
+          : product.firstSeenAt,
+      createdAt:
+        product.createdAt instanceof Date
+          ? product.createdAt.toISOString()
+          : product.createdAt,
+      updatedAt:
+        product.updatedAt instanceof Date
+          ? product.updatedAt.toISOString()
+          : product.updatedAt,
     };
   }
 }

@@ -73,6 +73,12 @@ export class ProductResponseDto implements ProductResponse {
   discoveredFrom: SourceType;
 
   @ApiProperty({
+    description: '首次发现的日期',
+    example: '2026-03-05',
+  })
+  firstSeenAt: string;
+
+  @ApiProperty({
     description: '创建时间',
     example: '2026-03-05T12:00:00.000Z',
   })

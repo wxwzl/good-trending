@@ -9,14 +9,17 @@
  */
 import { Queue } from "bullmq";
 import cron, { type ScheduledTask } from "node-cron";
-import { createSchedulerLogger } from "../utils/logger";
+import { createSchedulerLogger } from "../utils/logger.js";
+import { wrapScheduledJob } from "../utils/error-handler.js";
 import {
   getCrawlerQueue,
   getTrendingQueue,
   CrawlerJobData,
   TrendingJobData,
   JOB_TYPES,
-} from "../queue";
+} from "../queue/index.js";
+import { createCrawlerJobOptions, createTrendingJobOptions } from "../utils/job-config.js";
+import { CRON_SCHEDULES } from "../constants/index.js";
 
 const logger = createSchedulerLogger("scheduler");
 
@@ -35,32 +38,16 @@ const state: SchedulerState = {
 
 /**
  * 生成唯一追踪 ID
+ * @returns 追踪 ID
  */
 function generateTraceId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
- * Cron 表达式常量
- * 根据 dataStructure.md 需求配置
- */
-export const CRON_SCHEDULES = {
-  /** 每2小时执行 - 爬取今天数据 */
-  EVERY_2_HOURS: "0 */2 * * *",
-  /** 每天凌晨2点执行 - 完整数据爬取（昨天数据） */
-  DAILY_2AM: "0 2 * * *",
-  /** 每天凌晨3点执行 - 计算趋势榜单 */
-  DAILY_3AM: "0 3 * * *",
-  /** 每天凌晨4点执行 - Bitmap更新 */
-  DAILY_4AM: "0 4 * * *",
-  /** 每天凌晨5点执行 - 社交提及统计 */
-  DAILY_5AM: "0 5 * * *",
-  /** 每15分钟执行 - 趋势数据更新（可选） */
-  EVERY_15_MINUTES: "*/15 * * * *",
-} as const;
-
-/**
  * 验证 Cron 表达式是否有效
+ * @param expression - Cron 表达式
+ * @returns 是否有效
  */
 function validateCronExpression(expression: string): boolean {
   return cron.validate(expression);
@@ -68,7 +55,10 @@ function validateCronExpression(expression: string): boolean {
 
 /**
  * 创建定时任务
- * 使用 node-cron 库支持完整的 Cron 表达式
+ *
+ * @param name - 任务名称
+ * @param cronExpression - Cron 表达式
+ * @param callback - 任务回调
  */
 function scheduleJob(name: string, cronExpression: string, callback: () => Promise<void>): void {
   if (!validateCronExpression(cronExpression)) {
@@ -76,28 +66,18 @@ function scheduleJob(name: string, cronExpression: string, callback: () => Promi
     return;
   }
 
-  // 创建定时任务
+  const wrappedCallback = wrapScheduledJob(name, callback);
+
   const task = cron.schedule(
     cronExpression,
     async () => {
       if (!state.running) {
         return;
       }
-
-      logger.info(`Executing scheduled job: ${name}`);
-
-      try {
-        await callback();
-        logger.info(`Scheduled job "${name}" completed successfully`);
-      } catch (error) {
-        logger.error(`Scheduled job "${name}" failed`, {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
-      }
+      await wrappedCallback();
     },
     {
-      timezone: "Asia/Shanghai", // 使用中国时区
+      timezone: "Asia/Shanghai",
     } as any
   );
 
@@ -106,131 +86,51 @@ function scheduleJob(name: string, cronExpression: string, callback: () => Promi
 }
 
 /**
- * 添加类目热度爬取任务
+ * 添加爬虫任务到队列
+ *
+ * @param queue - 爬虫队列
+ * @param source - 爬虫来源
+ * @param options - 可选配置
  */
-async function scheduleCategoryHeatJob(queue: Queue<CrawlerJobData>): Promise<void> {
+async function addCrawlerJob(
+  queue: Queue<CrawlerJobData>,
+  source: "category-heat" | "product-discovery" | "product-mentions" | "yesterday-stats",
+  options: {
+    maxProducts?: number;
+  } = {}
+): Promise<void> {
   const traceId = generateTraceId();
 
-  logger.info(`Adding category heat crawl job to queue`, { traceId });
+  logger.info(`Adding ${source} crawl job to queue`, { traceId });
+
+  const jobTypeMap = {
+    "category-heat": JOB_TYPES.CRAWL_CATEGORY_HEAT,
+    "product-discovery": JOB_TYPES.CRAWL_PRODUCT_DISCOVERY,
+    "product-mentions": JOB_TYPES.CRAWL_PRODUCT_MENTIONS,
+    "yesterday-stats": JOB_TYPES.CRAWL_YESTERDAY_STATS,
+  };
 
   await queue.add(
-    JOB_TYPES.CRAWL_CATEGORY_HEAT,
+    jobTypeMap[source],
     {
-      source: "category-heat",
-      maxProducts: 10,
+      source,
+      maxProducts: options.maxProducts,
       headless: true,
       saveToDb: true,
       triggeredBy: "scheduler",
       traceId,
     },
-    {
-      jobId: `category-heat-${traceId}`,
-      removeOnComplete: {
-        age: 24 * 3600,
-        count: 100,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600,
-        count: 500,
-      },
-    }
+    createCrawlerJobOptions(source, traceId)
   );
 }
 
 /**
- * 添加商品发现任务
+ * 添加趋势任务到队列
+ *
+ * @param queue - 趋势队列
+ * @param type - 任务类型
  */
-async function scheduleProductDiscoveryJob(queue: Queue<CrawlerJobData>): Promise<void> {
-  const traceId = generateTraceId();
-
-  logger.info(`Adding product discovery crawl job to queue`, { traceId });
-
-  await queue.add(
-    JOB_TYPES.CRAWL_PRODUCT_DISCOVERY,
-    {
-      source: "product-discovery",
-      maxProducts: 10,
-      headless: true,
-      saveToDb: true,
-      triggeredBy: "scheduler",
-      traceId,
-    },
-    {
-      jobId: `product-discovery-${traceId}`,
-      removeOnComplete: {
-        age: 24 * 3600,
-        count: 100,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600,
-        count: 500,
-      },
-    }
-  );
-}
-
-/**
- * 添加社交提及统计任务
- */
-async function scheduleProductMentionsJob(queue: Queue<CrawlerJobData>): Promise<void> {
-  const traceId = generateTraceId();
-
-  logger.info(`Adding product mentions crawl job to queue`, { traceId });
-
-  await queue.add(
-    JOB_TYPES.CRAWL_PRODUCT_MENTIONS,
-    {
-      source: "product-mentions",
-      maxProducts: 50, // 限制处理的商品数量
-      headless: true,
-      saveToDb: true,
-      triggeredBy: "scheduler",
-      traceId,
-    },
-    {
-      jobId: `product-mentions-${traceId}`,
-      removeOnComplete: {
-        age: 24 * 3600,
-        count: 100,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600,
-        count: 500,
-      },
-    }
-  );
-}
-
-/**
- * 添加昨天数据统计任务
- */
-async function scheduleYesterdayStatsJob(queue: Queue<CrawlerJobData>): Promise<void> {
-  const traceId = generateTraceId();
-
-  logger.info(`Adding yesterday stats job to queue`, { traceId });
-
-  await queue.add(
-    JOB_TYPES.CRAWL_YESTERDAY_STATS,
-    {
-      source: "yesterday-stats",
-      maxProducts: 10,
-      headless: true,
-      saveToDb: true,
-      triggeredBy: "scheduler",
-      traceId,
-    },
-    {
-      jobId: `yesterday-stats-${traceId}`,
-      removeOnComplete: { age: 24 * 3600, count: 100 },
-      removeOnFail: { age: 7 * 24 * 3600, count: 500 },
-    }
-  );
-}
-
-/**
- * 添加趋势更新任务到队列
- */
-async function scheduleTrendingJob(
+async function addTrendingJob(
   queue: Queue<TrendingJobData>,
   type: "update" | "calculate"
 ): Promise<void> {
@@ -245,17 +145,7 @@ async function scheduleTrendingJob(
       triggeredBy: "scheduler",
       traceId,
     },
-    {
-      jobId: `trending-${type}-${traceId}`,
-      removeOnComplete: {
-        age: 24 * 3600,
-        count: 100,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600,
-        count: 500,
-      },
-    }
+    createTrendingJobOptions(type, traceId)
   );
 }
 
@@ -266,7 +156,7 @@ async function scheduleTrendingJob(
  * - 每2小时：类目热度统计、商品发现（今天数据）
  * - 每天凌晨2点：完整数据爬取（昨天数据）
  * - 每天凌晨3点：计算趋势榜单
- * - 每天凌晨4点：Bitmap更新
+ * - 每天凌晨4点：更新趋势数据
  * - 每天凌晨5点：社交提及统计
  */
 export function startScheduler(): void {
@@ -283,36 +173,32 @@ export function startScheduler(): void {
 
   // ========== 每2小时执行的任务（今天数据）==========
 
-  // 每2小时执行类目热度统计
   scheduleJob("crawl-category-heat", CRON_SCHEDULES.EVERY_2_HOURS, async () => {
-    await scheduleCategoryHeatJob(crawlerQueue);
+    await addCrawlerJob(crawlerQueue, "category-heat");
   });
 
-  // 每2小时执行商品发现
   scheduleJob("crawl-product-discovery", CRON_SCHEDULES.EVERY_2_HOURS, async () => {
-    await scheduleProductDiscoveryJob(crawlerQueue);
+    await addCrawlerJob(crawlerQueue, "product-discovery");
   });
 
   // ========== 每天凌晨执行的任务（昨天完整数据）==========
 
-  // 每天凌晨2点：昨天数据统计
   scheduleJob("crawl-yesterday-stats", CRON_SCHEDULES.DAILY_2AM, async () => {
-    await scheduleYesterdayStatsJob(crawlerQueue);
+    await addCrawlerJob(crawlerQueue, "yesterday-stats");
   });
 
-  // 每天凌晨3点：计算趋势榜单
   scheduleJob("calculate-trending", CRON_SCHEDULES.DAILY_3AM, async () => {
-    await scheduleTrendingJob(trendingQueue, "calculate");
+    await addTrendingJob(trendingQueue, "calculate");
   });
 
-  // 每天凌晨4点：更新趋势数据
   scheduleJob("update-trending", CRON_SCHEDULES.DAILY_4AM, async () => {
-    await scheduleTrendingJob(trendingQueue, "update");
+    await addTrendingJob(trendingQueue, "update");
   });
 
-  // 每天凌晨5点：社交提及统计
   scheduleJob("crawl-product-mentions", CRON_SCHEDULES.DAILY_5AM, async () => {
-    await scheduleProductMentionsJob(crawlerQueue);
+    await addCrawlerJob(crawlerQueue, "product-mentions", {
+      maxProducts: 50,
+    });
   });
 
   logger.info("Scheduler started successfully with new crawler jobs");
@@ -356,33 +242,32 @@ export function getSchedulerStatus(): {
 
 /**
  * 手动触发任务（用于测试或手动执行）
+ *
+ * @param jobName - 任务名称
+ * @throws 当任务名称未知时抛出错误
  */
 export async function triggerJob(jobName: string): Promise<void> {
   const crawlerQueue = getCrawlerQueue();
   const trendingQueue = getTrendingQueue();
 
-  switch (jobName) {
-    case "crawl-category-heat":
-      await scheduleCategoryHeatJob(crawlerQueue);
-      break;
-    case "crawl-product-discovery":
-      await scheduleProductDiscoveryJob(crawlerQueue);
-      break;
-    case "crawl-product-mentions":
-      await scheduleProductMentionsJob(crawlerQueue);
-      break;
-    case "crawl-yesterday-stats":
-      await scheduleYesterdayStatsJob(crawlerQueue);
-      break;
-    case "update-trending":
-      await scheduleTrendingJob(trendingQueue, "update");
-      break;
-    case "calculate-trending":
-      await scheduleTrendingJob(trendingQueue, "calculate");
-      break;
-    default:
-      throw new Error(`Unknown job: ${jobName}`);
+  const jobActions: Record<string, () => Promise<void>> = {
+    "crawl-category-heat": () => addCrawlerJob(crawlerQueue, "category-heat"),
+    "crawl-product-discovery": () => addCrawlerJob(crawlerQueue, "product-discovery"),
+    "crawl-product-mentions": () =>
+      addCrawlerJob(crawlerQueue, "product-mentions", { maxProducts: 50 }),
+    "crawl-yesterday-stats": () => addCrawlerJob(crawlerQueue, "yesterday-stats"),
+    "update-trending": () => addTrendingJob(trendingQueue, "update"),
+    "calculate-trending": () => addTrendingJob(trendingQueue, "calculate"),
+  };
+
+  const action = jobActions[jobName];
+
+  if (!action) {
+    const errorMsg = `Unknown job: ${jobName}`;
+    logger.error(errorMsg, { availableJobs: Object.keys(jobActions) });
+    throw new Error(errorMsg);
   }
 
+  await action();
   logger.info(`Manually triggered job: ${jobName}`);
 }

@@ -3,7 +3,11 @@
  * 定义所有任务队列及其配置
  */
 import { Queue, QueueEvents, Worker } from "bullmq";
-import { redisConnectionOptions } from "./redis";
+import { redisConnectionOptions } from "./redis.js";
+import { JOB_RETENTION_CONFIG, JOB_RETRY_CONFIG, JOB_TIMEOUT_CONFIG } from "../constants/index.js";
+import { createSchedulerLogger } from "../utils/logger.js";
+
+const logger = createSchedulerLogger("queue");
 
 /**
  * 队列名称常量
@@ -110,27 +114,19 @@ let trendingQueueEvents: QueueEvents | null = null;
 
 /**
  * 默认队列配置
+ * 使用常量定义，避免魔法数字
  */
 const defaultQueueOptions = {
   defaultJobOptions: {
     /** 移除已完成任务的时间 */
-    removeOnComplete: {
-      age: 24 * 3600, // 24 小时后移除
-      count: 100, // 最多保留 100 条
-    },
+    removeOnComplete: JOB_RETENTION_CONFIG.removeOnComplete,
     /** 移除失败任务的时间 */
-    removeOnFail: {
-      age: 7 * 24 * 3600, // 7 天后移除
-      count: 500, // 最多保留 500 条
-    },
+    removeOnFail: JOB_RETENTION_CONFIG.removeOnFail,
     /** 任务超时时间 */
-    timeout: 30 * 60 * 1000, // 30 分钟
+    timeout: JOB_TIMEOUT_CONFIG.default,
     /** 重试配置 */
-    attempts: 3,
-    backoff: {
-      type: "exponential" as const,
-      delay: 60 * 1000, // 初始延迟 1 分钟
-    },
+    attempts: JOB_RETRY_CONFIG.attempts,
+    backoff: JOB_RETRY_CONFIG.backoff,
   },
 } as const;
 
@@ -144,7 +140,7 @@ export function getCrawlerQueue(): Queue<CrawlerJobData> {
       ...defaultQueueOptions,
     });
 
-    console.log(`[Queue] Crawler queue initialized: ${QUEUE_NAMES.CRAWLER}`);
+    logger.info(`Crawler queue initialized: ${QUEUE_NAMES.CRAWLER}`);
   }
 
   return crawlerQueue;
@@ -160,7 +156,7 @@ export function getTrendingQueue(): Queue<TrendingJobData> {
       ...defaultQueueOptions,
     });
 
-    console.log(`[Queue] Trending queue initialized: ${QUEUE_NAMES.TRENDING}`);
+    logger.info(`Trending queue initialized: ${QUEUE_NAMES.TRENDING}`);
   }
 
   return trendingQueue;
@@ -201,7 +197,7 @@ export async function closeQueues(): Promise<void> {
   if (crawlerQueue) {
     closePromises.push(
       crawlerQueue.close().then(() => {
-        console.log("[Queue] Crawler queue closed");
+        logger.info("Crawler queue closed");
         crawlerQueue = null;
       })
     );
@@ -210,7 +206,7 @@ export async function closeQueues(): Promise<void> {
   if (trendingQueue) {
     closePromises.push(
       trendingQueue.close().then(() => {
-        console.log("[Queue] Trending queue closed");
+        logger.info("Trending queue closed");
         trendingQueue = null;
       })
     );

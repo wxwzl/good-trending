@@ -17,12 +17,7 @@ if (isProduction || !isRunByScript) {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const appEnv = process.env.APP_ENV || process.env.NODE_ENV || "development";
 
-  const envFiles = [
-    ".env", // 默认
-    ".env.local", // 本地覆盖
-    `.env.${appEnv}`, // 特定环境
-    `.env.${appEnv}.local`, // 最高优先级
-  ];
+  const envFiles = [".env", ".env.local", `.env.${appEnv}`, `.env.${appEnv}.local`];
 
   const loadedEnvFiles: string[] = [];
   for (const envFile of envFiles) {
@@ -41,25 +36,32 @@ if (isProduction || !isRunByScript) {
   }
 }
 
-import { logger } from "./utils/logger";
-import { closeRedisConnection, getRedisConnection } from "./queue/redis";
-import { getCrawlerQueue, getTrendingQueue, closeQueues, getQueueStats } from "./queue";
-import { createCrawlerProcessor, closeCrawlerProcessor } from "./processors/crawler.processor";
-import { createTrendingProcessor, closeTrendingProcessor } from "./processors/trending.processor";
-import { startScheduler, stopScheduler, getSchedulerStatus, triggerJob } from "./scheduler/index";
+import { logger } from "./utils/logger.js";
+import { closeRedisConnection, getRedisConnection } from "./queue/redis.js";
+import { getCrawlerQueue, getTrendingQueue, closeQueues, getQueueStats } from "./queue/index.js";
+import { createCrawlerProcessor, closeCrawlerProcessor } from "./processors/index.js";
+import { createTrendingProcessor, closeTrendingProcessor } from "./processors/index.js";
+import {
+  startScheduler,
+  stopScheduler,
+  getSchedulerStatus,
+  triggerJob,
+} from "./scheduler/index.js";
+import { formatError } from "./utils/error-handler.js";
+import type { AppState } from "./types/index.js";
 
 /**
  * 应用状态
  */
-interface AppState {
-  running: boolean;
-  startTime: Date | null;
-}
-
 const appState: AppState = {
   running: false,
   startTime: null,
 };
+
+/**
+ * 心跳定时器
+ */
+let heartbeatInterval: NodeJS.Timeout | null = null;
 
 /**
  * 初始化应用
@@ -73,9 +75,8 @@ async function initialize(): Promise<void> {
     await redis.ping();
     logger.info("Redis connection established");
   } catch (error) {
-    logger.error("Failed to connect to Redis", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const { message } = formatError(error);
+    logger.error("Failed to connect to Redis", { error: message });
     throw error;
   }
 
@@ -122,10 +123,8 @@ async function start(): Promise<void> {
       jobs: status.jobs,
     });
   } catch (error) {
-    logger.error("Failed to start application", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    const { message, stack } = formatError(error);
+    logger.error("Failed to start application", { error: message, stack });
     throw error;
   }
 }
@@ -140,6 +139,12 @@ async function stop(): Promise<void> {
   }
 
   logger.info("Stopping application...");
+
+  // 停止心跳定时器
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
 
   // 停止调度器
   stopScheduler();
@@ -171,28 +176,65 @@ async function gracefulShutdown(signal: string): Promise<void> {
     logger.info("Graceful shutdown completed");
     process.exit(0);
   } catch (error) {
-    logger.error("Error during graceful shutdown", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const { message } = formatError(error);
+    logger.error("Error during graceful shutdown", { error: message });
     process.exit(1);
+  }
+}
+
+/**
+ * 设置心跳定时器
+ */
+function setupHeartbeat(): void {
+  if (heartbeatInterval) {
+    return;
+  }
+
+  heartbeatInterval = setInterval(() => {
+    const status = getSchedulerStatus();
+    logger.debug("Scheduler heartbeat", {
+      running: status.running,
+      jobCount: status.jobCount,
+    });
+  }, 60000); // 每分钟打印一次
+}
+
+/**
+ * 清理资源
+ */
+function cleanup(): void {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
   }
 }
 
 /**
  * 获取应用状态
  */
-export function getAppStatus(): {
+export async function getAppStatus(): Promise<{
   running: boolean;
   startTime: Date | null;
   uptime: number | null;
   queues: Awaited<ReturnType<typeof getQueueStats>> | null;
   scheduler: ReturnType<typeof getSchedulerStatus> | null;
-} {
+}> {
+  let queueStats: Awaited<ReturnType<typeof getQueueStats>> | null = null;
+
+  if (appState.running) {
+    try {
+      queueStats = await getQueueStats();
+    } catch (error) {
+      const { message } = formatError(error);
+      logger.error("Failed to get queue stats", { error: message });
+    }
+  }
+
   return {
     running: appState.running,
     startTime: appState.startTime,
     uptime: appState.startTime ? Date.now() - appState.startTime.getTime() : null,
-    queues: appState.running ? null : null, // 可以添加队列状态查询
+    queues: queueStats,
     scheduler: getSchedulerStatus(),
   };
 }
@@ -212,11 +254,9 @@ async function main(): Promise<void> {
 
   // 处理未捕获的异常
   process.on("uncaughtException", (error) => {
-    logger.error("Uncaught exception", {
-      error: error.message,
-      stack: error.stack,
-    });
-    gracefulShutdown("uncaughtException");
+    const { message, stack } = formatError(error);
+    logger.error("Uncaught exception", { error: message, stack });
+    void gracefulShutdown("uncaughtException");
   });
 
   process.on("unhandledRejection", (reason, promise) => {
@@ -226,32 +266,21 @@ async function main(): Promise<void> {
     });
   });
 
+  // 清理资源
+  process.on("beforeExit", cleanup);
+
   // 启动应用
   try {
     await start();
 
-    // 保持进程运行
     logger.info("Scheduler is running. Press Ctrl+C to stop.");
 
-    // 定期打印状态
-    const statusInterval = setInterval(() => {
-      const status = getSchedulerStatus();
-      logger.debug("Scheduler heartbeat", {
-        running: status.running,
-        jobCount: status.jobCount,
-      });
-    }, 60000); // 每分钟打印一次
-
-    // 清理定时器
-    process.on("beforeExit", () => {
-      clearInterval(statusInterval);
-    });
+    setupHeartbeat();
   } catch (error) {
-    logger.error("Failed to start scheduler", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    const { message, stack } = formatError(error);
+    logger.error("Failed to start scheduler", { error: message, stack });
     process.exit(1);
   }
 }
+
 main();

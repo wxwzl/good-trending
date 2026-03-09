@@ -5,7 +5,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { db } from '@good-trending/database';
-import { categories, products, productCategories } from '@good-trending/database';
+import {
+  categories,
+  products,
+  productCategories,
+} from '@good-trending/database';
 import { eq, desc, count, inArray } from 'drizzle-orm';
 import { SourceType } from '@good-trending/dto';
 import {
@@ -43,6 +47,7 @@ export class TopicService {
         slug: categories.slug,
         description: categories.description,
         imageUrl: categories.imageUrl,
+        searchKeywords: categories.searchKeywords,
         createdAt: categories.createdAt,
         updatedAt: categories.updatedAt,
       })
@@ -156,11 +161,15 @@ export class TopicService {
         sourceUrl: products.sourceUrl,
         amazonId: products.amazonId,
         discoveredFrom: products.discoveredFrom,
+        firstSeenAt: products.firstSeenAt,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
       })
       .from(products)
-      .innerJoin(productCategories, eq(products.id, productCategories.productId))
+      .innerJoin(
+        productCategories,
+        eq(products.id, productCategories.productId),
+      )
       .where(eq(productCategories.categoryId, category[0].id))
       .orderBy(desc(products.createdAt))
       .limit(safeLimit)
@@ -178,14 +187,9 @@ export class TopicService {
     const items = productsData.map((product) => ({
       ...product,
       discoveredFrom: product.discoveredFrom as SourceType,
-      createdAt:
-        product.createdAt instanceof Date
-          ? product.createdAt.toISOString()
-          : product.createdAt,
-      updatedAt:
-        product.updatedAt instanceof Date
-          ? product.updatedAt.toISOString()
-          : product.updatedAt,
+      firstSeenAt: String(product.firstSeenAt),
+      createdAt: String(product.createdAt),
+      updatedAt: String(product.updatedAt),
     }));
 
     return {
@@ -232,6 +236,7 @@ export class TopicService {
         slug: dto.slug,
         description: dto.description,
         imageUrl: dto.imageUrl,
+        searchKeywords: dto.searchKeywords,
       })
       .returning();
 
@@ -269,6 +274,8 @@ export class TopicService {
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
+    if (dto.searchKeywords !== undefined)
+      updateData.searchKeywords = dto.searchKeywords;
 
     const result = await db
       .update(categories)

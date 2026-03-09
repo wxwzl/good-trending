@@ -35,6 +35,8 @@ export interface ProductBase {
   amazonId: string;
   /** 数据来源平台（从哪里发现的） */
   discoveredFrom: SourceType;
+  /** 首次发现的日期 */
+  firstSeenAt: string;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */

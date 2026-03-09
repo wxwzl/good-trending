@@ -63,6 +63,14 @@ export class CreateTopicDto implements CreateTopicRequest {
   @IsString()
   @IsUrl({}, { message: 'imageUrl must be a valid URL' })
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: '搜索关键词（用于 Google 搜索）',
+    example: 'electronics, gadgets, tech',
+  })
+  @IsOptional()
+  @IsString()
+  searchKeywords?: string;
 }
 
 /**
@@ -94,6 +102,14 @@ export class UpdateTopicDto implements UpdateTopicRequest {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: '搜索关键词（用于 Google 搜索）',
+    example: 'electronics, gadgets, tech',
+  })
+  @IsOptional()
+  @IsString()
+  searchKeywords?: string;
 }
 
 /**
@@ -160,6 +176,12 @@ export class TopicResponseDto implements TopicResponse {
     example: 'https://example.com/topic-image.jpg',
   })
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: '搜索关键词（用于 Google 搜索）',
+    example: 'electronics, gadgets, tech',
+  })
+  searchKeywords?: string;
 
   @ApiProperty({
     description: '创建时间',

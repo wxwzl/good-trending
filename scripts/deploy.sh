@@ -158,12 +158,14 @@ tar -czf $DEPLOY_PACKAGE \
     deploy/app/web/.next \
     deploy/app/web/public \
     deploy/app/web/package.json \
+    deploy/app/web/server.js \
     deploy/app/scheduler/dist \
     deploy/app/scheduler/package.json \
     deploy/.env.production \
     deploy/ecosystem.config.js \
     deploy/nginx \
     deploy/app/crawler/run-crawl-30days.sh \
+    deploy/app/crawler/scripts \
     deploy/migrations \
     deploy/scripts \
     deploy/init-database.sh \

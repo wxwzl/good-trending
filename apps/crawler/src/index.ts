@@ -9,33 +9,12 @@
  * pnpm crawl:full              # 执行完整爬取流程（凌晨任务）
  */
 
-import { config } from "dotenv";
-import { resolve } from "path";
-
-// ========== 必须在任何其他导入之前加载环境变量 ==========
-const env = process.env.NODE_ENV || "development";
-const envFile = env === "production" ? ".env.production" : `.env.${env}`;
-config({ path: resolve(__dirname, "../../../.env") });
-config({ path: resolve(__dirname, "../../../", envFile), override: true });
-
-// 验证数据库配置
-if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL 环境变量未设置");
-  console.error("请检查 .env 文件是否正确加载");
-  process.exit(1);
-}
-console.log("✅ 环境变量加载完成");
-console.log(
-  `   DATABASE_URL: ${process.env.DATABASE_URL.replace(/:\/\/[^:]+:[^@]+@/, "://***:***@")}`
-);
-// =====================================================
-
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { createLogger, format, transports } from "winston";
 import { db, categories, products } from "@good-trending/database";
 import { sql } from "drizzle-orm";
-import { GoogleSearchCrawler } from "./google";
+import { GoogleSearchCrawler } from "./crawlers/GoogleSearchCrawler";
 import {
   saveCategoryHeatStats,
   saveCrawledProducts,

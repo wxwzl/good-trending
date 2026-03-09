@@ -253,7 +253,7 @@ export class GoogleSearchService {
         const selectors = [
           'div[data-ved] a[jsname="UWckNb"]',
           'div.g a[href^="http"]',
-          'div.yuRUbf > a',
+          "div.yuRUbf > a",
           'a[ping][href^="http"]',
           '#search a[href^="http"]',
         ];
@@ -265,7 +265,7 @@ export class GoogleSearchService {
             const url = linkEl.getAttribute("href") || "";
             let titleEl = linkEl.querySelector("h3");
             if (!titleEl) {
-              const parent = linkEl.closest('div[data-ved], div.g, div.MjjYud');
+              const parent = linkEl.closest("div[data-ved], div.g, div.MjjYud");
               if (parent) {
                 titleEl = parent.querySelector("h3");
               }
@@ -273,9 +273,9 @@ export class GoogleSearchService {
             const title = titleEl?.textContent || linkEl.textContent || "";
 
             let snippet = "";
-            const parent = linkEl.closest('div[data-ved], div.g, div.MjjYud');
+            const parent = linkEl.closest("div[data-ved], div.g, div.MjjYud");
             if (parent) {
-              const snippetEl = parent.querySelector('div.VwiC3b, span.aCOpRe, div.s3v94d');
+              const snippetEl = parent.querySelector("div.VwiC3b, span.aCOpRe, div.s3v94d");
               snippet = snippetEl?.textContent?.trim() || "";
             }
 
@@ -294,7 +294,9 @@ export class GoogleSearchService {
             }
           }
 
-          if (links.length > 0) break;
+          if (links.length > 0) {
+            break;
+          }
         }
 
         // 去重
@@ -331,7 +333,9 @@ export class GoogleSearchService {
    * 初始化浏览器
    */
   private async initBrowser(): Promise<void> {
-    if (this.browser) return;
+    if (this.browser) {
+      return;
+    }
 
     logger.info("初始化浏览器...");
 

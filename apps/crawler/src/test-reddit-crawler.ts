@@ -12,7 +12,7 @@ const envFile = env === "production" ? ".env" : `.env.${env}`;
 config({ path: resolve(__dirname, "../../../.env") });
 config({ path: resolve(__dirname, "../../../", envFile), override: true });
 
-import { GoogleSearchCrawler } from "./google";
+import { GoogleSearchCrawler } from "./crawlers/GoogleSearchCrawler";
 import type { CategoryData } from "./types/crawler.types";
 
 async function testRedditCrawler() {
@@ -43,10 +43,7 @@ async function testRedditCrawler() {
   try {
     console.log("开始爬取商品...\n");
 
-    const result = await crawler.crawlProductsByCategory(
-      testCategories,
-      new Date()
-    );
+    const result = await crawler.crawlProductsByCategory(testCategories, new Date());
 
     console.log("\n=== 爬取结果 ===");
     console.log(`成功: ${result.success}`);

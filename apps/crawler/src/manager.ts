@@ -1,5 +1,5 @@
 import { createLogger, format, transports, Logger } from "winston";
-import { BaseCrawler, CrawlResult } from "./base";
+import { BaseCrawler, CrawlResult } from "./crawlers/BaseCrawler";
 
 /**
  * 商品数据接口

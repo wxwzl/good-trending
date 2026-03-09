@@ -4,23 +4,26 @@ import { ProductService } from './product.service';
 import { GetProductsDto, SourceType } from './dto/get-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductResponseDto } from './dto/product-response.dto';
 
 describe('ProductController', () => {
   let controller: ProductController;
   let service: jest.Mocked<ProductService>;
 
-  const mockProductResponse = {
+  const mockProductResponse: ProductResponseDto = {
     id: 'test-id-123',
     name: 'Test Product',
+    slug: 'test-product',
     description: 'Test Description',
     image: 'https://example.com/image.jpg',
     price: '99.99',
     currency: 'USD',
     sourceUrl: 'https://example.com/product',
-    sourceId: 'source-123',
-    sourceType: SourceType.X_PLATFORM,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    amazonId: 'source-123',
+    discoveredFrom: SourceType.X_PLATFORM,
+    firstSeenAt: '2024-01-01T00:00:00.000Z',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
   const mockPaginatedResponse = {
@@ -78,7 +81,7 @@ describe('ProductController', () => {
       const query: GetProductsDto = {
         page: 2,
         limit: 20,
-        sourceType: SourceType.AMAZON,
+        discoveredFrom: SourceType.AMAZON,
         keyword: 'test',
       };
       service.getProducts.mockResolvedValue(mockPaginatedResponse);
@@ -108,9 +111,10 @@ describe('ProductController', () => {
   describe('createProduct', () => {
     const createDto: CreateProductDto = {
       name: 'New Product',
+      slug: 'new-product',
       sourceUrl: 'https://example.com/new',
-      sourceId: 'new-123',
-      sourceType: SourceType.AMAZON,
+      amazonId: 'new-123',
+      discoveredFrom: SourceType.AMAZON,
     };
 
     it('should_create_product_and_return_result', async () => {

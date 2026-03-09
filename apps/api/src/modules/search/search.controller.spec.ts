@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 import { SearchQueryDto } from './dto/search.dto';
-import { SourceType } from '../product/dto/get-products.dto';
+import { SourceType } from '@good-trending/dto';
 
 describe('SearchController', () => {
   let controller: SearchController;
@@ -12,17 +12,20 @@ describe('SearchController', () => {
     items: [
       {
         id: 'test-id-123',
+        slug: 'apple-airpods-pro',
         name: 'Apple AirPods Pro',
         description: 'Wireless earbuds',
         image: 'https://example.com/image.jpg',
         price: '249.99',
-        sourceType: SourceType.AMAZON,
+        currency: 'USD',
+        discoveredFrom: SourceType.AMAZON,
         relevanceScore: 0.95,
       },
     ],
     total: 1,
     page: 1,
     limit: 10,
+    totalPages: 1,
     query: 'airpods',
   };
 
@@ -75,8 +78,8 @@ describe('SearchController', () => {
         q: 'airpods',
         page: 2,
         limit: 20,
-        sourceType: SourceType.AMAZON,
-        topicId: 'topic-123',
+        discoveredFrom: SourceType.AMAZON,
+        categoryId: 'topic-123',
       };
       service.search.mockResolvedValue(mockSearchResponse);
 

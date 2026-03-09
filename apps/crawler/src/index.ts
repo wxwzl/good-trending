@@ -23,6 +23,7 @@ import {
   saveCrawlerLog,
 } from "./services";
 import type { CategoryData, CrawlerLogData } from "./types/crawler.types";
+import { CrawlerStatus } from "./crawlers/BaseCrawler";
 
 // 创建日志记录器
 const logger = createLoggerInstance("crawler-cli");
@@ -82,7 +83,7 @@ async function crawlCategoryHeat(headless: boolean): Promise<void> {
   const log: CrawlerLogData = {
     taskType: "CATEGORY_HEAT",
     sourceType: "REDDIT",
-    status: "RUNNING",
+    status: CrawlerStatus.RUNNING,
     startTime,
     itemsFound: 0,
     itemsSaved: 0,
@@ -108,13 +109,13 @@ async function crawlCategoryHeat(headless: boolean): Promise<void> {
     const savedCount = await saveCategoryHeatStats(result.data);
 
     // 更新日志
-    log.status = result.success ? "COMPLETED" : "FAILED";
+    log.status = result.success ? CrawlerStatus.COMPLETED : CrawlerStatus.FAILED;
     log.itemsFound = result.data.length;
     log.itemsSaved = savedCount;
 
     logger.info(`类目热度爬取完成: ${savedCount}/${result.data.length}`);
   } catch (error) {
-    log.status = "FAILED";
+    log.status = CrawlerStatus.FAILED;
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("类目热度爬取失败:", error);
   } finally {
@@ -139,7 +140,7 @@ async function crawlProducts(headless: boolean): Promise<void> {
   const log: CrawlerLogData = {
     taskType: "PRODUCT_DISCOVERY",
     sourceType: "REDDIT",
-    status: "RUNNING",
+    status: CrawlerStatus.RUNNING,
     startTime,
     itemsFound: 0,
     itemsSaved: 0,
@@ -171,13 +172,13 @@ async function crawlProducts(headless: boolean): Promise<void> {
     const saveResult = await saveCrawledProducts(result.data, "REDDIT");
 
     // 更新日志
-    log.status = result.success ? "COMPLETED" : "FAILED";
+    log.status = result.success ? CrawlerStatus.COMPLETED : CrawlerStatus.FAILED;
     log.itemsFound = result.data.length;
     log.itemsSaved = saveResult.savedCount;
 
     logger.info(`商品发现完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`);
   } catch (error) {
-    log.status = "FAILED";
+    log.status = CrawlerStatus.FAILED;
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("商品发现爬取失败:", error);
   } finally {
@@ -202,7 +203,7 @@ async function crawlProductMentions(headless: boolean): Promise<void> {
   const log: CrawlerLogData = {
     taskType: "PRODUCT_MENTION",
     sourceType: "REDDIT",
-    status: "RUNNING",
+    status: CrawlerStatus.RUNNING,
     startTime,
     itemsFound: 0,
     itemsSaved: 0,
@@ -247,13 +248,13 @@ async function crawlProductMentions(headless: boolean): Promise<void> {
     }
 
     // 更新日志
-    log.status = "COMPLETED";
+    log.status = CrawlerStatus.COMPLETED;
     log.itemsFound = productList.length;
     log.itemsSaved = processedCount;
 
     logger.info(`商品社交提及爬取完成: ${processedCount}/${productList.length}`);
   } catch (error) {
-    log.status = "FAILED";
+    log.status = CrawlerStatus.FAILED;
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("商品社交提及爬取失败:", error);
   } finally {
@@ -313,7 +314,7 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
   const log: CrawlerLogData = {
     taskType: "YESTERDAY_STATS",
     sourceType: "REDDIT",
-    status: "RUNNING",
+    status: CrawlerStatus.RUNNING,
     startTime,
     itemsFound: 0,
     itemsSaved: 0,
@@ -351,7 +352,7 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
     logger.info(`商品保存完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`);
 
     // 更新日志
-    log.status = "COMPLETED";
+    log.status = CrawlerStatus.COMPLETED;
     log.itemsFound = productResult.data.length;
     log.itemsSaved = saveResult.savedCount;
 
@@ -360,7 +361,7 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
       `=== 昨天数据统计爬取完成，耗时 ${(endTime.getTime() - startTime.getTime()) / 1000}s ===`
     );
   } catch (error) {
-    log.status = "FAILED";
+    log.status = CrawlerStatus.FAILED;
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("昨天数据统计爬取失败:", error);
     throw error;

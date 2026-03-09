@@ -1,23 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TrendingController } from './trending.controller';
 import { TrendingService } from './trending.service';
-import { GetTrendingDto, Period } from './dto/trending.dto';
+import { GetTrendingDto } from './dto/trending.dto';
 
 describe('TrendingController', () => {
   let controller: TrendingController;
   let service: jest.Mocked<TrendingService>;
 
   const mockTrendItem = {
+    id: 'trend-id-123',
     rank: 1,
     productId: 'product-id-123',
+    productSlug: 'apple-airpods-pro-2',
     productName: 'Apple AirPods Pro 2',
     productImage: 'https://example.com/image.jpg',
     productPrice: '249.99',
+    periodType: 'TODAY',
+    statDate: '2024-01-01',
     score: 95.5,
-    mentions: 1500,
-    views: 50000,
-    likes: 2500,
-    date: '2024-01-01',
+    redditMentions: 500,
+    xMentions: 1000,
   };
 
   const mockPaginatedResponse = {
@@ -71,7 +73,7 @@ describe('TrendingController', () => {
 
     it('should_pass_period_filter_to_service', async () => {
       // Arrange
-      const query: GetTrendingDto = { period: Period.WEEKLY };
+      const query: GetTrendingDto = { period: 'THIS_WEEK' };
       service.getTrending.mockResolvedValue(mockPaginatedResponse);
 
       // Act
@@ -79,7 +81,7 @@ describe('TrendingController', () => {
 
       // Assert
       expect(service.getTrending).toHaveBeenCalledWith(query);
-      expect(query.period).toBe(Period.WEEKLY);
+      expect(query.period).toBe('THIS_WEEK');
     });
 
     it('should_pass_pagination_params_to_service', async () => {
@@ -171,7 +173,7 @@ describe('TrendingController', () => {
       const query: GetTrendingDto = {
         page: 2,
         limit: 20,
-        period: Period.MONTHLY,
+        period: 'THIS_MONTH',
       };
       service.getTrendingByTopic.mockResolvedValue(mockPaginatedResponse);
 

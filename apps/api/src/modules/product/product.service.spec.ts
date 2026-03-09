@@ -27,8 +27,9 @@ describe('ProductService', () => {
     price: '99.99',
     currency: 'USD',
     sourceUrl: 'https://example.com/product',
-    sourceId: 'source-123',
-    sourceType: 'X_PLATFORM' as const,
+    amazonId: 'source-123',
+    discoveredFrom: 'X_PLATFORM' as const,
+    firstSeenAt: '2024-01-01',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
   };
@@ -174,9 +175,9 @@ describe('ProductService', () => {
       );
     });
 
-    it('should_filter_by_sourceType', async () => {
+    it('should_filter_by_discoveredFrom', async () => {
       // Arrange
-      const query: GetProductsDto = { sourceType: SourceType.X_PLATFORM };
+      const query: GetProductsDto = { discoveredFrom: SourceType.X_PLATFORM };
       cacheService.get.mockResolvedValue(null);
       repository.findMany.mockResolvedValue({
         items: [mockProduct],
@@ -242,13 +243,15 @@ describe('ProductService', () => {
       const cachedProduct = {
         id: 'test-id-123',
         name: 'Test Product',
+        slug: 'test-product',
         description: 'Test Description',
         image: 'https://example.com/image.jpg',
         price: '99.99',
         currency: 'USD',
         sourceUrl: 'https://example.com/product',
-        sourceId: 'source-123',
-        sourceType: SourceType.X_PLATFORM,
+        amazonId: 'source-123',
+        discoveredFrom: SourceType.X_PLATFORM,
+        firstSeenAt: '2024-01-01',
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
       };
@@ -294,13 +297,14 @@ describe('ProductService', () => {
   describe('createProduct', () => {
     const createDto: CreateProductDto = {
       name: 'New Product',
+      slug: 'new-product',
       description: 'New Description',
       image: 'https://example.com/new.jpg',
-      price: 49.99,
+      price: '49.99',
       currency: 'USD',
       sourceUrl: 'https://example.com/new-product',
-      sourceId: 'new-123',
-      sourceType: SourceType.AMAZON,
+      amazonId: 'new-123',
+      discoveredFrom: SourceType.AMAZON,
     };
 
     it('should_create_product_successfully', async () => {
@@ -341,7 +345,7 @@ describe('ProductService', () => {
   describe('updateProduct', () => {
     const updateDto: UpdateProductDto = {
       name: 'Updated Product',
-      price: 79.99,
+      price: '79.99',
     };
 
     it('should_update_product_successfully', async () => {
@@ -349,7 +353,6 @@ describe('ProductService', () => {
       repository.update.mockResolvedValue({
         ...mockProduct,
         ...updateDto,
-        price: '79.99',
       });
 
       // Act
@@ -358,7 +361,7 @@ describe('ProductService', () => {
       // Assert
       expect(repository.update).toHaveBeenCalledWith('test-id-123', {
         name: 'Updated Product',
-        price: 79.99,
+        price: '79.99',
         description: undefined,
         image: undefined,
         currency: undefined,

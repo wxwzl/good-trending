@@ -20,25 +20,13 @@ export class DatabaseStatsDto {
     description: '分类总数',
     example: 15,
   })
-  topicCount: number;
-
-  @ApiProperty({
-    description: '标签总数',
-    example: 89,
-  })
-  tagCount: number;
+  categoryCount: number;
 
   @ApiProperty({
     description: '爬虫日志总数',
     example: 45,
   })
   crawlerLogCount: number;
-
-  @ApiProperty({
-    description: '商品历史记录总数',
-    example: 9876,
-  })
-  productHistoryCount: number;
 }
 
 /**
@@ -56,6 +44,12 @@ export class SourceStatsDto {
     example: 734,
   })
   amazonCount: number;
+
+  @ApiProperty({
+    description: 'Reddit商品数量',
+    example: 300,
+  })
+  redditCount: number;
 }
 
 /**

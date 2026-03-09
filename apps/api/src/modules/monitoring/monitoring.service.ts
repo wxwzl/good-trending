@@ -2,11 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import {
   products,
-  trends,
-  topics,
-  tags,
+  trendRanks,
+  categories,
   crawlerLogs,
-  productHistories,
 } from '@good-trending/database';
 import { count, eq, sql, gte } from 'drizzle-orm';
 import {
@@ -63,29 +61,19 @@ export class MonitoringService {
   private async getDatabaseStats(): Promise<DatabaseStatsDto> {
     try {
       // 并行查询各表数量
-      const [
-        productResult,
-        trendResult,
-        topicResult,
-        tagResult,
-        crawlerLogResult,
-        productHistoryResult,
-      ] = await Promise.all([
-        db.select({ count: count() }).from(products),
-        db.select({ count: count() }).from(trends),
-        db.select({ count: count() }).from(topics),
-        db.select({ count: count() }).from(tags),
-        db.select({ count: count() }).from(crawlerLogs),
-        db.select({ count: count() }).from(productHistories),
-      ]);
+      const [productResult, trendResult, categoryResult, crawlerLogResult] =
+        await Promise.all([
+          db.select({ count: count() }).from(products),
+          db.select({ count: count() }).from(trendRanks),
+          db.select({ count: count() }).from(categories),
+          db.select({ count: count() }).from(crawlerLogs),
+        ]);
 
       return {
         productCount: productResult[0]?.count ?? 0,
         trendCount: trendResult[0]?.count ?? 0,
-        topicCount: topicResult[0]?.count ?? 0,
-        tagCount: tagResult[0]?.count ?? 0,
+        categoryCount: categoryResult[0]?.count ?? 0,
         crawlerLogCount: crawlerLogResult[0]?.count ?? 0,
-        productHistoryCount: productHistoryResult[0]?.count ?? 0,
       };
     } catch (error) {
       this.logger.error('Failed to fetch database stats', error);
@@ -93,10 +81,8 @@ export class MonitoringService {
       return {
         productCount: 0,
         trendCount: 0,
-        topicCount: 0,
-        tagCount: 0,
+        categoryCount: 0,
         crawlerLogCount: 0,
-        productHistoryCount: 0,
       };
     }
   }
@@ -106,26 +92,32 @@ export class MonitoringService {
    */
   private async getSourceStats(): Promise<SourceStatsDto> {
     try {
-      const [xPlatformResult, amazonResult] = await Promise.all([
+      const [xPlatformResult, amazonResult, redditResult] = await Promise.all([
         db
           .select({ count: count() })
           .from(products)
-          .where(eq(products.sourceType, 'X_PLATFORM')),
+          .where(eq(products.discoveredFrom, 'X_PLATFORM')),
         db
           .select({ count: count() })
           .from(products)
-          .where(eq(products.sourceType, 'AMAZON')),
+          .where(eq(products.discoveredFrom, 'AMAZON')),
+        db
+          .select({ count: count() })
+          .from(products)
+          .where(eq(products.discoveredFrom, 'REDDIT')),
       ]);
 
       return {
         xPlatformCount: xPlatformResult[0]?.count ?? 0,
         amazonCount: amazonResult[0]?.count ?? 0,
+        redditCount: redditResult[0]?.count ?? 0,
       };
     } catch (error) {
       this.logger.error('Failed to fetch source stats', error);
       return {
         xPlatformCount: 0,
         amazonCount: 0,
+        redditCount: 0,
       };
     }
   }
@@ -150,20 +142,22 @@ export class MonitoringService {
           // 今日趋势
           db
             .select({ count: count() })
-            .from(trends)
-            .where(gte(trends.date, todayStr)),
+            .from(trendRanks)
+            .where(gte(trendRanks.statDate, todayStr)),
           // 本周趋势
           db
             .select({ count: count() })
-            .from(trends)
-            .where(gte(trends.date, weekAgoStr)),
+            .from(trendRanks)
+            .where(gte(trendRanks.statDate, weekAgoStr)),
           // 本月趋势
           db
             .select({ count: count() })
-            .from(trends)
-            .where(gte(trends.date, monthAgoStr)),
+            .from(trendRanks)
+            .where(gte(trendRanks.statDate, monthAgoStr)),
           // 平均分数
-          db.select({ avg: sql<number>`AVG(${trends.score})` }).from(trends),
+          db
+            .select({ avg: sql<number>`AVG(${trendRanks.score})` })
+            .from(trendRanks),
         ]);
 
       return {

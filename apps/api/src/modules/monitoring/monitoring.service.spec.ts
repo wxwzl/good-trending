@@ -50,8 +50,8 @@ describe('MonitoringService', () => {
       expect(result.database).toBeDefined();
       expect(typeof result.database.productCount).toBe('number');
       expect(typeof result.database.trendCount).toBe('number');
-      expect(typeof result.database.topicCount).toBe('number');
-      expect(typeof result.database.tagCount).toBe('number');
+      expect(typeof result.database.categoryCount).toBe('number');
+      expect(typeof result.database.crawlerLogCount).toBe('number');
     });
 
     it('should_return_source_stats_structure', async () => {
@@ -62,6 +62,7 @@ describe('MonitoringService', () => {
       expect(result.sources).toBeDefined();
       expect(typeof result.sources.xPlatformCount).toBe('number');
       expect(typeof result.sources.amazonCount).toBe('number');
+      expect(typeof result.sources.redditCount).toBe('number');
     });
 
     it('should_return_trend_stats_structure', async () => {

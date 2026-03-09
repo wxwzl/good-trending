@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TopicController } from './topic.controller';
 import { TopicService } from './topic.service';
 import { GetTopicsDto } from './dto/topic.dto';
+import { SourceType } from '@good-trending/dto';
 
 describe('TopicController', () => {
   let controller: TopicController;
@@ -13,14 +14,20 @@ describe('TopicController', () => {
     slug: 'electronics',
     description: 'Electronic products',
     imageUrl: 'https://example.com/topic-image.jpg',
+    searchKeywords: 'electronics, gadgets',
     productCount: 10,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
-  // TopicService now returns arrays directly (not paginated objects)
-  // TransformInterceptor wraps them in { data: [...] }
-  const mockTopicsArray = [mockTopicResponse];
+  // TopicService returns paginated response
+  const mockTopicsPaginatedResponse = {
+    items: [mockTopicResponse],
+    total: 1,
+    page: 1,
+    limit: 20,
+    totalPages: 1,
+  };
 
   const mockService = {
     getTopics: jest.fn(),
@@ -53,20 +60,20 @@ describe('TopicController', () => {
     it('should_return_paginated_topics', async () => {
       // Arrange
       const query: GetTopicsDto = { page: 1, limit: 10 };
-      service.getTopics.mockResolvedValue(mockTopicsArray);
+      service.getTopics.mockResolvedValue(mockTopicsPaginatedResponse);
 
       // Act
       const result = await controller.getTopics(query);
 
       // Assert
       expect(service.getTopics).toHaveBeenCalledWith(query);
-      expect(result).toEqual(mockTopicsArray);
+      expect(result).toEqual(mockTopicsPaginatedResponse);
     });
 
     it('should_pass_query_params_to_service', async () => {
       // Arrange
       const query: GetTopicsDto = { page: 2, limit: 20 };
-      service.getTopics.mockResolvedValue(mockTopicsArray);
+      service.getTopics.mockResolvedValue(mockTopicsPaginatedResponse);
 
       // Act
       await controller.getTopics(query);
@@ -96,19 +103,29 @@ describe('TopicController', () => {
       const mockProduct = {
         id: 'product-1',
         name: 'Product 1',
+        slug: 'product-1',
         description: 'Description',
         image: 'https://example.com/image.jpg',
         price: '99.99',
         currency: 'USD',
         sourceUrl: 'https://example.com/product',
-        sourceId: 'source-1',
-        sourceType: 'X_PLATFORM' as const,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
+        amazonId: 'source-1',
+        discoveredFrom: SourceType.X_PLATFORM,
+        firstSeenAt: '2024-01-01T00:00:00.000Z',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
       };
-      // getProductsByTopic now returns array directly
-      const mockProductsArray = [mockProduct];
-      service.getProductsByTopic.mockResolvedValue(mockProductsArray);
+      // getProductsByTopic now returns paginated response
+      const mockProductsPaginatedResponse = {
+        items: [mockProduct],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+      service.getProductsByTopic.mockResolvedValue(
+        mockProductsPaginatedResponse,
+      );
 
       // Act
       const result = await controller.getProductsByTopic('electronics', {
@@ -121,7 +138,7 @@ describe('TopicController', () => {
         page: 1,
         limit: 10,
       });
-      expect(result).toEqual(mockProductsArray);
+      expect(result).toEqual(mockProductsPaginatedResponse);
     });
   });
 

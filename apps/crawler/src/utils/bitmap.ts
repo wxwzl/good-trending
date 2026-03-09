@@ -13,11 +13,7 @@
  * @param appearedToday 今天是否出现
  * @returns 更新后的位图值
  */
-export function updateBitmap(
-  bitmap: bigint,
-  windowSize: number,
-  appearedToday: boolean
-): bigint {
+export function updateBitmap(bitmap: bigint, windowSize: number, appearedToday: boolean): bigint {
   // 左移一位
   let newBitmap = bitmap << 1n;
 
@@ -68,11 +64,7 @@ export function isDaySet(bitmap: bigint, dayOffset: number): boolean {
  * @param value 是否出现
  * @returns 更新后的位图值
  */
-export function setDay(
-  bitmap: bigint,
-  dayOffset: number,
-  value: boolean
-): bigint {
+export function setDay(bitmap: bigint, dayOffset: number, value: boolean): bigint {
   const mask = 1n << BigInt(dayOffset);
 
   if (value) {
@@ -118,22 +110,3 @@ export function getAppearanceCounts(
     last60Days: countBitmap(bitmap60),
   };
 }
-
-// ==================== 示例用法 ====================
-
-/*
-// 初始化
-let bitmap7 = 0n;
-
-// 每天更新（假设今天出现了）
-bitmap7 = updateBitmap(bitmap7, 7, true);
-
-// 获取近7天出现次数
-const count = countBitmap(bitmap7);
-console.log(`近7天出现 ${count} 次`);
-
-// 查看具体哪几天出现了
-const binaryStr = bitmapToString(bitmap7, 7);
-console.log(`位图: ${binaryStr}`);
-// 输出类似: 1011001 (从右到左: 今天, 昨天, 前天...)
-*/

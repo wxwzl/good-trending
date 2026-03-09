@@ -5,7 +5,6 @@
 
 import {
   db,
-  categories,
   products,
   categoryHeatStats,
   productAppearanceStats,
@@ -22,7 +21,7 @@ import {
   type CrawledProduct,
   type CrawlerLogData,
 } from "../types/crawler.types";
-import { updateBitmap } from "@good-trending/shared";
+import { updateBitmap } from "../utils/bitmap";
 
 /**
  * 保存类目热度统计
@@ -420,7 +419,7 @@ export async function generateTrendRanks(date: Date = new Date()): Promise<void>
           await db.insert(trendRanks).values(batch);
         }
 
-        console.log(`生成 ${period} 榜单完成，共 ${topProducts.length} 个商品`);
+        console.info(`生成 ${period} 榜单完成，共 ${topProducts.length} 个商品`);
       }
     } catch (error) {
       console.error(`生成榜单失败 [${period}]:`, error);

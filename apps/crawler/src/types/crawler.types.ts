@@ -9,10 +9,10 @@ import type { SourceType } from "@good-trending/database";
  * 爬虫任务类型
  */
 export type CrawlerTaskType =
-  | "CATEGORY_HEAT"      // 类目热度统计
-  | "PRODUCT_DISCOVERY"  // 商品发现
-  | "PRODUCT_MENTION"    // 商品社交提及统计
-  | "YESTERDAY_STATS";   // 昨天数据统计
+  | "CATEGORY_HEAT" // 类目热度统计
+  | "PRODUCT_DISCOVERY" // 商品发现
+  | "PRODUCT_MENTION" // 商品社交提及统计
+  | "YESTERDAY_STATS"; // 昨天数据统计
 
 /**
  * 爬虫状态
@@ -196,58 +196,5 @@ export interface CategoryCrawlConfig {
   searchDelayRange?: [number, number];
 }
 
-// ==================== Bitmap 工具函数 ====================
-
-/**
- * 更新位图（滑动窗口）
- * @param bitmap 当前位图值
- * @param windowSize 窗口大小（7/15/30/60）
- * @param appearedToday 今天是否出现
- * @returns 更新后的位图值
- */
-export function updateBitmap(
-  bitmap: number,
-  windowSize: number,
-  appearedToday: boolean
-): number {
-  // 左移一位
-  let newBitmap = bitmap << 1;
-
-  // 屏蔽超出窗口大小的位
-  const mask = (1 << windowSize) - 1;
-  newBitmap = newBitmap & mask;
-
-  // 设置今天的状态
-  if (appearedToday) {
-    newBitmap = newBitmap | 1;
-  }
-
-  return newBitmap;
-}
-
-/**
- * 计算位图中 1 的个数（出现次数）
- * @param bitmap 位图值
- * @returns 出现次数
- */
-export function countBitmap(bitmap: number): number {
-  let count = 0;
-  let n = bitmap;
-
-  while (n > 0) {
-    n = n & (n - 1);
-    count++;
-  }
-
-  return count;
-}
-
-/**
- * 将位图转换为二进制字符串
- * @param bitmap 位图值
- * @param length 字符串长度
- * @returns 二进制字符串
- */
-export function bitmapToString(bitmap: number, length: number = 30): string {
-  return bitmap.toString(2).padStart(length, "0");
-}
+// Note: Bitmap 工具函数已移动到 ../utils/bitmap.ts
+// 使用时请直接导入: import { updateBitmap, countBitmap, bitmapToString } from "../utils/bitmap";

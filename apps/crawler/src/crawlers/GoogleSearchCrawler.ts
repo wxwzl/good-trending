@@ -10,12 +10,11 @@
  */
 
 import { createLogger, format, transports, Logger } from "winston";
-import { BaseCrawler } from "./BaseCrawler";
+import { BaseCrawler, type CrawlerConfig } from "./BaseCrawler";
 import {
   type CategoryHeatResult,
   type CrawledProduct,
   type SearchPlatform,
-  type CrawlerConfig,
   type CategoryCrawlConfig,
   type CrawlerExecutionResult,
   type CategoryData,

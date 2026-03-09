@@ -167,20 +167,10 @@ export interface CrawlerExecutionResult<T> {
 }
 
 /**
- * 爬虫配置
+ * 类目爬取配置
  */
-export interface CrawlerConfig {
-  /** 无头模式 */
-  headless?: boolean;
-  /** 请求延迟 (毫秒) */
-  requestDelay?: number;
-  /** 最大重试次数 */
-  maxRetries?: number;
-  /** 超时时间 (毫秒) */
-  timeout?: number;
-  /** 代理地址 */
-  proxy?: string;
-}
+// Note: CrawlerConfig 接口已移动到 ../crawlers/BaseCrawler.ts
+// 使用时请导入: import { CrawlerConfig } from "../crawlers/BaseCrawler";
 
 /**
  * 类目爬取配置

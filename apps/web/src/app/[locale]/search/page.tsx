@@ -114,7 +114,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
                           image: product.image,
                           price: product.price ? parseFloat(product.price) : undefined,
                           currency: product.currency,
-                          source: product.sourceType === "X_PLATFORM" ? "x_platform" : "amazon",
+                          source: product.discoveredFrom === "X_PLATFORM" ? "x_platform" : "amazon",
                         }}
                         showRank={false}
                       />

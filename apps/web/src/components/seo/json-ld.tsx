@@ -6,6 +6,7 @@
  */
 
 import { locales, type Locale, localeMappings } from "@/i18n/config";
+import type { SourceType } from "@good-trending/dto/common";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://goodtrending.com";
 
@@ -56,7 +57,7 @@ interface ProductJsonLdProps {
   image?: string;
   price?: string;
   currency?: string;
-  sourceType: "X_PLATFORM" | "AMAZON";
+  sourceType: SourceType;
   sourceUrl: string;
   locale: Locale;
 }

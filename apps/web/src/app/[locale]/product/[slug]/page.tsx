@@ -65,8 +65,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const getSourceLabel = (sourceType: string) => {
-    return sourceType === "X_PLATFORM"
+  const getSourceLabel = (discoveredFrom: string) => {
+    return discoveredFrom === "X_PLATFORM"
       ? t("product.sourceLabels.x_platform")
       : t("product.sourceLabels.amazon");
   };
@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         image={product.image}
         price={product.price}
         currency={product.currency}
-        sourceType={product.sourceType}
+        sourceType={product.discoveredFrom}
         sourceUrl={product.sourceUrl}
         locale={currentLocale}
       />
@@ -157,7 +157,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-col">
             {/* Source */}
             <Badge variant="secondary" className="w-fit mb-3">
-              {getSourceLabel(product.sourceType)}
+              {getSourceLabel(product.discoveredFrom)}
             </Badge>
 
             {/* Name */}

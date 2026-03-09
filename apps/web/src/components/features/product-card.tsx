@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/routing";
 
-interface Product {
+interface ProductCardProduct {
   id: string;
   name: string;
   slug: string;
@@ -17,7 +17,7 @@ interface Product {
 }
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductCardProduct;
   showRank?: boolean;
   showSource?: boolean;
 }

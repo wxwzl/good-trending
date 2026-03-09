@@ -222,39 +222,43 @@ async function main() {
           const redditResult = await crawler.performGoogleSearch(redditQuery);
           logger.info(`   找到 ${redditResult.links.length} 个搜索结果`);
 
-          // 从 Reddit 结果中提取亚马逊商品
+          // 从 Reddit 结果中提取亚马逊商品（边爬边保存模式）
+          let categorySavedCount = 0;
+          let categoryDuplicateCount = 0;
+
           const redditProducts = await crawler.extractAmazonProductsFromLinks(
-            redditResult.links.slice(0, 30)
-          );
-
-          logger.info(`   提取到 ${redditProducts.length} 个商品链接`);
-
-          // 准备该类目的商品数据
-          const categoryProducts = [];
-          for (const product of redditProducts) {
-            if (!seenAsins.has(product.amazonId)) {
+            redditResult.links.slice(0, 30),
+            async (product) => {
+              // 检查是否已存在（全局去重）
+              if (seenAsins.has(product.amazonId)) {
+                categoryDuplicateCount++;
+                return;
+              }
               seenAsins.add(product.amazonId);
-              categoryProducts.push({
+
+              // 立即保存单个商品
+              const productWithCategory = {
                 ...product,
                 discoveredFromCategory: category.id,
                 firstSeenAt: yesterday,
-              });
+              };
+
+              const saveResult = await saveCrawledProducts([productWithCategory], "REDDIT");
+              if (saveResult.savedCount > 0) {
+                categorySavedCount++;
+                totalSaved++;
+              } else if (saveResult.skippedCount > 0) {
+                categoryDuplicateCount++;
+                totalSkipped++;
+              }
             }
-          }
+          );
 
-          // 立即保存该类目的商品
-          if (categoryProducts.length > 0) {
-            const saveResult = await saveCrawledProducts(categoryProducts, "REDDIT");
-            totalSaved += saveResult.savedCount;
-            totalSkipped += saveResult.skippedCount;
-            logger.info(
-              `   ✅ 类目 [${category.name}] 保存完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`
-            );
-          } else {
-            logger.info(`   ℹ️  类目 [${category.name}] 没有新商品`);
-          }
+          logger.info(
+            `   ✅ 类目 [${category.name}] 完成: 本类目新商品 ${categorySavedCount}, 重复/跳过 ${categoryDuplicateCount}`
+          );
 
-          totalFound += categoryProducts.length;
+          totalFound += redditProducts.length;
 
           // 延迟避免被封
           const delay = Math.floor(Math.random() * 5000) + 5000; // 5-10秒

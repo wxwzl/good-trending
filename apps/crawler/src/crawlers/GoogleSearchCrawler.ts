@@ -598,12 +598,17 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 1. 访问Reddit帖子
    * 2. 从帖子内容中提取亚马逊商品链接
    * 3. 访问亚马逊链接获取商品详情
+   * 4. 可选：每提取一个商品立即保存（边爬边保存模式）
    */
   async extractAmazonProductsFromLinks(
-    links: Array<{ title: string; url: string }>
+    links: Array<{ title: string; url: string }>,
+    onProductExtracted?: (
+      product: Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt">
+    ) => Promise<void> | void
   ): Promise<Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt">[]> {
     const products: Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt">[] = [];
     const seenAsins = new Set<string>();
+    let savedCount = 0;
 
     for (const link of links) {
       try {
@@ -627,7 +632,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
           const productInfo = await this.extractAmazonProductInfo(amazonUrl);
           if (productInfo && !("error" in productInfo)) {
             seenAsins.add(asin);
-            products.push({
+            const product: Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt"> = {
               name: productInfo.name,
               description: productInfo.description,
               price: productInfo.price
@@ -636,14 +641,27 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
               currency: "USD",
               amazonId: asin,
               sourceUrl: amazonUrl,
-            });
+            };
 
+            products.push(product);
             this.logger.info(`  ✅ 成功提取商品: ${productInfo.name.substring(0, 50)}...`);
+
+            // 如果提供了回调函数，立即保存商品（边爬边保存模式）
+            if (onProductExtracted) {
+              try {
+                await onProductExtracted(product);
+                savedCount++;
+                this.logger.info(`  💾 已立即保存商品 (总计: ${savedCount})`);
+              } catch (saveError) {
+                this.logger.warn(`  ⚠️ 保存商品失败: ${saveError}`);
+              }
+            }
           }
 
           // 限制商品数量
           const maxProducts = this.searchConfig.categoryConfig?.maxProductsPerCategory ?? 10;
           if (products.length >= maxProducts) {
+            this.logger.info(`  已达到最大商品数量限制 (${maxProducts})，停止提取`);
             return products;
           }
         }
@@ -657,6 +675,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       await this.delay(delay);
     }
 
+    this.logger.info(`提取完成: ${products.length} 个商品，已保存: ${savedCount} 个`);
     return products;
   }
 

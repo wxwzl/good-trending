@@ -11,6 +11,14 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/seed.ts", "src/cleanup.ts", "src/scripts/cleanup-data.ts"]
+  "include": [
+    "src/**/*",
+    "scripts/check-crawler-logs.ts",
+    "scripts/check-products.ts",
+    "scripts/cleanup-data.ts",
+    "scripts/reset-database.ts",
+    "scripts/seed-categories.ts",
+    "src/loadEnv.ts"
+  ],
+  "exclude": ["node_modules", "dist", "src/seed.ts", "src/cleanup.ts", "scripts/cleanup-data.ts"]
 }

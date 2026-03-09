@@ -243,7 +243,11 @@ export const trendRanks = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("trend_rank_product_period_date_idx").on(table.productId, table.periodType, table.statDate),
+    uniqueIndex("trend_rank_product_period_date_idx").on(
+      table.productId,
+      table.periodType,
+      table.statDate
+    ),
     index("trend_rank_period_date_rank_idx").on(table.periodType, table.statDate, table.rank),
     index("trend_rank_date_score_idx").on(table.statDate, table.score),
   ]
@@ -282,7 +286,11 @@ export const crawlerLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("crawler_log_task_source_created_idx").on(table.taskType, table.sourceType, table.createdAt),
+    index("crawler_log_task_source_created_idx").on(
+      table.taskType,
+      table.sourceType,
+      table.createdAt
+    ),
     index("crawler_log_status_idx").on(table.status),
     index("crawler_log_category_idx").on(table.categoryId),
   ]

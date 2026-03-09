@@ -82,16 +82,12 @@
         "category_name_unique": {
           "name": "category_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         },
         "category_slug_unique": {
           "name": "category_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -227,12 +223,8 @@
           "name": "category_heat_stat_category_id_category_id_fk",
           "tableFrom": "category_heat_stat",
           "tableTo": "category",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -484,12 +476,8 @@
           "name": "product_appearance_stat_product_id_product_id_fk",
           "tableFrom": "product_appearance_stat",
           "tableTo": "product",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -499,9 +487,7 @@
         "product_appearance_stat_product_id_unique": {
           "name": "product_appearance_stat_product_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "product_id"
-          ]
+          "columns": ["product_id"]
         }
       },
       "policies": {},
@@ -531,12 +517,8 @@
           "name": "product_category_product_id_product_id_fk",
           "tableFrom": "product_category",
           "tableTo": "product",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -544,12 +526,8 @@
           "name": "product_category_category_id_category_id_fk",
           "tableFrom": "product_category",
           "tableTo": "category",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -557,10 +535,7 @@
       "compositePrimaryKeys": {
         "product_category_product_id_category_id_pk": {
           "name": "product_category_product_id_category_id_pk",
-          "columns": [
-            "product_id",
-            "category_id"
-          ]
+          "columns": ["product_id", "category_id"]
         }
       },
       "uniqueConstraints": {},
@@ -760,12 +735,8 @@
           "name": "product_social_stat_product_id_product_id_fk",
           "tableFrom": "product_social_stat",
           "tableTo": "product",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -916,16 +887,12 @@
         "product_slug_unique": {
           "name": "product_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         },
         "product_amazon_id_unique": {
           "name": "product_amazon_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "amazon_id"
-          ]
+          "columns": ["amazon_id"]
         }
       },
       "policies": {},
@@ -1082,12 +1049,8 @@
           "name": "trend_rank_product_id_product_id_fk",
           "tableFrom": "trend_rank",
           "tableTo": "product",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1103,20 +1066,12 @@
     "public.crawler_status": {
       "name": "crawler_status",
       "schema": "public",
-      "values": [
-        "RUNNING",
-        "COMPLETED",
-        "FAILED"
-      ]
+      "values": ["RUNNING", "COMPLETED", "FAILED"]
     },
     "public.source_type": {
       "name": "source_type",
       "schema": "public",
-      "values": [
-        "REDDIT",
-        "X_PLATFORM",
-        "AMAZON"
-      ]
+      "values": ["REDDIT", "X_PLATFORM", "AMAZON"]
     }
   },
   "schemas": {},

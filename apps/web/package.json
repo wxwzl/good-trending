@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@good-trending/dto": "1.0.0",
     "cross-env": "^10.1.0",
     "dotenv": "^16.6.1",
     "next": "16.1.6",

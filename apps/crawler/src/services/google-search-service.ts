@@ -190,37 +190,49 @@ export class GoogleSearchService {
         page = this.page;
       }
 
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+      // 模拟真实用户行为：先访问 Google 首页，再输入搜索
+      logger.info("模拟用户搜索行为...");
 
-      // 导航到搜索页面
-      logger.info(`导航到: ${searchUrl}`);
-      const response = await page.goto(searchUrl, {
+      // 1. 先访问 Google 首页
+      logger.info("访问 Google 首页");
+      const homeResponse = await page.goto("https://www.google.com", {
         waitUntil: "networkidle",
         timeout: this.config.browser?.timeout || 30000,
       });
 
-      if (!response) {
-        throw new Error("页面导航失败: 无响应");
+      if (!homeResponse || homeResponse.status() !== 200) {
+        throw new Error("无法访问 Google 首页");
       }
 
-      const status = response.status();
-      logger.info(`页面响应状态: ${status}`);
+      await page.waitForTimeout(2000);
 
-      if (status !== 200) {
-        throw new Error(`页面导航失败: HTTP ${status}`);
+      // 2. 找到搜索框并输入查询
+      logger.info(`在搜索框输入: ${query}`);
+      const searchInput = await page.$('textarea[name="q"], input[name="q"]');
+      if (!searchInput) {
+        throw new Error("找不到 Google 搜索框");
       }
 
-      // 等待页面加载
+      await searchInput.click();
+      await searchInput.fill(query);
+      await page.waitForTimeout(500);
+
+      // 3. 按回车搜索（模拟用户行为）
+      logger.info("执行搜索...");
+      await searchInput.press("Enter");
+
+      // 4. 等待搜索结果页面加载
+      await page.waitForLoadState("networkidle", { timeout: 30000 });
       await page.waitForTimeout(3000);
 
       // 检查当前URL
       const currentUrl = page.url();
       logger.info(`当前页面URL: ${currentUrl}`);
 
-      if (currentUrl.includes("google.com")) {
-        logger.info("成功导航到 Google 搜索页面");
+      if (currentUrl.includes("google.com/search")) {
+        logger.info("成功导航到 Google 搜索结果页面");
       } else {
-        logger.warn(`警告: 当前页面不是 Google (${currentUrl})`);
+        logger.warn(`警告: 当前页面不是搜索结果页 (${currentUrl})`);
       }
 
       // 提取搜索结果

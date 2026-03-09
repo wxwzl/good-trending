@@ -83,7 +83,7 @@ export abstract class BaseCrawler<T> {
   /**
    * 初始化浏览器
    */
-  protected async initBrowser(): Promise<void> {
+  async initBrowser(): Promise<void> {
     if (this.browser) {
       return;
     }

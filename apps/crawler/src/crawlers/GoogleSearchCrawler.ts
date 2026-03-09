@@ -85,7 +85,8 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       timeout: searchConfig.timeout ?? 30000,
       proxy: searchConfig.proxy ?? "",
       headers: searchConfig.headers ?? {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
       },
       categoryConfig: {
@@ -565,7 +566,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 执行 Google 搜索
    * 优先使用 SerpAPI，失败时回退到浏览器
    */
-  private async performGoogleSearch(
+  async performGoogleSearch(
     query: string
   ): Promise<{ totalResults: number; links: SearchResult[]; source: "serpapi" | "browser" }> {
     this.logger.info(`执行搜索: ${query}`);
@@ -598,7 +599,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 2. 从帖子内容中提取亚马逊商品链接
    * 3. 访问亚马逊链接获取商品详情
    */
-  private async extractAmazonProductsFromLinks(
+  async extractAmazonProductsFromLinks(
     links: Array<{ title: string; url: string }>
   ): Promise<Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt">[]> {
     const products: Omit<CrawledProduct, "discoveredFromCategory" | "firstSeenAt">[] = [];

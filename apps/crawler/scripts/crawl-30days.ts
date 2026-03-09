@@ -164,7 +164,7 @@ async function main() {
   }
 
   /**
-   * 爬取昨天商品
+   * 爬取昨天商品（逐个类目处理，边爬边保存）
    */
   async function crawlYesterdayProducts(currentDate, headless) {
     const yesterday = new Date(currentDate);
@@ -181,6 +181,11 @@ async function main() {
     };
 
     let crawler = null;
+    const seenAsins = new Set<string>(); // 用于去重
+    let totalFound = 0;
+    let totalSaved = 0;
+    let totalSkipped = 0;
+    const errors: string[] = [];
 
     try {
       const categoryList = await getAllCategories();
@@ -197,16 +202,77 @@ async function main() {
         }
       );
 
-      // 爬取昨天商品
-      const result = await crawler.crawlYesterdayProducts(categoryList, currentDate);
-      const saveResult = await saveCrawledProducts(result.data, "REDDIT");
+      // 初始化浏览器
+      await crawler.initBrowser();
 
-      log.status = result.success ? "COMPLETED" : "FAILED";
-      log.itemsFound = result.data.length;
-      log.itemsSaved = saveResult.savedCount;
+      // 逐个类目处理
+      for (let i = 0; i < categoryList.length; i++) {
+        const category = categoryList[i];
+        logger.info(`   [${i + 1}/${categoryList.length}] 处理类目: ${category.name}`);
+
+        try {
+          // 搜索该类目
+          const keyword = category.searchKeywords || category.name;
+          const yesterdayStr = formatDate(yesterday);
+          const todayStr = formatDate(currentDate);
+
+          const redditQuery = `site:reddit.com "${keyword}" after:${yesterdayStr} before:${todayStr}`;
+          logger.info(`   搜索: ${redditQuery}`);
+
+          const redditResult = await crawler.performGoogleSearch(redditQuery);
+          logger.info(`   找到 ${redditResult.links.length} 个搜索结果`);
+
+          // 从 Reddit 结果中提取亚马逊商品
+          const redditProducts = await crawler.extractAmazonProductsFromLinks(
+            redditResult.links.slice(0, 30)
+          );
+
+          logger.info(`   提取到 ${redditProducts.length} 个商品链接`);
+
+          // 准备该类目的商品数据
+          const categoryProducts = [];
+          for (const product of redditProducts) {
+            if (!seenAsins.has(product.amazonId)) {
+              seenAsins.add(product.amazonId);
+              categoryProducts.push({
+                ...product,
+                discoveredFromCategory: category.id,
+                firstSeenAt: yesterday,
+              });
+            }
+          }
+
+          // 立即保存该类目的商品
+          if (categoryProducts.length > 0) {
+            const saveResult = await saveCrawledProducts(categoryProducts, "REDDIT");
+            totalSaved += saveResult.savedCount;
+            totalSkipped += saveResult.skippedCount;
+            logger.info(
+              `   ✅ 类目 [${category.name}] 保存完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`
+            );
+          } else {
+            logger.info(`   ℹ️  类目 [${category.name}] 没有新商品`);
+          }
+
+          totalFound += categoryProducts.length;
+
+          // 延迟避免被封
+          const delay = Math.floor(Math.random() * 5000) + 5000; // 5-10秒
+          logger.info(`   ⏳ 等待 ${delay}ms 后处理下一个类目...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } catch (error) {
+          const errorMsg = `处理类目 [${category.name}] 失败: ${error.message || String(error)}`;
+          logger.error(`   ❌ ${errorMsg}`);
+          errors.push(errorMsg);
+        }
+      }
+
+      log.status = errors.length === 0 ? "COMPLETED" : "FAILED";
+      log.itemsFound = totalFound;
+      log.itemsSaved = totalSaved;
 
       logger.info(
-        `   ✅ 昨天商品爬取完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`
+        `   ✅ 昨天商品爬取完成: 总计新商品 ${totalSaved}, 跳过 ${totalSkipped}, 错误 ${errors.length}`
       );
     } catch (error) {
       log.status = "FAILED";

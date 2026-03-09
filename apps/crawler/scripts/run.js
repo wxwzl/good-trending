@@ -3,10 +3,10 @@
  * Crawler 统一启动脚本
  * 根据 APP_ENV 加载对应的环境文件，支持 dev/build/start 所有命令
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+
 const { spawn } = require("child_process");
-const fs = require("fs");
 const path = require("path");
+const { loadEnv, printEnvInfo } = require("./load-env");
 
 // 获取命令参数: dev, build, start
 let command = process.argv[2] || "dev";
@@ -17,40 +17,9 @@ if (!["dev", "build", "start"].includes(command)) {
   process.exit(1);
 }
 
-// 确定环境 (APP_ENV 用于加载自定义环境文件, NODE_ENV 保持标准值)
-const appEnv = process.env.APP_ENV || (command === "dev" ? "development" : "production");
-const nodeEnv = process.env.NODE_ENV || (command === "dev" ? "development" : "production");
-
-// 加载环境文件的优先级（从高到低）
-const rootDir = path.resolve(__dirname, "../../..");
-const envFiles = [
-  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件 (使用 APP_ENV)
-  ".env.local",             // 本地覆盖
-  `.env.${appEnv}`,         // 特定环境 (使用 APP_ENV)
-  ".env",                   // 默认
-];
-
 // 加载环境变量
-const dotenv = require("dotenv");
-let loadedEnvFile = null;
-
-for (const envFile of envFiles) {
-  const envPath = path.resolve(rootDir, envFile);
-  if (fs.existsSync(envPath)) {
-    const result = dotenv.config({ path: envPath });
-    if (!result.error) {
-      loadedEnvFile = envFile;
-      console.log(`[${command}] 已加载环境文件: ${envFile}`);
-      break;
-    }
-  }
-}
-
-if (!loadedEnvFile) {
-  console.log(`[${command}] 警告: 未找到环境文件，使用系统环境变量`);
-}
-
-console.log(`[${command}] NODE_ENV=${nodeEnv}, APP_ENV=${appEnv}`);
+const envInfo = loadEnv({ command });
+printEnvInfo(envInfo);
 
 // 构建命令
 let args;

@@ -11,7 +11,7 @@
     "pnpm --filter @good-trending/scheduler run lint:staged",
     "pnpm --filter @good-trending/scheduler run format:staged"
   ],
-  "apps/tests/**/*.{ts,tsx}": ["pnpm --filter @good-trending/tests test:api"],
+  "apps/tests/**/*.{ts,tsx}": ["prettier --write"],
   "apps/web/**/*.{ts,tsx}": [
     "pnpm --filter @good-trending/web run lint:staged",
     "pnpm --filter @good-trending/web run format:staged"

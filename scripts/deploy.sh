@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Good-Trending 自动部署脚本
-# 构建应用、生成数据库迁移、部署到服务器
+# Good-Trending 部署包生成和上传脚本
+# 只负责打包和上传，不执行服务器端命令
 #
 # 使用方法: ./scripts/deploy.sh
 #
@@ -39,7 +39,7 @@ DEPLOY_DIR="/workspace/good-trending"
 SERVICES="api web scheduler"
 
 log_info "=========================================="
-log_info "Good-Trending 自动部署脚本"
+log_info "Good-Trending 部署包生成和上传"
 log_info "=========================================="
 log_info "部署目标: $DEPLOY_HOST:$DEPLOY_DIR"
 log_info "=========================================="
@@ -48,21 +48,21 @@ echo ""
 # ============================================
 # 1. 安装依赖
 # ============================================
-log_info "[1/7] 安装依赖..."
+log_info "[1/5] 安装依赖..."
 pnpm install --frozen-lockfile
 log_success "依赖安装完成"
 
 # ============================================
 # 2. 构建服务
 # ============================================
-log_info "[2/7] 构建服务 (api, web, scheduler)..."
+log_info "[2/5] 构建服务 (api, web, scheduler)..."
 pnpm run build:deploy
 log_success "构建完成"
 
 # ============================================
 # 3. 检查构建结果
 # ============================================
-log_info "[3/7] 检查构建结果..."
+log_info "[3/5] 检查构建结果..."
 for service in $SERVICES; do
     if [ ! -d "apps/$service/dist" ] && [ ! -d "apps/$service/.next" ]; then
         log_error "构建失败: apps/$service 没有输出目录"
@@ -72,10 +72,10 @@ for service in $SERVICES; do
 done
 
 # ============================================
-# 4. 生成数据库迁移
+# 4. 生成数据库迁移（可选）
 # ============================================
 echo ""
-log_info "[4/7] 数据库迁移"
+log_info "[4/5] 数据库迁移"
 echo "是否需要生成新的数据库迁移?"
 echo "  1) 是 - 执行 db:generate 生成 SQL"
 echo "  2) 否 - 使用已存在的迁移文件"
@@ -96,22 +96,23 @@ if [ "$migrate_choice" = "1" ]; then
         log_success "生成迁移文件: $SQL_FILENAME"
 
         # 复制到部署目录
+        mkdir -p deploy/migrations
         cp "$NEW_SQL" "deploy/migrations/"
         log_info "已复制到 deploy/migrations/$SQL_FILENAME"
     else
         log_warn "未检测到新生成的 SQL 文件"
     fi
 else
-    log_info "跳过迁移生成，使用现有文件"
+    log_info "跳过迁移生成"
 fi
 
 # ============================================
 # 5. 创建部署包
 # ============================================
-log_info "[5/7] 创建部署包..."
+log_info "[5/5] 创建部署包..."
 DEPLOY_PACKAGE="deploy-$(date +%Y%m%d-%H%M%S).tar.gz"
 
-# 创建部署目录结构
+# 确保 migrations 目录存在
 mkdir -p deploy/migrations
 
 # 打包所有必要文件
@@ -126,10 +127,10 @@ tar -czf $DEPLOY_PACKAGE \
     deploy/.env.production \
     deploy/ecosystem.config.js \
     deploy/nginx \
-    deploy/init-database.sh \
     deploy/migrations \
     deploy/scripts \
     deploy/init-database.sh \
+    deploy/scripts/start-services.sh \
     deploy/install-ubuntu.sh \
     deploy/install-ubuntu-remaining.sh \
     deploy/DATABASE-DEPLOY.md \
@@ -139,10 +140,6 @@ tar -czf $DEPLOY_PACKAGE \
     pnpm-workspace.yaml \
     pnpm-lock.yaml \
     turbo.json \
-    scripts/start-all.sh \
-    scripts/check-status.ts \
-    scripts/check-data.mjs \
-    scripts/check-db-stats.mjs \
     --exclude='node_modules' \
     --exclude='.git' 2>/dev/null || true
 
@@ -151,157 +148,80 @@ log_success "部署包创建完成: $DEPLOY_PACKAGE ($(du -h $DEPLOY_PACKAGE | c
 # ============================================
 # 6. 上传到服务器
 # ============================================
-log_info "[6/7] 上传部署包到服务器..."
+log_info "上传部署包到服务器..."
 
 # 创建远程目录
 ssh $DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
 
 # 上传部署包
-scp $DEPLOY_PACKAGE $DEPLOY_HOST:/tmp/
+scp $DEPLOY_PACKAGE "$DEPLOY_HOST:$DEPLOY_DIR/"
 
-# 解压到部署目录
+# 解压部署包
 ssh $DEPLOY_HOST "
     cd $DEPLOY_DIR
     echo '解压部署包...'
-    tar -xzf /tmp/$DEPLOY_PACKAGE --strip-components=0
-    rm /tmp/$DEPLOY_PACKAGE
-
-    # 创建必要的目录
-    mkdir -p app/api/logs app/web/logs app/scheduler/logs
-    mkdir -p deploy/app
-
-    # 复制 ecosystem.config.js 到部署目录
-    cp deploy/ecosystem.config.js .
-
-    echo '文件解压完成'
+    tar -xzf $DEPLOY_PACKAGE
+    rm $DEPLOY_PACKAGE
+    echo '解压完成'
 "
 
 # 清理本地部署包
 rm -f $DEPLOY_PACKAGE
 
-log_success "文件上传完成"
+log_success "部署包上传完成"
 
 # ============================================
-# 7. 在服务器上执行数据库迁移
+# 7. 提交迁移文件（如果有）
 # ============================================
-echo ""
-log_info "[7/7] 在服务器上执行数据库迁移..."
-
-ssh $DEPLOY_HOST "
-    cd $DEPLOY_DIR
-
-    # 检查 DATABASE_URL
-    if [ -z \"\$DATABASE_URL\" ]; then
-        echo '错误: 未设置 DATABASE_URL 环境变量'
-        echo '请先执行: export DATABASE_URL=postgresql://user:password@localhost:5432/good_trending'
-        exit 1
-    fi
-
-    # 检查是否有迁移文件
-    if [ -d \"deploy/migrations\" ] && [ \"\$(ls -A deploy/migrations/*.sql 2>/dev/null)\" ]; then
-        echo '发现迁移文件，执行中...'
-        chmod +x deploy/scripts/run-migrations.sh
-        ./deploy/scripts/run-migrations.sh
-    else
-        echo '没有需要执行的迁移文件'
-    fi
-"
-
-if [ $? -ne 0 ]; then
-    log_error "数据库迁移失败"
-    exit 1
-fi
-
-log_success "数据库迁移完成"
-
-# ============================================
-# 8. 服务器端安装应用依赖并启动
-# ============================================
-echo ""
-log_info "安装应用依赖并启动服务..."
-
-ssh $DEPLOY_HOST "
-    cd $DEPLOY_DIR
-
-    echo '安装生产依赖（使用 npm）...'
-    for service in api web scheduler; do
-        echo \"  安装 apps/\$service...\"
-        cd apps/\$service
-        npm install --production
-        cd ../..
-    done
-    echo '依赖安装完成'
-
-    echo ''
-    echo '=========================================='
-    echo '环境变量配置:'
-    echo '=========================================='
-    echo '请确保已设置以下环境变量:'
-    echo ''
-    echo '  export DATABASE_URL=postgresql://user:password@localhost:5432/good_trending'
-    echo '  export REDIS_URL=redis://localhost:6379'
-    echo '  export NEXT_PUBLIC_API_URL=/backend/api/v1'
-    echo '  export CORS_ORIGINS=http://www.godtrending.com'
-    echo ''
-    echo '或创建 .env 文件:'
-    echo '  cp deploy/.env.production .env'
-    echo '=========================================='
-    echo ''
-
-    # 检查 PM2
-    if ! command -v pm2 &>/dev/null; then
-        echo '安装 PM2...'
-        npm install -g pm2
-    fi
-
-    # 启动服务
-    echo '启动服务...'
-    pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
-    pm2 save
-
-    echo ''
-    echo '服务状态:'
-    pm2 status
-"
-
-# ============================================
-# 9. 提交迁移文件到代码库
-# ============================================
-echo ""
 if [ -n "$GENERATED_SQL" ]; then
+    echo ""
     log_info "提交迁移文件到代码库..."
     SQL_FILENAME=$(basename "$GENERATED_SQL")
 
     git add packages/database/migrations/
     git add deploy/migrations/
-    git status
 
     echo ""
     read -p "提交迁移文件? (y/N): " commit_confirm
     if [ "$commit_confirm" = "y" ] || [ "$commit_confirm" = "Y" ]; then
         git commit -m "chore(db): add migration $SQL_FILENAME" --no-verify
-        log_success "迁移文件已提交"
-        echo "请手动推送: git push"
+        log_success "迁移文件已提交，请手动推送: git push"
     else
-        log_warn "未提交，请手动提交"
+        log_warn "未提交，请手动提交:"
+        echo "  git add packages/database/migrations/ deploy/migrations/"
+        echo "  git commit -m 'chore(db): add migration'"
     fi
 fi
 
 # ============================================
-# 10. 完成
+# 8. 完成提示
 # ============================================
 echo ""
 log_success "=========================================="
-log_success "部署完成!"
+log_success "部署包上传完成!"
 log_success "=========================================="
 echo ""
-echo "访问地址:"
-echo "  http://www.godtrending.com"
-echo "  http://www.godtrending.com/backend/api/health"
+echo "部署目录: $DEPLOY_DIR"
 echo ""
-echo "查看日志:"
-echo "  ssh $DEPLOY_HOST"
-echo "  cd $DEPLOY_DIR"
-echo "  pm2 logs"
+echo "请在服务器上执行以下操作:"
 echo ""
+echo "1. SSH 登录服务器:"
+echo "   ssh $DEPLOY_HOST"
+echo ""
+echo "2. 进入部署目录:"
+echo "   cd $DEPLOY_DIR"
+echo ""
+echo "3. 执行数据库迁移（如有新的 SQL 文件）:"
+echo "   ./deploy/scripts/run-migrations.sh"
+echo ""
+echo "4. 安装依赖并启动服务:"
+echo "   ./deploy/scripts/start-services.sh"
+echo ""
+echo "或手动执行:"
+echo "   cd apps/api && npm install --production && cd ../.."
+echo "   cd apps/web && npm install --production && cd ../.."
+echo "   cd apps/scheduler && npm install --production && cd ../.."
+echo "   pm2 start ecosystem.config.js && pm2 save"
+echo ""
+echo "注意: 环境变量已配置在 deploy/.env.production，程序会自动加载"
 echo "=========================================="

@@ -9,6 +9,7 @@
     "dev:scheduler": "pnpm --filter @good-trending/scheduler dev",
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:deploy": "turbo run build --filter=@good-trending/api --filter=@good-trending/web --filter=@good-trending/scheduler",
     "start": "turbo run start",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",

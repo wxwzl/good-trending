@@ -38,11 +38,40 @@ DEPLOY_HOST="root@www.godtrending.com"
 DEPLOY_DIR="/workspace/good-trending"
 SERVICES="api web scheduler"
 
+# ============================================
+# 提示输入密码
+# ============================================
+echo ""
 log_info "=========================================="
 log_info "Good-Trending 部署包生成和上传"
 log_info "=========================================="
 log_info "部署目标: $DEPLOY_HOST:$DEPLOY_DIR"
 log_info "=========================================="
+echo ""
+
+# 检查是否使用密码或 SSH Key
+echo "连接方式:"
+echo "  1) 使用 SSH Key（免密码，推荐）"
+echo "  2) 使用密码（将提示输入）"
+read -p "选择 (1/2): " auth_choice
+
+SSH_PASS=""
+USE_SSHPASS=false
+
+if [ "$auth_choice" = "2" ]; then
+    # 检查是否安装了 sshpass
+    if command -v sshpass &> /dev/null; then
+        read -s -p "请输入服务器密码: " SSH_PASS
+        echo ""
+        USE_SSHPASS=true
+        log_info "将使用 sshpass 自动输入密码"
+    else
+        log_warn "未安装 sshpass，每次连接都将手动输入密码"
+        log_info "建议安装: apt-get install sshpass 或 brew install sshpass"
+        echo ""
+    fi
+fi
+
 echo ""
 
 # ============================================
@@ -151,19 +180,37 @@ log_success "部署包创建完成: $DEPLOY_PACKAGE ($(du -h $DEPLOY_PACKAGE | c
 log_info "上传部署包到服务器..."
 
 # 创建远程目录
-ssh $DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
+if [ "$USE_SSHPASS" = true ]; then
+    sshpass -p "$SSH_PASS" ssh $DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
+else
+    ssh $DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
+fi
 
 # 上传部署包
-scp $DEPLOY_PACKAGE "$DEPLOY_HOST:$DEPLOY_DIR/"
+if [ "$USE_SSHPASS" = true ]; then
+    sshpass -p "$SSH_PASS" scp $DEPLOY_PACKAGE "$DEPLOY_HOST:$DEPLOY_DIR/"
+else
+    scp $DEPLOY_PACKAGE "$DEPLOY_HOST:$DEPLOY_DIR/"
+fi
 
 # 解压部署包
-ssh $DEPLOY_HOST "
-    cd $DEPLOY_DIR
-    echo '解压部署包...'
-    tar -xzf $DEPLOY_PACKAGE
-    rm $DEPLOY_PACKAGE
-    echo '解压完成'
-"
+if [ "$USE_SSHPASS" = true ]; then
+    sshpass -p "$SSH_PASS" ssh $DEPLOY_HOST "
+        cd $DEPLOY_DIR
+        echo '解压部署包...'
+        tar -xzf $DEPLOY_PACKAGE
+        rm $DEPLOY_PACKAGE
+        echo '解压完成'
+    "
+else
+    ssh $DEPLOY_HOST "
+        cd $DEPLOY_DIR
+        echo '解压部署包...'
+        tar -xzf $DEPLOY_PACKAGE
+        rm $DEPLOY_PACKAGE
+        echo '解压完成'
+    "
+fi
 
 # 清理本地部署包
 rm -f $DEPLOY_PACKAGE
@@ -206,7 +253,11 @@ echo ""
 echo "请在服务器上执行以下操作:"
 echo ""
 echo "1. SSH 登录服务器:"
-echo "   ssh $DEPLOY_HOST"
+if [ "$USE_SSHPASS" = true ]; then
+    echo "   sshpass -p '你的密码' ssh $DEPLOY_HOST"
+else
+    echo "   ssh $DEPLOY_HOST"
+fi
 echo ""
 echo "2. 进入部署目录:"
 echo "   cd $DEPLOY_DIR"

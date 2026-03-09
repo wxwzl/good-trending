@@ -298,9 +298,13 @@ export class TrendingService {
         totalRedditMentions: sql<number>`SUM(${trendRanks.redditMentions})`.as(
           'total_reddit_mentions',
         ),
-        totalXMentions: sql<number>`SUM(${trendRanks.xMentions})`.as('total_x_mentions'),
+        totalXMentions: sql<number>`SUM(${trendRanks.xMentions})`.as(
+          'total_x_mentions',
+        ),
         // 数据天数
-        dataDays: sql<number>`COUNT(DISTINCT ${trendRanks.statDate})`.as('data_days'),
+        dataDays: sql<number>`COUNT(DISTINCT ${trendRanks.statDate})`.as(
+          'data_days',
+        ),
       })
       .from(trendRanks)
       .innerJoin(products, eq(trendRanks.productId, products.id))

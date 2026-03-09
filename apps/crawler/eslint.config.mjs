@@ -33,7 +33,7 @@ export default tseslint.config(
 
   // Custom rules for TypeScript files
   {
-    files: ["**/*.ts"],
+    files: ["src/**/*.ts"],
     plugins: {
       prettier,
     },
@@ -73,6 +73,33 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
+  // Scripts directory - uses separate tsconfig
+  {
+    files: ["scripts/**/*.ts"],
+    plugins: {
+      prettier,
+    },
+    rules: {
+      "prettier/prettier": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "no-console": "off",
+    },
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.scripts.json",
         tsconfigRootDir: import.meta.dirname,
       },
     },

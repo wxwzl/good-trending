@@ -44,7 +44,8 @@ export class GetTrendingDto implements GetTrendingRequest {
   limit?: number = 20;
 
   @ApiPropertyOptional({
-    description: '时间范围: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
+    description:
+      '时间范围: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
     example: 'TODAY',
   })
   @IsOptional()
@@ -117,7 +118,8 @@ export class TrendingItemDto implements TrendingItem {
   productPrice: string | null;
 
   @ApiProperty({
-    description: '榜单类型: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
+    description:
+      '榜单类型: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
     example: 'TODAY',
   })
   periodType: string;

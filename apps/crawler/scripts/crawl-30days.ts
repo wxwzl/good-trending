@@ -17,7 +17,7 @@ printEnvInfo(envInfo);
 if (!validateDatabaseConfig()) {
   process.exit(1);
 }
-// eslint-disable-next-line no-console
+
 console.log("✅ 环境变量加载完成\n");
 // =================================
 
@@ -257,9 +257,7 @@ async function main() {
 
       for (const product of productList) {
         try {
-          logger.info(
-            `   处理商品 [${processedCount + 1}/${productList.length}]: ${product.name}`
-          );
+          logger.info(`   处理商品 [${processedCount + 1}/${productList.length}]: ${product.name}`);
 
           const mentions = await crawler.crawlProductMentions(product.name, currentDate);
           await saveProductSocialStats(product.id, currentDate, mentions.periodResults);

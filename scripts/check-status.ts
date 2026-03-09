@@ -65,7 +65,13 @@ async function checkStatus() {
 
   // 检查 trending-queue
   const trendingQueue = new Queue("trending-queue", { connection });
-  const trendingCounts = await trendingQueue.getJobCounts("wait", "active", "completed", "failed", "delayed");
+  const trendingCounts = await trendingQueue.getJobCounts(
+    "wait",
+    "active",
+    "completed",
+    "failed",
+    "delayed"
+  );
   console.log(`   Trending Queue:`);
   console.log(`     - waiting: ${trendingCounts.wait}`);
   console.log(`     - active: ${trendingCounts.active}`);
@@ -75,7 +81,13 @@ async function checkStatus() {
 
   // 检查 crawler-queue
   const crawlerQueue = new Queue("crawler-queue", { connection });
-  const crawlerCounts = await crawlerQueue.getJobCounts("wait", "active", "completed", "failed", "delayed");
+  const crawlerCounts = await crawlerQueue.getJobCounts(
+    "wait",
+    "active",
+    "completed",
+    "failed",
+    "delayed"
+  );
   console.log(`   Crawler Queue:`);
   console.log(`     - waiting: ${crawlerCounts.wait}`);
   console.log(`     - active: ${crawlerCounts.active}`);

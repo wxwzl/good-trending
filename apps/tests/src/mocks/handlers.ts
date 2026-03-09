@@ -91,11 +91,11 @@ export const handlers = [
       url.searchParams.get("page") || undefined,
       url.searchParams.get("limit") || undefined
     );
-    const sourceType = url.searchParams.get("sourceType");
+    const discoveredFrom = url.searchParams.get("discoveredFrom");
 
     let filteredProducts = mockProducts;
-    if (sourceType) {
-      filteredProducts = mockProducts.filter((p) => p.sourceType === sourceType);
+    if (discoveredFrom) {
+      filteredProducts = mockProducts.filter((p) => p.discoveredFrom === discoveredFrom);
     }
 
     const start = (page - 1) * limit;
@@ -135,16 +135,18 @@ export const handlers = [
     await delay(100);
     const body = (await request.json()) as {
       name: string;
+      slug: string;
       sourceUrl: string;
-      sourceId: string;
-      sourceType: string;
+      amazonId: string;
+      discoveredFrom: string;
       description?: string;
-      price?: number;
+      image?: string;
+      price?: string;
       currency?: string;
     };
 
     // Validate required fields
-    if (!body.name || !body.sourceUrl || !body.sourceId || !body.sourceType) {
+    if (!body.name || !body.sourceUrl || !body.amazonId || !body.discoveredFrom) {
       return new HttpResponse(
         JSON.stringify({
           statusCode: 400,
@@ -168,7 +170,21 @@ export const handlers = [
       );
     }
 
+    // Check for duplicate amazonId
+    const existingAmazonId = mockProducts.find((p) => p.amazonId === body.amazonId);
+    if (existingAmazonId) {
+      return new HttpResponse(
+        JSON.stringify({
+          statusCode: 409,
+          message: "Product with this Amazon ID already exists",
+          error: "Conflict",
+        }),
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Create new product
+    const now = new Date().toISOString();
     const newProduct = {
       id: `new-${Date.now()}`,
       name: body.name,
@@ -177,19 +193,15 @@ export const handlers = [
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, ""),
       description: body.description || "",
-      imageUrl: "https://example.com/image.jpg",
+      image: body.image || "https://example.com/image.jpg",
       sourceUrl: body.sourceUrl,
-      sourceId: body.sourceId,
-      sourceType: body.sourceType as "X_PLATFORM" | "AMAZON",
+      amazonId: body.amazonId,
+      discoveredFrom: body.discoveredFrom as "X_PLATFORM" | "AMAZON" | "REDDIT",
       price: body.price ?? null,
       currency: body.currency || "USD",
-      rating: null,
-      reviewCount: 0,
-      viewCount: 0,
-      trendingScore: 0,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      firstSeenAt: now.split("T")[0],
+      createdAt: now,
+      updatedAt: now,
     };
 
     mockProducts.push(newProduct);
@@ -213,10 +225,11 @@ export const handlers = [
     }
 
     const body = (await request.json()) as Record<string, unknown>;
+    const now = new Date().toISOString();
     const updatedProduct = {
       ...mockProducts[productIndex],
       ...body,
-      updatedAt: new Date(),
+      updatedAt: now,
     };
     mockProducts[productIndex] = updatedProduct;
 
@@ -316,6 +329,54 @@ export const handlers = [
     });
   }),
 
+  // GET /api/v1/trending/today
+  http.get("*/api/v1/trending/today", async ({ request }) => {
+    await delay(100);
+    const url = new URL(request.url);
+    const { page, limit } = validatePagination(
+      url.searchParams.get("page") || undefined,
+      url.searchParams.get("limit") || undefined
+    );
+    const start = (page - 1) * limit;
+    const paginatedTrends = mockTrends.filter(t => t.periodType === "TODAY").slice(start, start + limit);
+
+    return HttpResponse.json({
+      data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
+    });
+  }),
+
+  // GET /api/v1/trending/this-week
+  http.get("*/api/v1/trending/this-week", async ({ request }) => {
+    await delay(100);
+    const url = new URL(request.url);
+    const { page, limit } = validatePagination(
+      url.searchParams.get("page") || undefined,
+      url.searchParams.get("limit") || undefined
+    );
+    const start = (page - 1) * limit;
+    const paginatedTrends = mockTrends.filter(t => t.periodType === "THIS_WEEK").slice(start, start + limit);
+
+    return HttpResponse.json({
+      data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
+    });
+  }),
+
+  // GET /api/v1/trending/this-month
+  http.get("*/api/v1/trending/this-month", async ({ request }) => {
+    await delay(100);
+    const url = new URL(request.url);
+    const { page, limit } = validatePagination(
+      url.searchParams.get("page") || undefined,
+      url.searchParams.get("limit") || undefined
+    );
+    const start = (page - 1) * limit;
+    const paginatedTrends = mockTrends.filter(t => t.periodType === "THIS_MONTH").slice(start, start + limit);
+
+    return HttpResponse.json({
+      data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
+    });
+  }),
+
   // GET /api/v1/trending/topic/:slug - Get trending by topic
   http.get("*/api/v1/trending/topic/:slug", async ({ params, request }) => {
     await delay(100);
@@ -407,10 +468,7 @@ export const handlers = [
     const paginatedProducts = mockProducts.slice(start, start + limit);
 
     return HttpResponse.json({
-      data: {
-        topic,
-        ...createPaginatedResponse(paginatedProducts, mockProducts.length, page, limit),
-      },
+      data: createPaginatedResponse(paginatedProducts, mockProducts.length, page, limit),
     });
   }),
 
@@ -421,6 +479,8 @@ export const handlers = [
       name: string;
       slug?: string;
       description?: string;
+      imageUrl?: string;
+      searchKeywords?: string;
     };
 
     if (!body.name) {
@@ -453,13 +513,17 @@ export const handlers = [
       );
     }
 
+    const now = new Date().toISOString();
     const newTopic = {
       id: `topic-${Date.now()}`,
       name: body.name,
       slug,
       description: body.description || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      imageUrl: body.imageUrl || null,
+      searchKeywords: body.searchKeywords || null,
+      productCount: 0,
+      createdAt: now,
+      updatedAt: now,
     };
 
     mockTopics.push(newTopic);
@@ -483,10 +547,11 @@ export const handlers = [
     }
 
     const body = (await request.json()) as Record<string, unknown>;
+    const now = new Date().toISOString();
     const updatedTopic = {
       ...mockTopics[topicIndex],
       ...body,
-      updatedAt: new Date(),
+      updatedAt: now,
     };
     mockTopics[topicIndex] = updatedTopic;
 

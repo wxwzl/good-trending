@@ -5,39 +5,42 @@ export interface ProductFixture {
   name: string;
   slug: string;
   description: string;
-  imageUrl: string;
+  image: string;
   sourceUrl: string;
-  sourceType: "TWITTER" | "AMAZON";
-  sourceId: string;
-  price: number | null;
+  discoveredFrom: "X_PLATFORM" | "AMAZON" | "REDDIT";
+  amazonId: string;
+  price: string | null;
   currency: string;
-  rating: number | null;
-  reviewCount: number;
-  viewCount: number;
-  trendingScore: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  firstSeenAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TopicFixture {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  description?: string;
+  imageUrl?: string;
+  searchKeywords?: string;
+  productCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TrendFixture {
   id: string;
   productId: string;
-  date: Date;
+  productSlug: string;
+  productName: string;
+  productImage: string | null;
+  productPrice: string | null;
+  periodType: string;
+  statDate: string;
   rank: number;
-  mentions: number;
-  sentiment: number;
   score: number;
-  createdAt: Date;
+  redditMentions: number;
+  xMentions: number;
 }
 
 /**
@@ -50,24 +53,22 @@ export function createProductFixture(overrides: Partial<ProductFixture> = {}): P
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+  const now = new Date().toISOString();
+
   return {
     id: faker.string.uuid(),
     name,
     slug,
     description: faker.commerce.productDescription(),
-    imageUrl: faker.image.url(),
+    image: faker.image.url(),
     sourceUrl: faker.internet.url(),
-    sourceType: faker.helpers.arrayElement(["X_PLATFORM", "AMAZON"]),
-    sourceId: faker.string.alphanumeric(10),
-    price: faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }),
+    discoveredFrom: faker.helpers.arrayElement(["X_PLATFORM", "AMAZON", "REDDIT"]),
+    amazonId: faker.string.alphanumeric(10).toUpperCase(),
+    price: faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }).toFixed(2),
     currency: "USD",
-    rating: faker.number.float({ min: 1, max: 5, fractionDigits: 1 }),
-    reviewCount: faker.number.int({ min: 0, max: 10000 }),
-    viewCount: faker.number.int({ min: 0, max: 1000000 }),
-    trendingScore: faker.number.float({ min: 0, max: 100, fractionDigits: 2 }),
-    isActive: true,
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.recent(),
+    firstSeenAt: now.split("T")[0],
+    createdAt: now,
+    updatedAt: now,
     ...overrides,
   };
 }
@@ -92,13 +93,18 @@ export function createTopicFixture(overrides: Partial<TopicFixture> = {}): Topic
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+  const now = new Date().toISOString();
+
   return {
     id: faker.string.uuid(),
     name,
     slug,
     description: faker.lorem.sentence(),
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.recent(),
+    imageUrl: faker.image.url(),
+    searchKeywords: faker.word.words(3).replace(/ /g, ", "),
+    productCount: faker.number.int({ min: 0, max: 1000 }),
+    createdAt: now,
+    updatedAt: now,
     ...overrides,
   };
 }
@@ -117,15 +123,21 @@ export function createTopicFixtures(
  * Generate a random trend fixture
  */
 export function createTrendFixture(overrides: Partial<TrendFixture> = {}): TrendFixture {
+  const productName = faker.commerce.productName();
+
   return {
     id: faker.string.uuid(),
     productId: faker.string.uuid(),
-    date: faker.date.recent(),
+    productSlug: productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+    productName,
+    productImage: faker.image.url(),
+    productPrice: faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }).toFixed(2),
+    periodType: faker.helpers.arrayElement(["TODAY", "YESTERDAY", "THIS_WEEK", "THIS_MONTH", "LAST_7_DAYS", "LAST_15_DAYS", "LAST_30_DAYS"]),
+    statDate: new Date().toISOString().split("T")[0],
     rank: faker.number.int({ min: 1, max: 100 }),
-    mentions: faker.number.int({ min: 0, max: 10000 }),
-    sentiment: faker.number.float({ min: -1, max: 1, fractionDigits: 2 }),
     score: faker.number.float({ min: 0, max: 100, fractionDigits: 2 }),
-    createdAt: faker.date.recent(),
+    redditMentions: faker.number.int({ min: 0, max: 10000 }),
+    xMentions: faker.number.int({ min: 0, max: 10000 }),
     ...overrides,
   };
 }
@@ -157,11 +169,11 @@ export function createPaginationParams(overrides = {}) {
 }
 
 /**
- * Generate mock API response
+ * Generate mock API response (new format with 'items' instead of 'data')
  */
-export function createPaginatedResponse<T>(data: T[], total: number, page: number, limit: number) {
+export function createPaginatedResponse<T>(items: T[], total: number, page: number, limit: number) {
   return {
-    data,
+    items,
     total,
     page,
     limit,

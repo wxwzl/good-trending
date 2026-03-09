@@ -5,7 +5,7 @@
 export interface ProductQueryOptions {
   page: number;
   limit: number;
-  sourceType?: string;
+  discoveredFrom?: string;
   keyword?: string;
   sortBy?: string;
   order?: 'asc' | 'desc';

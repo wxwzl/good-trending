@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { setupMockServer, resetMockData } from "../mocks/server";
 import { getMockProducts } from "../mocks/handlers";
 
-const API_BASE = "http://localhost:3005/api/v1";
+const API_BASE = "http://localhost:3015/api/v1";
 
 describe("Products API", () => {
   setupMockServer();
@@ -19,9 +19,9 @@ describe("Products API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      // Response format: { data: { data: [...], total, page, limit, totalPages } }
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      // Response format: { data: { items: [...], total, page, limit, totalPages } }
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
       expect(result.data.total).toBeDefined();
       expect(result.data.page).toBe(1);
       expect(result.data.limit).toBe(10);
@@ -38,38 +38,38 @@ describe("Products API", () => {
       expect(result.data.limit).toBe(5);
     });
 
-    it("should_filter_products_by_source_type", async () => {
+    it("should_filter_products_by_discovered_from", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/products?sourceType=X_PLATFORM`);
+      const response = await fetch(`${API_BASE}/products?discoveredFrom=X_PLATFORM`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      result.data.data.forEach((product: { sourceType: string }) => {
-        expect(product.sourceType).toBe("X_PLATFORM");
+      result.data.items.forEach((product: { discoveredFrom: string }) => {
+        expect(product.discoveredFrom).toBe("X_PLATFORM");
       });
     });
 
-    it("should_filter_products_by_AMAZON_source_type", async () => {
+    it("should_filter_products_by_AMAZON_discovered_from", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/products?sourceType=AMAZON`);
+      const response = await fetch(`${API_BASE}/products?discoveredFrom=AMAZON`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      result.data.data.forEach((product: { sourceType: string }) => {
-        expect(product.sourceType).toBe("AMAZON");
+      result.data.items.forEach((product: { discoveredFrom: string }) => {
+        expect(product.discoveredFrom).toBe("AMAZON");
       });
     });
 
-    it("should_return_all_products_when_no_source_type_filter", async () => {
+    it("should_return_all_products_when_no_discovered_from_filter", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/products`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data.length).toBeGreaterThan(0);
+      expect(result.data.items.length).toBeGreaterThan(0);
     });
 
     it("should_handle_pagination_correctly", async () => {
@@ -81,12 +81,12 @@ describe("Products API", () => {
       const page2Result = await page2Response.json();
 
       // Assert
-      expect(page1Result.data.data.length).toBeLessThanOrEqual(5);
-      expect(page2Result.data.data.length).toBeLessThanOrEqual(5);
+      expect(page1Result.data.items.length).toBeLessThanOrEqual(5);
+      expect(page2Result.data.items.length).toBeLessThanOrEqual(5);
 
       // Ensure different products on different pages
-      if (page1Result.data.data.length > 0 && page2Result.data.data.length > 0) {
-        expect(page1Result.data.data[0].id).not.toBe(page2Result.data.data[0].id);
+      if (page1Result.data.items.length > 0 && page2Result.data.items.length > 0) {
+        expect(page1Result.data.items[0].id).not.toBe(page2Result.data.items[0].id);
       }
     });
 
@@ -138,7 +138,7 @@ describe("Products API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toEqual([]);
+      expect(result.data.items).toEqual([]);
       expect(result.data.total).toBeDefined();
     });
   });
@@ -183,7 +183,9 @@ describe("Products API", () => {
       expect(result.data.name).toBeDefined();
       expect(result.data.slug).toBeDefined();
       expect(result.data.description).toBeDefined();
-      expect(result.data.sourceType).toBeDefined();
+      expect(result.data.discoveredFrom).toBeDefined();
+      expect(result.data.amazonId).toBeDefined();
+      expect(result.data.firstSeenAt).toBeDefined();
     });
   });
 
@@ -216,11 +218,12 @@ describe("Products API", () => {
       // Arrange
       const newProduct = {
         name: "New Test Product",
+        slug: "new-test-product",
         sourceUrl: "https://example.com/new-product-unique",
-        sourceId: "new-source-123",
-        sourceType: "AMAZON",
+        amazonId: "new-amazon-123",
+        discoveredFrom: "AMAZON",
         description: "Test description",
-        price: 99.99,
+        price: "99.99",
         currency: "USD",
       };
 
@@ -258,9 +261,10 @@ describe("Products API", () => {
       const mockProducts = getMockProducts();
       const duplicateProduct = {
         name: "Duplicate Product",
+        slug: "duplicate-product",
         sourceUrl: mockProducts[0].sourceUrl,
-        sourceId: "duplicate-source",
-        sourceType: "AMAZON",
+        amazonId: "duplicate-amazon-id",
+        discoveredFrom: "AMAZON",
       };
 
       // Act
@@ -344,8 +348,8 @@ describe("Products API", () => {
       const result = await response.json();
 
       // Assert
-      if (result.data.data.length > 0) {
-        const product = result.data.data[0];
+      if (result.data.items.length > 0) {
+        const product = result.data.items[0];
 
         expect(product.id).toBeDefined();
         expect(typeof product.id).toBe("string");
@@ -353,7 +357,9 @@ describe("Products API", () => {
         expect(typeof product.name).toBe("string");
         expect(product.slug).toBeDefined();
         expect(typeof product.slug).toBe("string");
-        expect(["X_PLATFORM", "AMAZON"]).toContain(product.sourceType);
+        expect(["X_PLATFORM", "AMAZON", "REDDIT"]).toContain(product.discoveredFrom);
+        expect(product.amazonId).toBeDefined();
+        expect(product.firstSeenAt).toBeDefined();
       }
     });
 
@@ -363,10 +369,10 @@ describe("Products API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((product: { price: number | null; currency: string }) => {
+      result.data.items.forEach((product: { price: string | null; currency: string }) => {
         if (product.price !== null) {
-          expect(typeof product.price).toBe("number");
-          expect(product.price).toBeGreaterThanOrEqual(0);
+          expect(typeof product.price).toBe("string");
+          expect(parseFloat(product.price)).toBeGreaterThanOrEqual(0);
         }
         expect(product.currency).toBeDefined();
       });

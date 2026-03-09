@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupMockServer, resetMockData } from "../mocks/server";
 
-const API_BASE = "http://localhost:3005/api/v1";
+const API_BASE = "http://localhost:3015/api/v1";
 
 describe("Search API", () => {
   setupMockServer();
@@ -19,8 +19,8 @@ describe("Search API", () => {
       // Assert
       expect(response.status).toBe(200);
       expect(result.data.query).toBe("laptop");
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
 
     it("should_return_400_for_empty_query", async () => {
@@ -107,7 +107,7 @@ describe("Search API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toEqual([]);
+      expect(result.data.items).toEqual([]);
       expect(result.data.total).toBe(0);
     });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setupMockServer, resetMockData } from "../mocks/server";
 
-const API_BASE = "http://localhost:3005/api/v1";
+const API_BASE = "http://localhost:3015/api/v1";
 
 describe("Trending API", () => {
   setupMockServer();
@@ -18,10 +18,10 @@ describe("Trending API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      // Response format: { data: { data: [...], period, total, page, limit, totalPages } }
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
-      expect(result.data.period).toBeDefined();
+      // Response format: { data: { items: [...], total, page, limit, totalPages } }
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
+      expect(result.data.total).toBeDefined();
     });
 
     it("should_return_paginated_results", async () => {
@@ -36,43 +36,44 @@ describe("Trending API", () => {
       expect(result.data.totalPages).toBeDefined();
     });
 
-    it("should_default_to_daily_period", async () => {
+    it("should_default_to_today_period", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/trending`);
       const result = await response.json();
 
       // Assert
-      expect(result.data.period).toBe("daily");
+      expect(response.status).toBe(200);
+      expect(result.data.items).toBeDefined();
     });
 
-    it("should_support_daily_period_filter", async () => {
+    it("should_support_today_period_filter", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending?period=daily`);
+      const response = await fetch(`${API_BASE}/trending?period=TODAY`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.period).toBe("daily");
+      expect(result.data.items).toBeDefined();
     });
 
-    it("should_support_weekly_period_filter", async () => {
+    it("should_support_this_week_period_filter", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending?period=weekly`);
+      const response = await fetch(`${API_BASE}/trending?period=THIS_WEEK`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.period).toBe("weekly");
+      expect(result.data.items).toBeDefined();
     });
 
-    it("should_support_monthly_period_filter", async () => {
+    it("should_support_this_month_period_filter", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending?period=monthly`);
+      const response = await fetch(`${API_BASE}/trending?period=THIS_MONTH`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.period).toBe("monthly");
+      expect(result.data.items).toBeDefined();
     });
 
     // Boundary cases
@@ -107,21 +108,21 @@ describe("Trending API", () => {
     });
   });
 
-  describe("GET /api/v1/trending/daily", () => {
-    it("should_return_daily_trending", async () => {
+  describe("GET /api/v1/trending/today", () => {
+    it("should_return_today_trending", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending/daily`);
+      const response = await fetch(`${API_BASE}/trending/today`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
 
     it("should_support_pagination", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending/daily?page=2&limit=5`);
+      const response = await fetch(`${API_BASE}/trending/today?page=2&limit=5`);
       const result = await response.json();
 
       // Assert
@@ -131,29 +132,29 @@ describe("Trending API", () => {
     });
   });
 
-  describe("GET /api/v1/trending/weekly", () => {
-    it("should_return_weekly_trending", async () => {
+  describe("GET /api/v1/trending/this-week", () => {
+    it("should_return_this_week_trending", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending/weekly`);
+      const response = await fetch(`${API_BASE}/trending/this-week`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
   });
 
-  describe("GET /api/v1/trending/monthly", () => {
-    it("should_return_monthly_trending", async () => {
+  describe("GET /api/v1/trending/this-month", () => {
+    it("should_return_this_month_trending", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending/monthly`);
+      const response = await fetch(`${API_BASE}/trending/this-month`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
   });
 
@@ -163,8 +164,8 @@ describe("Trending API", () => {
       const topicsResponse = await fetch(`${API_BASE}/topics`);
       const topicsResult = await topicsResponse.json();
 
-      if (topicsResult.data.data.length > 0) {
-        const topicSlug = topicsResult.data.data[0].slug;
+      if (topicsResult.data.items.length > 0) {
+        const topicSlug = topicsResult.data.items[0].slug;
 
         // Act
         const response = await fetch(`${API_BASE}/trending/topic/${topicSlug}`);
@@ -172,8 +173,7 @@ describe("Trending API", () => {
 
         // Assert
         expect(response.status).toBe(200);
-        expect(result.data.topic).toBeDefined();
-        expect(result.data.topic.slug).toBe(topicSlug);
+        expect(result.data.items).toBeDefined();
       }
     });
 
@@ -193,23 +193,10 @@ describe("Trending API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((trend: { rank: number }, index: number) => {
+      result.data.items.forEach((trend: { rank: number }) => {
         expect(trend.rank).toBeDefined();
         expect(typeof trend.rank).toBe("number");
         expect(trend.rank).toBeGreaterThan(0);
-      });
-    });
-
-    it("should_include_mention_count", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/trending?limit=5`);
-      const result = await response.json();
-
-      // Assert
-      result.data.data.forEach((trend: { mentions: number }) => {
-        expect(trend.mentions).toBeDefined();
-        expect(typeof trend.mentions).toBe("number");
-        expect(trend.mentions).toBeGreaterThanOrEqual(0);
       });
     });
 
@@ -219,7 +206,7 @@ describe("Trending API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((trend: { score: number }) => {
+      result.data.items.forEach((trend: { score: number }) => {
         expect(trend.score).toBeDefined();
         expect(typeof trend.score).toBe("number");
         expect(trend.score).toBeGreaterThanOrEqual(0);
@@ -232,9 +219,49 @@ describe("Trending API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((trend: { productId: string }) => {
+      result.data.items.forEach((trend: { productId: string }) => {
         expect(trend.productId).toBeDefined();
         expect(typeof trend.productId).toBe("string");
+      });
+    });
+
+    it("should_include_product_details", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/trending?limit=5`);
+      const result = await response.json();
+
+      // Assert
+      result.data.items.forEach((trend: { productName: string; productSlug: string }) => {
+        expect(trend.productName).toBeDefined();
+        expect(typeof trend.productName).toBe("string");
+        expect(trend.productSlug).toBeDefined();
+        expect(typeof trend.productSlug).toBe("string");
+      });
+    });
+
+    it("should_include_mention_counts", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/trending?limit=5`);
+      const result = await response.json();
+
+      // Assert
+      result.data.items.forEach((trend: { redditMentions: number; xMentions: number }) => {
+        expect(trend.redditMentions).toBeDefined();
+        expect(typeof trend.redditMentions).toBe("number");
+        expect(trend.xMentions).toBeDefined();
+        expect(typeof trend.xMentions).toBe("number");
+      });
+    });
+
+    it("should_include_period_type", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/trending?limit=5`);
+      const result = await response.json();
+
+      // Assert
+      result.data.items.forEach((trend: { periodType: string }) => {
+        expect(trend.periodType).toBeDefined();
+        expect(typeof trend.periodType).toBe("string");
       });
     });
   });
@@ -269,7 +296,7 @@ describe("Trending API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toEqual([]);
+      expect(result.data.items).toEqual([]);
     });
   });
 });

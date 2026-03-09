@@ -45,7 +45,7 @@ export class ProductRepository {
     const {
       page = 1,
       limit = 10,
-      sourceType,
+      discoveredFrom,
       keyword,
       sortBy = 'createdAt',
       order = 'desc',
@@ -54,11 +54,11 @@ export class ProductRepository {
     // 构建查询条件
     const conditions: SQL[] = [];
 
-    if (sourceType) {
+    if (discoveredFrom) {
       conditions.push(
         eq(
           products.discoveredFrom,
-          sourceType as (typeof SourceType)[keyof typeof SourceType],
+          discoveredFrom as (typeof SourceType)[keyof typeof SourceType],
         ),
       );
     }
@@ -157,8 +157,8 @@ export class ProductRepository {
       price: input.price ? parseFloat(input.price) : undefined,
       currency: input.currency,
       sourceUrl: input.sourceUrl,
-      sourceId: input.amazonId,
-      sourceType: input.discoveredFrom as DbSourceType,
+      amazonId: input.amazonId,
+      discoveredFrom: input.discoveredFrom as DbSourceType,
     });
 
     if (product === null) {

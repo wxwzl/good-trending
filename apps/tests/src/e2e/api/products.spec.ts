@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const API_BASE = process.env.E2E_API_URL || "http://localhost:3005";
+const API_BASE = process.env.E2E_API_URL || "http://localhost:3015";
 
 test.describe("Health API", () => {
   test("should_return_health_status", async ({ request }) => {
@@ -36,28 +36,28 @@ test.describe("Products API", () => {
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    // Response format: { data: { data: [...], total, page, limit, totalPages } }
-    expect(data.data.data).toBeDefined();
-    expect(Array.isArray(data.data.data)).toBe(true);
+    // Response format: { data: { items: [...], total, page, limit, totalPages } }
+    expect(data.data.items).toBeDefined();
+    expect(Array.isArray(data.data.items)).toBe(true);
     expect(data.data.total).toBeDefined();
     expect(data.data.page).toBe(1);
     expect(data.data.limit).toBe(10);
     expect(data.data.totalPages).toBeDefined();
   });
 
-  test("should_filter_products_by_source_type", async ({ request }) => {
+  test("should_filter_products_by_discovered_from", async ({ request }) => {
     // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/products?sourceType=AMAZON`);
+    const response = await request.get(`${API_BASE}/api/v1/products?discoveredFrom=AMAZON`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
+    expect(data.data.items).toBeDefined();
 
-    // All products should have AMAZON source type
-    data.data.data.forEach((product: { sourceType: string }) => {
-      expect(product.sourceType).toBe("AMAZON");
+    // All products should have AMAZON discoveredFrom
+    data.data.items.forEach((product: { discoveredFrom: string }) => {
+      expect(product.discoveredFrom).toBe("AMAZON");
     });
   });
 
@@ -66,8 +66,8 @@ test.describe("Products API", () => {
     const listResponse = await request.get(`${API_BASE}/api/v1/products?limit=1`);
     const listData = await listResponse.json();
 
-    if (listData.data.data.length > 0) {
-      const productId = listData.data.data[0].id;
+    if (listData.data.items.length > 0) {
+      const productId = listData.data.items[0].id;
 
       // Act
       const response = await request.get(`${API_BASE}/api/v1/products/${productId}`);
@@ -93,9 +93,10 @@ test.describe("Products API", () => {
     // Arrange
     const newProduct = {
       name: `Test Product ${Date.now()}`,
+      slug: `test-product-${Date.now()}`,
       sourceUrl: `https://example.com/product-${Date.now()}`,
-      sourceId: `source-${Date.now()}`,
-      sourceType: "AMAZON",
+      amazonId: `amazon-${Date.now()}`,
+      discoveredFrom: "AMAZON",
       description: "Test product description",
     };
 
@@ -130,8 +131,8 @@ test.describe("Products API", () => {
     const listResponse = await request.get(`${API_BASE}/api/v1/products?limit=1`);
     const listData = await listResponse.json();
 
-    if (listData.data.data.length > 0) {
-      const productId = listData.data.data[0].id;
+    if (listData.data.items.length > 0) {
+      const productId = listData.data.items[0].id;
       const updateData = { name: `Updated Product ${Date.now()}` };
 
       // Act
@@ -164,9 +165,10 @@ test.describe("Products API", () => {
     // Arrange - First create a product to delete
     const newProduct = {
       name: `Product to Delete ${Date.now()}`,
+      slug: `product-to-delete-${Date.now()}`,
       sourceUrl: `https://example.com/delete-${Date.now()}`,
-      sourceId: `delete-source-${Date.now()}`,
-      sourceType: "AMAZON",
+      amazonId: `delete-amazon-${Date.now()}`,
+      discoveredFrom: "AMAZON",
     };
 
     const createResponse = await request.post(`${API_BASE}/api/v1/products`, {
@@ -200,41 +202,41 @@ test.describe("Trending API", () => {
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
-    expect(Array.isArray(data.data.data)).toBe(true);
+    expect(data.data.items).toBeDefined();
+    expect(Array.isArray(data.data.items)).toBe(true);
   });
 
-  test("should_get_daily_trending", async ({ request }) => {
+  test("should_get_today_trending", async ({ request }) => {
     // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/daily`);
+    const response = await request.get(`${API_BASE}/api/v1/trending/today`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
+    expect(data.data.items).toBeDefined();
   });
 
-  test("should_get_weekly_trending", async ({ request }) => {
+  test("should_get_this_week_trending", async ({ request }) => {
     // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/weekly`);
+    const response = await request.get(`${API_BASE}/api/v1/trending/this-week`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
+    expect(data.data.items).toBeDefined();
   });
 
-  test("should_get_monthly_trending", async ({ request }) => {
+  test("should_get_this_month_trending", async ({ request }) => {
     // Arrange & Act
-    const response = await request.get(`${API_BASE}/api/v1/trending/monthly`);
+    const response = await request.get(`${API_BASE}/api/v1/trending/this-month`);
 
     // Assert
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
+    expect(data.data.items).toBeDefined();
   });
 
   test("should_include_trending_score_and_rank", async ({ request }) => {
@@ -245,8 +247,8 @@ test.describe("Trending API", () => {
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    if (data.data.data.length > 0) {
-      const trend = data.data.data[0];
+    if (data.data.items.length > 0) {
+      const trend = data.data.items[0];
       expect(trend.score).toBeDefined();
       expect(typeof trend.score).toBe("number");
       expect(trend.rank).toBeDefined();
@@ -259,8 +261,8 @@ test.describe("Trending API", () => {
     const topicsResponse = await request.get(`${API_BASE}/api/v1/topics`);
     const topicsData = await topicsResponse.json();
 
-    if (topicsData.data.data.length > 0) {
-      const topicSlug = topicsData.data.data[0].slug;
+    if (topicsData.data.items.length > 0) {
+      const topicSlug = topicsData.data.items[0].slug;
 
       // Act
       const response = await request.get(`${API_BASE}/api/v1/trending/topic/${topicSlug}`);
@@ -270,8 +272,8 @@ test.describe("Trending API", () => {
 
       const data = await response.json();
       // API returns paginated trending products for the topic
-      expect(data.data.data).toBeDefined();
-      expect(Array.isArray(data.data.data)).toBe(true);
+      expect(data.data.items).toBeDefined();
+      expect(Array.isArray(data.data.items)).toBe(true);
       expect(data.data.total).toBeDefined();
     }
   });
@@ -286,8 +288,8 @@ test.describe("Topics API", () => {
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
-    expect(data.data.data).toBeDefined();
-    expect(Array.isArray(data.data.data)).toBe(true);
+    expect(data.data.items).toBeDefined();
+    expect(Array.isArray(data.data.items)).toBe(true);
   });
 
   test("should_return_single_topic_by_slug", async ({ request }) => {
@@ -295,8 +297,8 @@ test.describe("Topics API", () => {
     const listResponse = await request.get(`${API_BASE}/api/v1/topics`);
     const listData = await listResponse.json();
 
-    if (listData.data.data.length > 0) {
-      const topicSlug = listData.data.data[0].slug;
+    if (listData.data.items.length > 0) {
+      const topicSlug = listData.data.items[0].slug;
 
       // Act
       const response = await request.get(`${API_BASE}/api/v1/topics/${topicSlug}`);
@@ -314,8 +316,8 @@ test.describe("Topics API", () => {
     const listResponse = await request.get(`${API_BASE}/api/v1/topics`);
     const listData = await listResponse.json();
 
-    if (listData.data.data.length > 0) {
-      const topicSlug = listData.data.data[0].slug;
+    if (listData.data.items.length > 0) {
+      const topicSlug = listData.data.items[0].slug;
 
       // Act
       const response = await request.get(`${API_BASE}/api/v1/topics/${topicSlug}/products`);
@@ -324,8 +326,8 @@ test.describe("Topics API", () => {
       expect(response.ok()).toBeTruthy();
 
       const data = await response.json();
-      expect(data.data.topic).toBeDefined();
-      expect(data.data.data).toBeDefined();
+      expect(data.data.items).toBeDefined();
+      expect(Array.isArray(data.data.items)).toBe(true);
     }
   });
 
@@ -356,12 +358,12 @@ test.describe("Topics API", () => {
     const listResponse = await request.get(`${API_BASE}/api/v1/topics?limit=1`);
     const listData = await listResponse.json();
 
-    if (listData.data.data.length > 0) {
-      const topicSlug = listData.data.data[0].slug;
+    if (listData.data.items.length > 0) {
+      const topicSlug = listData.data.items[0].slug;
       const updateData = { name: `Updated Topic ${Date.now()}` };
 
-      // Act - Use PATCH method for updates
-      const response = await request.patch(`${API_BASE}/api/v1/topics/${topicSlug}`, {
+      // Act - Use PUT method for updates
+      const response = await request.put(`${API_BASE}/api/v1/topics/${topicSlug}`, {
         data: updateData,
       });
 
@@ -384,8 +386,8 @@ test.describe("Search API", () => {
 
     const data = await response.json();
     expect(data.data.query).toBe("apple");
-    expect(data.data.data).toBeDefined();
-    expect(Array.isArray(data.data.data)).toBe(true);
+    expect(data.data.items).toBeDefined();
+    expect(Array.isArray(data.data.items)).toBe(true);
   });
 
   test("should_return_400_for_empty_search_query", async ({ request }) => {
@@ -442,9 +444,9 @@ test.describe("API Response Format", () => {
     const response = await request.get(`${API_BASE}/api/v1/products`);
     const data = await response.json();
 
-    // Assert - All API responses should have a data wrapper
+    // Assert - All API responses should have a data wrapper with items
     expect(data.data).toBeDefined();
-    expect(data.data.data).toBeDefined();
+    expect(data.data.items).toBeDefined();
     expect(data.data.total).toBeDefined();
     expect(data.data.page).toBeDefined();
     expect(data.data.limit).toBeDefined();

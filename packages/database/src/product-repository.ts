@@ -22,8 +22,10 @@ export interface CreateProductInput {
   price?: number | null;
   currency?: string;
   sourceUrl: string;
-  sourceId: string;
-  sourceType: SourceType;
+  /** 亚马逊商品 ID (ASIN) */
+  amazonId: string;
+  /** 数据来源平台（从哪里发现的） */
+  discoveredFrom: SourceType;
   /** 可选的自定义 slug */
   slug?: string;
   /** 可选的分类 slug 列表 */
@@ -159,32 +161,32 @@ export async function generateUniqueSlug(
 }
 
 /**
- * 检查商品是否已存在（基于 sourceType + sourceId 组合）
+ * 检查商品是否已存在（基于 discoveredFrom + amazonId 组合）
  */
 export async function checkProductExists(
-  sourceType: SourceType,
-  sourceId: string
+  discoveredFrom: SourceType,
+  amazonId: string
 ): Promise<boolean> {
   const existing = await db
     .select({ id: products.id })
     .from(products)
-    .where(and(eq(products.discoveredFrom, sourceType), eq(products.amazonId, sourceId)))
+    .where(and(eq(products.discoveredFrom, discoveredFrom), eq(products.amazonId, amazonId)))
     .limit(1);
 
   return existing.length > 0;
 }
 
 /**
- * 检查 sourceUrl 是否已存在（基于 sourceType + sourceUrl 组合）
+ * 检查 sourceUrl 是否已存在（基于 discoveredFrom + sourceUrl 组合）
  */
 export async function checkSourceUrlExists(
-  sourceType: SourceType,
+  discoveredFrom: SourceType,
   sourceUrl: string
 ): Promise<boolean> {
   const existing = await db
     .select({ id: products.id })
     .from(products)
-    .where(and(eq(products.discoveredFrom, sourceType), eq(products.sourceUrl, sourceUrl)))
+    .where(and(eq(products.discoveredFrom, discoveredFrom), eq(products.sourceUrl, sourceUrl)))
     .limit(1);
 
   return existing.length > 0;
@@ -192,20 +194,20 @@ export async function checkSourceUrlExists(
 
 /**
  * 创建单个商品
- * 如果 (sourceType, sourceId) 或 (sourceType, sourceUrl) 组合已存在，则跳过
+ * 如果 (discoveredFrom, amazonId) 或 (discoveredFrom, sourceUrl) 组合已存在，则跳过
  *
  * @param input 商品输入数据
  * @returns 创建的商品，如果已存在则返回 null
  */
 export async function createProduct(input: CreateProductInput): Promise<Product | null> {
-  // 检查 sourceId 是否已存在（基于 sourceType + sourceId 组合）
-  const idExists = await checkProductExists(input.sourceType, input.sourceId);
+  // 检查 amazonId 是否已存在（基于 discoveredFrom + amazonId 组合）
+  const idExists = await checkProductExists(input.discoveredFrom, input.amazonId);
   if (idExists) {
     return null;
   }
 
-  // 检查 sourceUrl 是否已存在（基于 sourceType + sourceUrl 组合）
-  const urlExists = await checkSourceUrlExists(input.sourceType, input.sourceUrl);
+  // 检查 sourceUrl 是否已存在（基于 discoveredFrom + sourceUrl 组合）
+  const urlExists = await checkSourceUrlExists(input.discoveredFrom, input.sourceUrl);
   if (urlExists) {
     return null;
   }
@@ -228,8 +230,8 @@ export async function createProduct(input: CreateProductInput): Promise<Product 
       price: input.price?.toString() ?? null,
       currency: input.currency ?? "USD",
       sourceUrl: input.sourceUrl,
-      amazonId: input.sourceId,
-      discoveredFrom: input.sourceType,
+      amazonId: input.amazonId,
+      discoveredFrom: input.discoveredFrom,
       firstSeenAt: formatDate(new Date()),
     })
     .returning();
@@ -284,7 +286,7 @@ export async function createProductsBatch(
     } catch (error) {
       result.failedCount++;
       result.errors.push({
-        sourceId: input.sourceId,
+        sourceId: input.amazonId,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -294,18 +296,18 @@ export async function createProductsBatch(
 }
 
 /**
- * 批量检查 sourceId 是否存在（基于 sourceType + sourceId 组合）
+ * 批量检查 amazonId 是否存在（基于 discoveredFrom + amazonId 组合）
  * 用于批量导入前快速去重
  *
- * @param sourceType 数据源类型
- * @param sourceIds sourceId 列表
- * @returns 已存在的 sourceId 集合
+ * @param discoveredFrom 数据源类型
+ * @param amazonIds amazonId 列表
+ * @returns 已存在的 amazonId 集合
  */
 export async function getExistingSourceIds(
-  sourceType: SourceType,
-  sourceIds: string[]
+  discoveredFrom: SourceType,
+  amazonIds: string[]
 ): Promise<Set<string>> {
-  if (sourceIds.length === 0) {
+  if (amazonIds.length === 0) {
     return new Set();
   }
 
@@ -313,12 +315,12 @@ export async function getExistingSourceIds(
   const batchSize = 1000;
   const existing = new Set<string>();
 
-  for (let i = 0; i < sourceIds.length; i += batchSize) {
-    const batch = sourceIds.slice(i, i + batchSize);
+  for (let i = 0; i < amazonIds.length; i += batchSize) {
+    const batch = amazonIds.slice(i, i + batchSize);
     const rows = await db
       .select({ amazonId: products.amazonId })
       .from(products)
-      .where(and(eq(products.discoveredFrom, sourceType), inArray(products.amazonId, batch)));
+      .where(and(eq(products.discoveredFrom, discoveredFrom), inArray(products.amazonId, batch)));
 
     for (const row of rows) {
       if (row.amazonId) {
@@ -331,15 +333,15 @@ export async function getExistingSourceIds(
 }
 
 /**
- * 批量检查 sourceUrl 是否存在（基于 sourceType + sourceUrl 组合）
+ * 批量检查 sourceUrl 是否存在（基于 discoveredFrom + sourceUrl 组合）
  * 用于批量导入前快速去重
  *
- * @param sourceType 数据源类型
+ * @param discoveredFrom 数据源类型
  * @param sourceUrls sourceUrl 列表
  * @returns 已存在的 sourceUrl 集合
  */
 export async function getExistingSourceUrls(
-  sourceType: SourceType,
+  discoveredFrom: SourceType,
   sourceUrls: string[]
 ): Promise<Set<string>> {
   if (sourceUrls.length === 0) {
@@ -355,7 +357,7 @@ export async function getExistingSourceUrls(
     const rows = await db
       .select({ sourceUrl: products.sourceUrl })
       .from(products)
-      .where(and(eq(products.discoveredFrom, sourceType), inArray(products.sourceUrl, batch)));
+      .where(and(eq(products.discoveredFrom, discoveredFrom), inArray(products.sourceUrl, batch)));
 
     for (const row of rows) {
       existing.add(row.sourceUrl);
@@ -366,16 +368,16 @@ export async function getExistingSourceUrls(
 }
 
 /**
- * 根据 sourceType + sourceId 查询商品
+ * 根据 discoveredFrom + amazonId 查询商品
  */
 export async function findProductBySource(
-  sourceType: SourceType,
-  sourceId: string
+  discoveredFrom: SourceType,
+  amazonId: string
 ): Promise<Product | null> {
   const result = await db
     .select()
     .from(products)
-    .where(and(eq(products.discoveredFrom, sourceType), eq(products.amazonId, sourceId)))
+    .where(and(eq(products.discoveredFrom, discoveredFrom), eq(products.amazonId, amazonId)))
     .limit(1);
 
   return result[0] ?? null;

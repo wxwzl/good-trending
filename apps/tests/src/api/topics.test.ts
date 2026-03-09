@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { setupMockServer, resetMockData } from "../mocks/server";
 import { getMockTopics } from "../mocks/handlers";
 
-const API_BASE = "http://localhost:3005/api/v1";
+const API_BASE = "http://localhost:3015/api/v1";
 
 describe("Topics API", () => {
   setupMockServer();
@@ -19,8 +19,8 @@ describe("Topics API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
 
     it("should_return_paginated_results", async () => {
@@ -73,7 +73,7 @@ describe("Topics API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.data).toEqual([]);
+      expect(result.data.items).toEqual([]);
     });
   });
 
@@ -129,9 +129,8 @@ describe("Topics API", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.topic).toBeDefined();
-      expect(result.data.data).toBeDefined();
-      expect(Array.isArray(result.data.data)).toBe(true);
+      expect(result.data.items).toBeDefined();
+      expect(Array.isArray(result.data.items)).toBe(true);
     });
 
     it("should_return_paginated_products", async () => {
@@ -256,13 +255,14 @@ describe("Topics API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((topic: { id: string; name: string; slug: string }) => {
+      result.data.items.forEach((topic: { id: string; name: string; slug: string; productCount: number }) => {
         expect(topic.id).toBeDefined();
         expect(typeof topic.id).toBe("string");
         expect(topic.name).toBeDefined();
         expect(typeof topic.name).toBe("string");
         expect(topic.slug).toBeDefined();
         expect(typeof topic.slug).toBe("string");
+        expect(typeof topic.productCount).toBe("number");
       });
     });
 
@@ -272,8 +272,22 @@ describe("Topics API", () => {
       const result = await response.json();
 
       // Assert
-      result.data.data.forEach((topic: { slug: string }) => {
+      result.data.items.forEach((topic: { slug: string }) => {
         expect(topic.slug).toMatch(/^[a-z0-9-]+$/);
+      });
+    });
+
+    it("should_include_searchKeywords_field", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics?limit=5`);
+      const result = await response.json();
+
+      // Assert
+      result.data.items.forEach((topic: { searchKeywords?: string }) => {
+        // searchKeywords may be undefined or string
+        if (topic.searchKeywords !== undefined) {
+          expect(typeof topic.searchKeywords).toBe("string");
+        }
       });
     });
   });

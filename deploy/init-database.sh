@@ -9,7 +9,7 @@
 #
 # 指定环境变量（可选）：
 # 方式1 - 命令行临时指定：
-#   sudo -u postgres DB_PASSWORD=my_pass DB_USER=myuser ./init-database.sh
+#   sudo -u postgres DB_PASSWORD=trending-god DB_USER=trending ./init-database.sh
 #
 # 方式2 - 先导出再执行：
 #   export DB_PASSWORD=my_pass DB_USER=myuser

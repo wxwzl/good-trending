@@ -1,5 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ThrottlerConfigService,
   CustomThrottlerGuard,
@@ -8,9 +9,13 @@ import { ThrottlerModuleOptions, ThrottlerOptions } from '@nestjs/throttler';
 
 describe('ThrottlerConfigService', () => {
   let service: ThrottlerConfigService;
+  let configService: ConfigService;
 
   beforeEach(() => {
-    service = new ThrottlerConfigService();
+    configService = {
+      get: jest.fn((key: string, defaultValue: unknown) => defaultValue),
+    } as unknown as ConfigService;
+    service = new ThrottlerConfigService(configService);
   });
 
   it('should be defined', () => {

@@ -80,7 +80,7 @@ export class ProductService {
     const result = await this.productRepository.findMany({
       page: safePage,
       limit: safeLimit,
-      sourceType: discoveredFrom,
+      discoveredFrom,
       keyword,
       sortBy,
       order,

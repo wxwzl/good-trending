@@ -193,7 +193,7 @@ describe('ProductService', () => {
       // Assert
       expect(repository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          sourceType: SourceType.X_PLATFORM,
+          discoveredFrom: SourceType.X_PLATFORM,
         }),
       );
     });

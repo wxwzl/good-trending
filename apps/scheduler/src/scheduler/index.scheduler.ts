@@ -1,6 +1,11 @@
 /**
  * 定时任务调度器
- * 使用 node-cron 实现定时任务
+ * 根据 dataStructure.md 需求实现定时任务调度
+ *
+ * 调度规则：
+ * - 每2小时爬取今天数据（类目热度、商品发现）
+ * - 每天凌晨执行昨天数据统计（完整数据爬取）
+ * - 每天凌晨计算趋势榜单
  */
 import { Queue } from "bullmq";
 import { createSchedulerLogger } from "../utils/logger";
@@ -36,39 +41,60 @@ function generateTraceId(): string {
 
 /**
  * Cron 表达式常量
+ * 根据 dataStructure.md 需求配置
  */
 export const CRON_SCHEDULES = {
-  /** 每小时整点执行 */
-  EVERY_HOUR: "0 * * * *",
-  /** 每 15 分钟执行 */
-  EVERY_15_MINUTES: "*/15 * * * *",
-  /** 每天凌晨 2 点执行 */
+  /** 每2小时执行 - 爬取今天数据 */
+  EVERY_2_HOURS: "0 */2 * * *",
+  /** 每天凌晨2点执行 - 完整数据爬取（昨天数据） */
   DAILY_2AM: "0 2 * * *",
-  /** 每天凌晨 3 点执行 */
+  /** 每天凌晨3点执行 - 计算趋势榜单 */
   DAILY_3AM: "0 3 * * *",
-  /** 每天凌晨 5 点执行 */
+  /** 每天凌晨4点执行 - Bitmap更新 */
+  DAILY_4AM: "0 4 * * *",
+  /** 每天凌晨5点执行 - 社交提及统计 */
   DAILY_5AM: "0 5 * * *",
+  /** 每15分钟执行 - 趋势数据更新（可选） */
+  EVERY_15_MINUTES: "*/15 * * * *",
 } as const;
 
 /**
- * 计算下次执行延迟
+ * 计算下次执行延迟（毫秒）
  */
-function getNextDelay(expression: string): number {
-  const parts = expression.split(" ");
+function getNextDelay(cronExpression: string): number {
+  const parts = cronExpression.split(" ");
 
-  // 处理 */X 格式（每 X 分钟）
-  if (parts[0].startsWith("*/")) {
-    const minutes = parseInt(parts[0].substring(2), 10);
+  // 处理 */X 格式（每 X 分钟/小时）
+  if (parts[0].startsWith("*/") || parts[1].startsWith("*/")) {
     const now = new Date();
-    const currentMinutes = now.getMinutes();
-    const currentSeconds = now.getSeconds();
 
-    // 计算到下一个时间点的分钟数
-    const nextMinute = Math.ceil((currentMinutes + 1) / minutes) * minutes;
-    const delayMinutes = nextMinute - currentMinutes;
-    const delayMs = (delayMinutes * 60 - currentSeconds) * 1000;
+    // 每 X 小时
+    if (parts[1].startsWith("*/")) {
+      const hours = parseInt(parts[1].substring(2), 10);
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentSecond = now.getSeconds();
 
-    return delayMs;
+      const nextHour = Math.floor(currentHour / hours) * hours + hours;
+      const delayHours = nextHour - currentHour;
+      const delayMs =
+        (delayHours * 60 * 60 - currentMinute * 60 - currentSecond) * 1000;
+
+      return delayMs;
+    }
+
+    // 每 X 分钟
+    if (parts[0].startsWith("*/")) {
+      const minutes = parseInt(parts[0].substring(2), 10);
+      const currentMinute = now.getMinutes();
+      const currentSecond = now.getSeconds();
+
+      const nextMinute = Math.ceil((currentMinute + 1) / minutes) * minutes;
+      const delayMinutes = nextMinute - currentMinute;
+      const delayMs = (delayMinutes * 60 - currentSecond) * 1000;
+
+      return delayMs;
+    }
   }
 
   // 处理每小时整点 "0 * * * *"
@@ -76,7 +102,8 @@ function getNextDelay(expression: string): number {
     const now = new Date();
     const currentMinutes = now.getMinutes();
     const currentSeconds = now.getSeconds();
-    const delayMs = (60 - currentMinutes - 1) * 60 * 1000 + (60 - currentSeconds) * 1000;
+    const delayMs =
+      (60 - currentMinutes - 1) * 60 * 1000 + (60 - currentSeconds) * 1000;
     return delayMs;
   }
 
@@ -100,12 +127,12 @@ function getNextDelay(expression: string): number {
 
 /**
  * 创建定时任务
- *
- * @param name - 任务名称
- * @param cronExpression - Cron 表达式
- * @param callback - 任务回调函数
  */
-function scheduleJob(name: string, cronExpression: string, callback: () => Promise<void>): void {
+function scheduleJob(
+  name: string,
+  cronExpression: string,
+  callback: () => Promise<void>
+): void {
   const scheduleNext = (): void => {
     if (!state.running) {
       return;
@@ -144,28 +171,27 @@ function scheduleJob(name: string, cronExpression: string, callback: () => Promi
 }
 
 /**
- * 添加爬虫任务到队列
+ * 添加类目热度爬取任务
  */
-async function scheduleCrawlJob(
-  queue: Queue<CrawlerJobData>,
-  source: "amazon" | "twitter"
+async function scheduleCategoryHeatJob(
+  queue: Queue<CrawlerJobData>
 ): Promise<void> {
   const traceId = generateTraceId();
 
-  logger.info(`Adding ${source} crawl job to queue`, { traceId });
+  logger.info(`Adding category heat crawl job to queue`, { traceId });
 
   await queue.add(
-    JOB_TYPES.CRAWL_AMAZON,
+    JOB_TYPES.CRAWL_CATEGORY_HEAT,
     {
-      source,
-      maxProducts: 20,
+      source: "category-heat",
+      maxProducts: 10,
       headless: true,
       saveToDb: true,
       triggeredBy: "scheduler",
       traceId,
     },
     {
-      jobId: `${source}-${traceId}`,
+      jobId: `category-heat-${traceId}`,
       removeOnComplete: {
         age: 24 * 3600,
         count: 100,
@@ -174,6 +200,100 @@ async function scheduleCrawlJob(
         age: 7 * 24 * 3600,
         count: 500,
       },
+    }
+  );
+}
+
+/**
+ * 添加商品发现任务
+ */
+async function scheduleProductDiscoveryJob(
+  queue: Queue<CrawlerJobData>
+): Promise<void> {
+  const traceId = generateTraceId();
+
+  logger.info(`Adding product discovery crawl job to queue`, { traceId });
+
+  await queue.add(
+    JOB_TYPES.CRAWL_PRODUCT_DISCOVERY,
+    {
+      source: "product-discovery",
+      maxProducts: 10,
+      headless: true,
+      saveToDb: true,
+      triggeredBy: "scheduler",
+      traceId,
+    },
+    {
+      jobId: `product-discovery-${traceId}`,
+      removeOnComplete: {
+        age: 24 * 3600,
+        count: 100,
+      },
+      removeOnFail: {
+        age: 7 * 24 * 3600,
+        count: 500,
+      },
+    }
+  );
+}
+
+/**
+ * 添加社交提及统计任务
+ */
+async function scheduleProductMentionsJob(
+  queue: Queue<CrawlerJobData>
+): Promise<void> {
+  const traceId = generateTraceId();
+
+  logger.info(`Adding product mentions crawl job to queue`, { traceId });
+
+  await queue.add(
+    JOB_TYPES.CRAWL_PRODUCT_MENTIONS,
+    {
+      source: "product-mentions",
+      maxProducts: 50, // 限制处理的商品数量
+      headless: true,
+      saveToDb: true,
+      triggeredBy: "scheduler",
+      traceId,
+    },
+    {
+      jobId: `product-mentions-${traceId}`,
+      removeOnComplete: {
+        age: 24 * 3600,
+        count: 100,
+      },
+      removeOnFail: {
+        age: 7 * 24 * 3600,
+        count: 500,
+      },
+    }
+  );
+}
+
+/**
+ * 添加昨天数据统计任务
+ */
+async function scheduleYesterdayStatsJob(queue: Queue<CrawlerJobData>): Promise<void> {
+  const traceId = generateTraceId();
+
+  logger.info(`Adding yesterday stats job to queue`, { traceId });
+
+  await queue.add(
+    JOB_TYPES.CRAWL_YESTERDAY_STATS,
+    {
+      source: "yesterday-stats",
+      maxProducts: 10,
+      headless: true,
+      saveToDb: true,
+      triggeredBy: "scheduler",
+      traceId,
+    },
+    {
+      jobId: `yesterday-stats-${traceId}`,
+      removeOnComplete: { age: 24 * 3600, count: 100 },
+      removeOnFail: { age: 7 * 24 * 3600, count: 500 },
     }
   );
 }
@@ -190,7 +310,9 @@ async function scheduleTrendingJob(
   logger.info(`Adding trending ${type} job to queue`, { traceId });
 
   await queue.add(
-    type === "update" ? JOB_TYPES.UPDATE_TRENDING : JOB_TYPES.CALCULATE_TRENDING_SCORE,
+    type === "update"
+      ? JOB_TYPES.UPDATE_TRENDING
+      : JOB_TYPES.CALCULATE_TRENDING_SCORE,
     {
       type,
       triggeredBy: "scheduler",
@@ -213,11 +335,12 @@ async function scheduleTrendingJob(
 /**
  * 启动调度器
  *
- * @description
- * 设置以下定时任务：
- * - 每小时爬取 Amazon 商品
- * - 每小时爬取 Twitter 商品
- * - 每 15 分钟更新趋势数据
+ * 根据 dataStructure.md 设置定时任务：
+ * - 每2小时：类目热度统计、商品发现（今天数据）
+ * - 每天凌晨2点：完整数据爬取（昨天数据）
+ * - 每天凌晨3点：计算趋势榜单
+ * - 每天凌晨4点：Bitmap更新
+ * - 每天凌晨5点：社交提及统计
  */
 export function startScheduler(): void {
   if (state.running) {
@@ -231,22 +354,45 @@ export function startScheduler(): void {
   const crawlerQueue = getCrawlerQueue();
   const trendingQueue = getTrendingQueue();
 
-  // 每小时爬取 Amazon 商品
-  scheduleJob("crawl-amazon", CRON_SCHEDULES.EVERY_HOUR, async () => {
-    await scheduleCrawlJob(crawlerQueue, "amazon");
+  // ========== 每2小时执行的任务（今天数据）==========
+
+  // 每2小时执行类目热度统计
+  scheduleJob("crawl-category-heat", CRON_SCHEDULES.EVERY_2_HOURS, async () => {
+    await scheduleCategoryHeatJob(crawlerQueue);
   });
 
-  // 每小时爬取 Twitter 商品
-  scheduleJob("crawl-twitter", CRON_SCHEDULES.EVERY_HOUR, async () => {
-    await scheduleCrawlJob(crawlerQueue, "twitter");
+  // 每2小时执行商品发现
+  scheduleJob(
+    "crawl-product-discovery",
+    CRON_SCHEDULES.EVERY_2_HOURS,
+    async () => {
+      await scheduleProductDiscoveryJob(crawlerQueue);
+    }
+  );
+
+  // ========== 每天凌晨执行的任务（昨天完整数据）==========
+
+  // 每天凌晨2点：昨天数据统计
+  scheduleJob("crawl-yesterday-stats", CRON_SCHEDULES.DAILY_2AM, async () => {
+    await scheduleYesterdayStatsJob(crawlerQueue);
   });
 
-  // 每 15 分钟更新趋势数据
-  scheduleJob("update-trending", CRON_SCHEDULES.EVERY_15_MINUTES, async () => {
+  // 每天凌晨3点：计算趋势榜单
+  scheduleJob("calculate-trending", CRON_SCHEDULES.DAILY_3AM, async () => {
+    await scheduleTrendingJob(trendingQueue, "calculate");
+  });
+
+  // 每天凌晨4点：更新趋势数据
+  scheduleJob("update-trending", CRON_SCHEDULES.DAILY_4AM, async () => {
     await scheduleTrendingJob(trendingQueue, "update");
   });
 
-  logger.info("Scheduler started successfully");
+  // 每天凌晨5点：社交提及统计
+  scheduleJob("crawl-product-mentions", CRON_SCHEDULES.DAILY_5AM, async () => {
+    await scheduleProductMentionsJob(crawlerQueue);
+  });
+
+  logger.info("Scheduler started successfully with new crawler jobs");
 }
 
 /**
@@ -293,11 +439,17 @@ export async function triggerJob(jobName: string): Promise<void> {
   const trendingQueue = getTrendingQueue();
 
   switch (jobName) {
-    case "crawl-amazon":
-      await scheduleCrawlJob(crawlerQueue, "amazon");
+    case "crawl-category-heat":
+      await scheduleCategoryHeatJob(crawlerQueue);
       break;
-    case "crawl-twitter":
-      await scheduleCrawlJob(crawlerQueue, "twitter");
+    case "crawl-product-discovery":
+      await scheduleProductDiscoveryJob(crawlerQueue);
+      break;
+    case "crawl-product-mentions":
+      await scheduleProductMentionsJob(crawlerQueue);
+      break;
+    case "crawl-yesterday-stats":
+      await scheduleYesterdayStatsJob(crawlerQueue);
       break;
     case "update-trending":
       await scheduleTrendingJob(trendingQueue, "update");

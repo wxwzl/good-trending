@@ -3,6 +3,7 @@
 ## 概述
 
 爬虫现在支持两种 Google 搜索模式：
+
 1. **SerpAPI**（推荐）- 稳定、快速、不会被阻止
 2. **浏览器爬取**（备用）- 免费但容易被 Google 反爬虫阻止
 
@@ -90,6 +91,7 @@ pnpm crawl:test-serpapi
 ## 监控额度使用
 
 在 [SerpAPI Dashboard](https://serpapi.com/dashboard) 可以查看：
+
 - 本月已使用次数
 - 剩余免费额度
 - API 调用历史
@@ -99,11 +101,13 @@ pnpm crawl:test-serpapi
 ### 问题：一直使用浏览器模式
 
 **原因**：
+
 - 未设置 `SERPAPI_KEY`
 - API Key 无效
 - 免费额度已用完
 
 **解决**：
+
 1. 检查 `.env.development` 是否包含 `SERPAPI_KEY`
 2. 确认 API Key 正确
 3. 查看 Dashboard 确认额度
@@ -111,11 +115,13 @@ pnpm crawl:test-serpapi
 ### 问题：SerpAPI 返回错误
 
 **常见错误**：
+
 - `quota exceeded` - 额度已用完
 - `rate limit` - 请求太频繁
 - `invalid api key` - API Key 无效
 
 **解决**：
+
 - 额度用完会自动回退到浏览器模式
 - 降低请求频率
 - 检查 API Key
@@ -143,9 +149,7 @@ const searchService = new GoogleSearchService({
 });
 
 // 执行搜索（自动选择最佳方式）
-const result = await searchService.search(
-  "site:reddit.com headphones after:2024-01-01"
-);
+const result = await searchService.search("site:reddit.com headphones after:2024-01-01");
 
 console.log(`搜索来源: ${result.source}`); // serpapi 或 browser
 console.log(`结果数: ${result.links.length}`);

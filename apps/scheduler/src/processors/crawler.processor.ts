@@ -19,7 +19,7 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
  * 避免在模块加载时初始化 Playwright
  */
 async function importCrawler() {
-  const { GoogleSearchCrawler } = await import("@good-trending/crawler/google");
+  const { GoogleSearchCrawler } = await import("@good-trending/crawler/googleSearchCrawler");
   const { saveCategoryHeatStats, saveCrawledProducts, saveProductSocialStats, saveCrawlerLog } =
     await import("@good-trending/crawler/services");
   return {

@@ -6,10 +6,12 @@ module.exports = function (options) {
     ...options,
     target: 'node',
     mode: 'production',
-    externals: [nodeExternals({
-      // 将 workspace 包打包进 bundle
-      allowlist: [/^@good-trending/],
-    })],
+    externals: [
+      nodeExternals({
+        // 将 workspace 包打包进 bundle
+        allowlist: [/^@good-trending/],
+      }),
+    ],
     output: {
       path: path.join(__dirname, 'dist'),
       filename: 'main.js',

@@ -43,7 +43,13 @@ export const JOB_TYPES = {
  */
 export interface CrawlerJobData {
   /** 爬虫类型 */
-  source: "amazon" | "twitter" | "category-heat" | "product-discovery" | "product-mentions" | "yesterday-stats";
+  source:
+    | "amazon"
+    | "twitter"
+    | "category-heat"
+    | "product-discovery"
+    | "product-mentions"
+    | "yesterday-stats";
   /** 最大商品数量 */
   maxProducts?: number;
   /** 是否使用无头模式 */

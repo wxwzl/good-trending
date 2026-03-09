@@ -5,7 +5,7 @@
  * 包含所有 API 接口的请求参数类型
  */
 
-import { PaginationParams, Period, SourceType } from '../common';
+import { PaginationParams, Period, SourceType } from "../common";
 
 // ============================================
 // Product 商品相关请求

@@ -27,10 +27,10 @@
  */
 
 // 公共类型
-export * from './common';
+export * from "./common";
 
 // 请求参数类型
-export * from './request';
+export * from "./request";
 
 // 响应数据类型
-export * from './response';
+export * from "./response";

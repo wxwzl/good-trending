@@ -51,12 +51,12 @@ vercel deploy --prebuilt --prod
 
 ### 优点说明
 
-| 优点 | 说明 |
-|------|------|
-| **源码隐私** | Vercel 服务器上完全不接触你的源代码 |
-| **构建环境一致性** | 可以在你自己的 CI (如 GitHub Actions, GitLab CI) 或本地完成构建，避免 Vercel 编译环境与本地不一致的问题 |
-| **节省 Vercel 额度** | 消耗的是你自己的 CPU 进行构建，不占用 Vercel 的 Build Minutes（对于大型项目可节省费用） |
-| **突破限制** | 如果构建过程需要访问 Vercel 环境无法访问的内网资源，可以在本地构建完成后再推送到 Vercel |
+| 优点                 | 说明                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| **源码隐私**         | Vercel 服务器上完全不接触你的源代码                                                                     |
+| **构建环境一致性**   | 可以在你自己的 CI (如 GitHub Actions, GitLab CI) 或本地完成构建，避免 Vercel 编译环境与本地不一致的问题 |
+| **节省 Vercel 额度** | 消耗的是你自己的 CPU 进行构建，不占用 Vercel 的 Build Minutes（对于大型项目可节省费用）                 |
+| **突破限制**         | 如果构建过程需要访问 Vercel 环境无法访问的内网资源，可以在本地构建完成后再推送到 Vercel                 |
 
 ---
 
@@ -100,7 +100,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm ci
@@ -141,6 +141,7 @@ jobs:
 **原因**：`vercel build` 未执行或执行失败
 
 **解决**：
+
 ```bash
 # 确保在正确目录执行
 vercel build --prod
@@ -154,6 +155,7 @@ ls -la .vercel/output/
 **原因**：包含 `node_modules` 后超出免费版限制
 
 **解决**：
+
 ```bash
 # 使用 vercel build 自动生成，它会智能处理依赖
 vercel build --prod
@@ -173,11 +175,11 @@ vercel build --prod
 
 如果 Vercel 的限制不适合你的项目，可以考虑：
 
-| 平台 | 免费额度 | 特点 |
-|------|---------|------|
-| **Railway** | $5/月 | 直接运行 Node.js，无 Serverless 限制 |
-| **Render** | 永久免费 | 支持 Docker，但有休眠机制 |
-| **Fly.io** | $5/月 | 全球边缘部署 |
+| 平台        | 免费额度 | 特点                                 |
+| ----------- | -------- | ------------------------------------ |
+| **Railway** | $5/月    | 直接运行 Node.js，无 Serverless 限制 |
+| **Render**  | 永久免费 | 支持 Docker，但有休眠机制            |
+| **Fly.io**  | $5/月    | 全球边缘部署                         |
 
 ---
 

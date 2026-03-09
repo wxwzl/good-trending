@@ -8,7 +8,8 @@ const fs = require("fs");
 const path = require("path");
 
 // 获取部署目录
-const deployDir = process.env.DEPLOY_DIR || path.resolve(__dirname, "../../../deploy/app/scheduler");
+const deployDir =
+  process.env.DEPLOY_DIR || path.resolve(__dirname, "../../../deploy/app/scheduler");
 const logsDir = process.env.LOGS_DIR || path.join(deployDir, "logs");
 
 // 确保日志目录存在

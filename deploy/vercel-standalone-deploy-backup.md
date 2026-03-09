@@ -28,6 +28,7 @@ node scripts/prepare-for-vercel.js
 ```
 
 此脚本会检查：
+
 - 必要文件是否完整
 - 依赖是否安装
 - 包大小是否合理
@@ -75,32 +76,38 @@ vercel env add DATABASE_URL
 ### 1. 包大小限制
 
 Vercel Serverless Function 有大小限制：
+
 - 压缩后最大 **250MB**
 - 包含 `node_modules` + `.next` 目录
 
 如果超出限制：
+
 - 使用 `output: 'export'` 转为静态导出
 - 或迁移到 Docker 部署（Railway, Render, Fly.io）
 
 ### 2. Cold Start
 
 Serverless 有冷启动时间，对于：
+
 - 小型项目：通常 < 1s
 - 大型项目：可能 2-5s
 
 如需更稳定性能，考虑：
+
 - Vercel Pro 的 Edge Functions
 - 或专用服务器部署
 
 ### 3. 静态资源缓存
 
 已配置的缓存策略：
+
 - `/_next/static/*` - 1 年长期缓存（immutable）
 - 页面路由 - 由 Next.js 控制
 
 ### 4. 图片优化
 
 Next.js Image 组件需要额外配置。如需使用：
+
 - 确保在 `next.config.js` 中配置了 `images.domains`
 - 或使用 Vercel 的 Edge Network
 
@@ -140,13 +147,13 @@ ls -la .next/server/app/
 
 ## 替代方案对比
 
-| 平台 | 部署方式 | 适合场景 |
-|------|---------|---------|
-| **Vercel** | Serverless | SEO 要求、Serverless 生态 |
-| **Railway** | Docker/容器 | 简单部署、低流量 |
-| **Render** | Docker/容器 | 性价比高 |
-| **Fly.io** | Docker | 全球分布、边缘部署 |
-| **AWS ECS** | Docker | 企业级、高可用 |
+| 平台        | 部署方式    | 适合场景                  |
+| ----------- | ----------- | ------------------------- |
+| **Vercel**  | Serverless  | SEO 要求、Serverless 生态 |
+| **Railway** | Docker/容器 | 简单部署、低流量          |
+| **Render**  | Docker/容器 | 性价比高                  |
+| **Fly.io**  | Docker      | 全球分布、边缘部署        |
+| **AWS ECS** | Docker      | 企业级、高可用            |
 
 ## 迁移到 Docker（备选）
 

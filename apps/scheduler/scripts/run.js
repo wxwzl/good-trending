@@ -24,10 +24,10 @@ const nodeEnv = process.env.NODE_ENV || (command === "dev" ? "development" : "pr
 // 加载环境文件的优先级（从低到高，后加载的覆盖先加载的）
 const rootDir = path.resolve(__dirname, "../../..");
 const envFiles = [
-  ".env",                   // 默认（最低优先级）
-  ".env.local",             // 本地覆盖
-  `.env.${appEnv}`,         // 特定环境 (使用 APP_ENV)
-  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件
+  ".env", // 默认（最低优先级）
+  ".env.local", // 本地覆盖
+  `.env.${appEnv}`, // 特定环境 (使用 APP_ENV)
+  `.env.${appEnv}.local`, // 最高优先级: 特定环境的本地文件
 ];
 
 // 加载环境变量

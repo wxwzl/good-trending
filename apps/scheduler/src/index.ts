@@ -46,7 +46,7 @@ import { closeRedisConnection, getRedisConnection } from "./queue/redis";
 import { getCrawlerQueue, getTrendingQueue, closeQueues, getQueueStats } from "./queue";
 import { createCrawlerProcessor, closeCrawlerProcessor } from "./processors/crawler.processor";
 import { createTrendingProcessor, closeTrendingProcessor } from "./processors/trending.processor";
-import { startScheduler, stopScheduler, getSchedulerStatus, triggerJob } from "./scheduler";
+import { startScheduler, stopScheduler, getSchedulerStatus, triggerJob } from "./scheduler/index";
 
 /**
  * 应用状态

@@ -28,11 +28,14 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "lint:scripts": "eslint scripts --parser-options=project:tsconfig.scripts.json",
     "lint:staged": "eslint --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
+    "format:scripts": "prettier --write \"scripts/**/*.ts\"",
     "format:staged": "prettier --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json"
   },
   "dependencies": {
     "@good-trending/database": "workspace:*",

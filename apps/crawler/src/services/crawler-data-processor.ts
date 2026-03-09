@@ -18,11 +18,11 @@ import type { SourceType } from "@good-trending/database";
 import { eq, and, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import {
-  updateBitmap,
   type CategoryHeatResult,
   type CrawledProduct,
   type CrawlerLogData,
 } from "../types/crawler.types";
+import { updateBitmap } from "@good-trending/shared";
 
 /**
  * 保存类目热度统计
@@ -209,13 +209,13 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
       // 检查商品今天是否出现在任何类目中
       const todayAppeared = await checkProductAppearedToday(stat.productId, today);
 
-      // 滑动窗口更新（每天左移一位）
-      let newBitmap7 = stat.bitmap7 || 0;
-      let newBitmap15 = stat.bitmap15 || 0;
-      let newBitmap30 = stat.bitmap30 || 0;
-      let newBitmap60 = stat.bitmap60 || 0;
+      // 使用 shared 包的 BigInt bitmap 函数
+      let newBitmap7 = BigInt(stat.bitmap7 || 0);
+      let newBitmap15 = BigInt(stat.bitmap15 || 0);
+      let newBitmap30 = BigInt(stat.bitmap30 || 0);
+      let newBitmap60 = BigInt(stat.bitmap60 || 0);
 
-      // 左移 daysDiff 次
+      // 滑动窗口更新（每天左移一位）
       for (let i = 0; i < daysDiff; i++) {
         newBitmap7 = updateBitmap(newBitmap7, 7, false);
         newBitmap15 = updateBitmap(newBitmap15, 15, false);
@@ -225,10 +225,10 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
 
       // 设置今天的状态
       if (todayAppeared) {
-        newBitmap7 = newBitmap7 | 1;
-        newBitmap15 = newBitmap15 | 1;
-        newBitmap30 = newBitmap30 | 1;
-        newBitmap60 = newBitmap60 | 1;
+        newBitmap7 = newBitmap7 | 1n;
+        newBitmap15 = newBitmap15 | 1n;
+        newBitmap30 = newBitmap30 | 1n;
+        newBitmap60 = newBitmap60 | 1n;
       }
 
       // 更新数据库
@@ -471,25 +471,29 @@ async function generateUniqueSlug(baseSlug: string): Promise<string> {
 
 /**
  * 检查商品今天是否出现在任何类目中
- * 通过检查 categoryHeatStats 的 crawledProductCount
+ * 通过检查该商品关联的类目今天是否有爬取记录
  */
 async function checkProductAppearedToday(
   productId: string,
   today: string
 ): Promise<boolean> {
-  // 这里简化处理，实际应该通过 product_category 关联查询
-  // 检查该商品是否在今天的爬取中被发现
+  // 查询该商品关联的类目今天是否有爬取记录
   const result = await db
-    .select({ count: sql`count(*)`.mapWith(Number) })
-    .from(products)
-    .where(
+    .select({
+      totalCrawled: sql`coalesce(sum(${categoryHeatStats.crawledProductCount}), 0)`.mapWith(Number),
+    })
+    .from(productCategories)
+    .innerJoin(
+      categoryHeatStats,
       and(
-        eq(products.id, productId),
-        eq(products.firstSeenAt, today)
+        eq(productCategories.categoryId, categoryHeatStats.categoryId),
+        eq(categoryHeatStats.statDate, today)
       )
-    );
+    )
+    .where(eq(productCategories.productId, productId));
 
-  return result[0]?.count > 0;
+  // 如果有类目今天被爬取且爬取到了商品，则认为该商品今天出现
+  return (result[0]?.totalCrawled ?? 0) > 0;
 }
 
 /**

@@ -76,8 +76,7 @@ for (const envFile of envFiles) {
   }
 }
 
-const loadedEnvFile = loadedEnvFiles.length > 0 ? loadedEnvFiles.join(", ") : null;
-
+// loadedEnvFiles 已处理
 if (loadedEnvFiles.length > 0) {
   console.log(` 已加载环境文件: ${loadedEnvFiles.join(" -> ")}`);
 } else {

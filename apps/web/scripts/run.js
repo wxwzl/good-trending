@@ -29,10 +29,10 @@ if (process.env.APP_ENV) {
 // 加载环境文件的优先级（从低到高，后加载的覆盖先加载的）
 const rootDir = path.resolve(__dirname, "../../..");
 const envFiles = [
-  ".env",                   // 默认（最低优先级）
-  ".env.local",             // 本地覆盖
-  `.env.${appEnv}`,         // 特定环境 (使用 APP_ENV)
-  `.env.${appEnv}.local`,   // 最高优先级: 特定环境的本地文件
+  ".env", // 默认（最低优先级）
+  ".env.local", // 本地覆盖
+  `.env.${appEnv}`, // 特定环境 (使用 APP_ENV)
+  `.env.${appEnv}.local`, // 最高优先级: 特定环境的本地文件
 ];
 
 // 加载环境变量
@@ -49,8 +49,7 @@ for (const envFile of envFiles) {
   }
 }
 
-const loadedEnvFile = loadedEnvFiles.length > 0 ? loadedEnvFiles.join(", ") : null;
-
+// loadedEnvFiles 已处理
 if (loadedEnvFiles.length > 0) {
   console.log(`[${command}] 已加载环境文件: ${loadedEnvFiles.join(" -> ")}`);
 } else {
@@ -60,12 +59,14 @@ if (loadedEnvFiles.length > 0) {
 // 调试缓存模式
 if (process.env.NEXT_PRIVATE_DEBUG_CACHE === "1") {
   console.log(`[${command}] 调试缓存模式已启用 (NEXT_PRIVATE_DEBUG_CACHE=1)`);
-  console.log(`[${command}] 调试缓存模式必须用start命令启动，且不支持dev/build命令，已强制改成start命令`);
+  console.log(
+    `[${command}] 调试缓存模式必须用start命令启动，且不支持dev/build命令，已强制改成start命令`
+  );
   command = "start";
   process.env.NODE_ENV = "production";
 }
 
-const nodeEnv = process.env.NODE_ENV
+const nodeEnv = process.env.NODE_ENV;
 console.log(`[${command}] NODE_ENV=${nodeEnv}, APP_ENV=${appEnv}`);
 // 读取端口配置
 const port = process.env.WEB_PORT || 3010;

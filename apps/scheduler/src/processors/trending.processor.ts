@@ -248,7 +248,7 @@ async function updateTrendingData(): Promise<number> {
  */
 async function calculateAllTrendingScores(): Promise<number> {
   const { db, products, productSocialStats, trendRanks } = await import("@good-trending/database");
-  const { eq, desc, and, gte } = await import("drizzle-orm");
+  const { eq, and, gte } = await import("drizzle-orm");
   const { createId } = await import("@paralleldrive/cuid2");
 
   logger.info("Starting TODAY trending score calculation...");

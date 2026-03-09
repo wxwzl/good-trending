@@ -184,7 +184,7 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 
-process.on("unhandledRejection", (reason, promise) => {
+process.on("unhandledRejection", (reason, _promise) => {
   log("ERROR", `[deploy-server] 未处理的 Promise 拒绝: ${reason}`);
   logStream.end();
   errorStream.end();

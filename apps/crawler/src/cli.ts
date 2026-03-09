@@ -12,16 +12,27 @@
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// 加载环境变量
+// ========== 必须在任何其他导入之前加载环境变量 ==========
 const env = process.env.NODE_ENV || "development";
 const envFile = env === "production" ? ".env.production" : `.env.${env}`;
 config({ path: resolve(__dirname, "../../../.env") });
-config({ path: resolve(__dirname, "../../../", envFile) , override: true });
+config({ path: resolve(__dirname, "../../../", envFile), override: true });
+
+// 验证数据库配置
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL 环境变量未设置");
+  console.error("请检查 .env 文件是否正确加载");
+  process.exit(1);
+}
+console.log("✅ 环境变量加载完成");
+console.log(`   DATABASE_URL: ${process.env.DATABASE_URL.replace(/:\/\/[^:]+:[^@]+@/, "://***:***@")}`);
+// =====================================================
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { createLogger, format, transports } from "winston";
 import { db, categories, products } from "@good-trending/database";
+import { sql } from "drizzle-orm";
 import { GoogleSearchCrawler } from "./google";
 import {
   saveCategoryHeatStats,
@@ -51,6 +62,30 @@ const logger = createLogger({
     }),
   ],
 });
+
+/**
+ * 验证数据库连接
+ * 在爬虫开始前确保数据库可访问
+ */
+async function verifyDatabaseConnection(): Promise<boolean> {
+  try {
+    logger.info("验证数据库连接...");
+
+    // 尝试执行简单查询
+    const result = await db.execute(sql`SELECT 1 as health_check`);
+
+    if (result && result.length > 0) {
+      logger.info("✅ 数据库连接成功");
+      return true;
+    }
+
+    logger.error("❌ 数据库连接失败：查询无结果");
+    return false;
+  } catch (error) {
+    logger.error(`❌ 数据库连接失败: ${error}`);
+    return false;
+  }
+}
 
 /**
  * 获取所有类目
@@ -396,6 +431,13 @@ async function main() {
   logger.info("=== Good-Trending Crawler CLI ===");
   logger.info(`命令: ${argv.command}`);
   logger.info(`无头模式: ${argv.headless}`);
+
+  // 验证数据库连接
+  const dbConnected = await verifyDatabaseConnection();
+  if (!dbConnected) {
+    logger.error("数据库连接失败，爬虫无法继续");
+    process.exit(1);
+  }
 
   try {
     switch (argv.command) {

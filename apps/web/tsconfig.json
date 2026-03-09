@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@good-trending/dto": ["../../packages/dto"]
     }
   },
   "include": [

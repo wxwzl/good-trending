@@ -6,15 +6,10 @@
 import { eq, inArray, and, type InferSelectModel } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { db } from "./client";
-import { products, productTopics } from "./schema";
+import { products, productCategories, type SourceType } from "./schema";
 
 /** 商品类型 */
 export type Product = InferSelectModel<typeof products>;
-
-/**
- * 商品数据来源类型
- */
-export type SourceType = "X_PLATFORM" | "AMAZON";
 
 /**
  * 商品创建输入
@@ -53,14 +48,14 @@ export interface BatchCreateResult {
  * 确保分类存在，返回 slug -> id 的映射
  */
 async function ensureTopics(topicSlugs: string[]): Promise<Map<string, string>> {
-  const { topics } = await import("./schema");
+  const { categories } = await import("./schema");
   const topicMap = new Map<string, string>();
 
   for (const slug of topicSlugs) {
     const existing = await db
-      .select({ id: topics.id })
-      .from(topics)
-      .where(eq(topics.slug, slug))
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.slug, slug))
       .limit(1);
 
     if (existing.length > 0) {
@@ -74,19 +69,19 @@ async function ensureTopics(topicSlugs: string[]): Promise<Map<string, string>> 
         .join(" ");
 
       try {
-        await db.insert(topics).values({
+        await db.insert(categories).values({
           id: topicId,
           name,
           slug,
-          description: `Auto-created topic for ${slug}`,
+          description: `Auto-created category for ${slug}`,
         });
         topicMap.set(slug, topicId);
       } catch (_error) {
         // 忽略创建失败（可能并发创建）
         const retry = await db
-          .select({ id: topics.id })
-          .from(topics)
-          .where(eq(topics.slug, slug))
+          .select({ id: categories.id })
+          .from(categories)
+          .where(eq(categories.slug, slug))
           .limit(1);
         if (retry.length > 0) {
           topicMap.set(slug, retry[0].id);
@@ -172,7 +167,7 @@ export async function checkProductExists(
   const existing = await db
     .select({ id: products.id })
     .from(products)
-    .where(and(eq(products.sourceType, sourceType), eq(products.sourceId, sourceId)))
+    .where(and(eq(products.discoveredFrom, sourceType), eq(products.amazonId, sourceId)))
     .limit(1);
 
   return existing.length > 0;
@@ -188,7 +183,7 @@ export async function checkSourceUrlExists(
   const existing = await db
     .select({ id: products.id })
     .from(products)
-    .where(and(eq(products.sourceType, sourceType), eq(products.sourceUrl, sourceUrl)))
+    .where(and(eq(products.discoveredFrom, sourceType), eq(products.sourceUrl, sourceUrl)))
     .limit(1);
 
   return existing.length > 0;
@@ -232,8 +227,9 @@ export async function createProduct(input: CreateProductInput): Promise<Product 
       price: input.price?.toString() ?? null,
       currency: input.currency ?? "USD",
       sourceUrl: input.sourceUrl,
-      sourceId: input.sourceId,
-      sourceType: input.sourceType,
+      amazonId: input.sourceId,
+      discoveredFrom: input.sourceType,
+      firstSeenAt: new Date().toISOString().split("T")[0],
     })
     .returning();
 
@@ -245,9 +241,9 @@ export async function createProduct(input: CreateProductInput): Promise<Product 
 
     for (const [, topicId] of topicMap) {
       try {
-        await db.insert(productTopics).values({
+        await db.insert(productCategories).values({
           productId,
-          topicId,
+          categoryId: topicId,
         });
       } catch {
         // 忽略关联失败
@@ -319,12 +315,14 @@ export async function getExistingSourceIds(
   for (let i = 0; i < sourceIds.length; i += batchSize) {
     const batch = sourceIds.slice(i, i + batchSize);
     const rows = await db
-      .select({ sourceId: products.sourceId })
+      .select({ amazonId: products.amazonId })
       .from(products)
-      .where(and(eq(products.sourceType, sourceType), inArray(products.sourceId, batch)));
+      .where(and(eq(products.discoveredFrom, sourceType), inArray(products.amazonId, batch)));
 
     for (const row of rows) {
-      existing.add(row.sourceId);
+      if (row.amazonId) {
+        existing.add(row.amazonId);
+      }
     }
   }
 
@@ -356,7 +354,7 @@ export async function getExistingSourceUrls(
     const rows = await db
       .select({ sourceUrl: products.sourceUrl })
       .from(products)
-      .where(and(eq(products.sourceType, sourceType), inArray(products.sourceUrl, batch)));
+      .where(and(eq(products.discoveredFrom, sourceType), inArray(products.sourceUrl, batch)));
 
     for (const row of rows) {
       existing.add(row.sourceUrl);
@@ -376,7 +374,7 @@ export async function findProductBySource(
   const result = await db
     .select()
     .from(products)
-    .where(and(eq(products.sourceType, sourceType), eq(products.sourceId, sourceId)))
+    .where(and(eq(products.discoveredFrom, sourceType), eq(products.amazonId, sourceId)))
     .limit(1);
 
   return result[0] ?? null;

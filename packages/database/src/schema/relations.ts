@@ -12,7 +12,7 @@ import {
 
 // ==================== 类目关系 ====================
 
-export const categoriesRelations = relations(categories, ({ many }) =>> ({
+export const categoriesRelations = relations(categories, ({ many }) => ({
   heatStats: many(categoryHeatStats),
   productCategories: many(productCategories),
   crawlerLogs: many(crawlerLogs),

@@ -77,7 +77,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // output: "standalone",
   // cacheComponents: true,
   reactCompiler: true,
   // 开启 sourcemap 便于调试

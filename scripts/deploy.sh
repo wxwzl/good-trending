@@ -153,8 +153,15 @@ log_info "[6/6] 在服务器上安装依赖并启动服务..."
 ssh $DEPLOY_HOST "
     cd $DEPLOY_DIR
 
-    echo '安装生产依赖...'
-    pnpm install --production --frozen-lockfile
+    echo '安装生产依赖（使用 npm）...'
+    # 为每个服务安装生产依赖
+    for service in api web scheduler; do
+        echo \"安装 apps/\$service 依赖...\"
+        cd apps/\$service
+        npm install --production
+        cd ../..
+    done
+    echo '依赖安装完成'
 
     echo ''
     echo '=========================================='

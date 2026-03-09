@@ -544,6 +544,95 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   }
 
   /**
+   * 爬取类目热度和商品（合并处理）
+   * 一次遍历同时获取热度数据和商品数据，避免重复搜索
+   */
+  async crawlCategoryHeatAndProducts(
+    categories: CategoryData[],
+    date: Date = new Date()
+  ): Promise<{
+    heatResults: CategoryHeatResult[];
+    products: CrawledProduct[];
+    success: boolean;
+    errors: string[];
+  }> {
+    const heatResults: CategoryHeatResult[] = [];
+    const products: CrawledProduct[] = [];
+    const errors: string[] = [];
+    const seenAsins = new Set<string>();
+
+    this.logger.info(`开始合并爬取 ${categories.length} 个类目的热度数据和商品`);
+
+    // 初始化浏览器
+    await this.initBrowser();
+
+    for (const category of categories) {
+      try {
+        await this.delay(this.getRandomDelay());
+
+        const keyword = category.searchKeywords || category.name;
+        const dateStr = formatDate(date);
+
+        this.logger.info(`处理类目 "${category.name}": 搜索 + 提取商品`);
+
+        // 搜索 Reddit
+        const redditQuery = this.buildSearchQuery(keyword, "REDDIT", dateStr);
+        const redditResult = await this.performGoogleSearch(redditQuery);
+
+        await this.delay(1000);
+
+        // 搜索 X
+        const xQuery = this.buildSearchQuery(keyword, "X_PLATFORM", dateStr);
+        const xResult = await this.performGoogleSearch(xQuery);
+
+        // 记录类目热度
+        heatResults.push({
+          categoryId: category.id,
+          categoryName: category.name,
+          statDate: date,
+          redditResultCount: redditResult.totalResults,
+          xResultCount: xResult.totalResults,
+        });
+
+        this.logger.info(
+          `类目 "${category.name}" 热度: Reddit=${redditResult.totalResults}, X=${xResult.totalResults}`
+        );
+
+        // 从 Reddit 结果中提取商品
+        const maxResults = this.searchConfig.categoryConfig?.maxResultsPerCategory ?? 30;
+        const extractedProducts = await this.extractAmazonProductsFromLinks(
+          redditResult.links.slice(0, maxResults)
+        );
+
+        // 添加到结果（去重）
+        for (const product of extractedProducts) {
+          if (!seenAsins.has(product.amazonId)) {
+            seenAsins.add(product.amazonId);
+            products.push({
+              ...product,
+              discoveredFromCategory: category.id,
+              firstSeenAt: date,
+            });
+          }
+        }
+
+        this.logger.info(`类目 "${category.name}" 提取 ${extractedProducts.length} 个新商品`);
+      } catch (error) {
+        const errorMsg = `处理类目 "${category.name}" 失败: ${error}`;
+        this.logger.error(errorMsg);
+        errors.push(errorMsg);
+      }
+    }
+
+    return {
+      heatResults,
+      products,
+      success: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
    * 搜索商品提及数
    */
   private async searchProductMentionCount(

@@ -1,6 +1,6 @@
 /**
  * 昨天数据统计处理器
- * 处理昨天数据统计任务
+ * 处理昨天数据统计任务 - 合并类目热度和商品发现
  */
 import { Job } from "bullmq";
 import { CrawlerJobData, CrawlerJobResult } from "../../queue/index.js";
@@ -18,13 +18,15 @@ const logger = createSchedulerLogger("yesterday-stats");
  * 爬取结果接口
  */
 interface CrawlResult {
-  data: unknown[];
+  heatResults: unknown[];
+  products: unknown[];
   errors: string[];
   success: boolean;
 }
 
 /**
  * 处理昨天数据统计任务
+ * 合并类目热度和商品发现，一次遍历同时处理
  */
 export async function processYesterdayStatsJob(
   job: Job<CrawlerJobData>
@@ -77,20 +79,22 @@ export async function processYesterdayStatsJob(
       }
     ) as unknown as CrawlerInstance;
 
-    // 爬取昨天类目热度
-    const heatResult = (await crawler.crawlYesterdayCategoryHeat(categoryList)) as CrawlResult;
-    if (heatResult.data.length > 0) {
-      await saveCategoryHeatStats(heatResult.data);
+    // 合并爬取类目热度和商品（一次遍历）
+    const crawlResult = (await crawler.crawlCategoryHeatAndProducts(categoryList)) as CrawlResult;
+
+    // 保存类目热度
+    if (crawlResult.heatResults.length > 0) {
+      await saveCategoryHeatStats(crawlResult.heatResults);
     }
 
-    // 爬取昨天商品
-    const productResult = (await crawler.crawlYesterdayProducts(categoryList)) as CrawlResult;
-    result.totalProducts = productResult.data.length;
-
-    if (data.saveToDb !== false && productResult.data.length > 0) {
-      const saveResult = await saveCrawledProducts(productResult.data, "REDDIT");
+    // 保存商品
+    result.totalProducts = crawlResult.products.length;
+    if (data.saveToDb !== false && crawlResult.products.length > 0) {
+      const saveResult = await saveCrawledProducts(crawlResult.products, "REDDIT");
       result.savedProducts = saveResult.savedCount;
     }
+
+    result.errorCount = crawlResult.errors.length;
 
     // 记录爬虫日志
     const endTime = new Date();
@@ -100,26 +104,25 @@ export async function processYesterdayStatsJob(
     await saveCrawlerLog({
       taskType: "YESTERDAY_STATS",
       sourceType: "REDDIT",
-      status: (productResult.success ? "COMPLETED" : "FAILED") as CrawlerStatus,
+      status: (crawlResult.success ? "COMPLETED" : "FAILED") as CrawlerStatus,
       startTime,
       endTime,
       duration: result.duration,
       itemsFound: result.totalProducts,
       itemsSaved: result.savedProducts,
       errors:
-        productResult.errors.length > 0
-          ? productResult.errors.map((e) => ({ message: e }))
-          : undefined,
+        crawlResult.errors.length > 0 ? crawlResult.errors.map((e) => ({ message: e })) : undefined,
       metadata: {
         traceId: data.traceId,
         triggeredBy: data.triggeredBy,
         categoryCount: categoryList.length,
+        heatCount: crawlResult.heatResults.length,
       },
     });
 
     logger.info(`Yesterday stats job completed`, {
       jobId: job.id,
-      totalCategories: heatResult.data.length,
+      totalCategories: crawlResult.heatResults.length,
       totalProducts: result.totalProducts,
       savedCount: result.savedProducts,
       duration: result.duration,

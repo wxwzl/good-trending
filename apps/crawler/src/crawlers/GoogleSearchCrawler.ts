@@ -10,15 +10,23 @@
  */
 
 import { createLogger, format, transports, Logger } from "winston";
-import { BaseCrawler, type CrawlerConfig } from "./BaseCrawler";
+import { BaseCrawler, type CrawlerConfig, type CrawlResult } from "./BaseCrawler";
 import {
   type CategoryHeatResult,
   type CrawledProduct,
   type SearchPlatform,
   type CategoryCrawlConfig,
-  type CrawlerExecutionResult,
   type CategoryData,
 } from "../types/crawler.types";
+
+/**
+ * 爬虫执行结果
+ * 继承自 CrawlResult，添加成功状态
+ */
+export interface CrawlerExecutionResult<T> extends CrawlResult<T> {
+  /** 是否成功 */
+  success: boolean;
+}
 import { GoogleSearchService, type SearchResult } from "../services/google-search-service";
 import { formatDate } from "../utils/date";
 
@@ -151,6 +159,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     return {
       success: errors.length === 0,
       data: results,
+      total: results.length,
       errors,
       startTime,
       endTime,
@@ -203,6 +212,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     return {
       success: errors.length === 0,
       data: results,
+      total: results.length,
       errors,
       startTime,
       endTime,
@@ -359,6 +369,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     return {
       success: errors.length === 0,
       data: results,
+      total: results.length,
       errors,
       startTime,
       endTime,
@@ -435,6 +446,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     return {
       success: errors.length === 0,
       data: results,
+      total: results.length,
       errors,
       startTime,
       endTime,

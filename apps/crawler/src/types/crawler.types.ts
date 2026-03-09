@@ -153,18 +153,8 @@ export interface CrawlerLogData {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * 爬虫执行结果
- */
-export interface CrawlerExecutionResult<T> {
-  success: boolean;
-  data: T[];
-  errors: string[];
-  startTime: Date;
-  endTime: Date;
-  duration: number;
-  metadata?: Record<string, unknown>;
-}
+// Note: CrawlerExecutionResult 接口已移动到 ../crawlers/GoogleSearchCrawler.ts
+// 使用时请导入: import { CrawlerExecutionResult } from "../crawlers/GoogleSearchCrawler";
 
 /**
  * 类目爬取配置

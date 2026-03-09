@@ -20,7 +20,6 @@ import {
   saveCrawledProducts,
   saveProductSocialStats,
   updateAllProductsBitmap,
-  generateTrendRanks,
   saveCrawlerLog,
 } from "./services";
 import type { CategoryData, CrawlerLogData } from "./types/crawler.types";
@@ -304,10 +303,8 @@ async function crawlFull(headless: boolean): Promise<void> {
     // 步骤4: 爬取商品社交提及
     await crawlProductMentions(headless);
 
-    // 步骤5: 生成趋势榜单
-    logger.info("生成趋势榜单...");
-    await generateTrendRanks();
-    logger.info("趋势榜单生成完成");
+    // 注意: 趋势榜单由 scheduler 定时任务生成，不在爬虫流程中处理
+    // scheduler 每小时自动根据 productSocialStats 表数据更新 trendRanks 表
 
     const endTime = new Date();
     logger.info(

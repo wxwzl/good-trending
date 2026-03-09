@@ -1,6 +1,9 @@
 /**
  * 爬虫数据处理器
- * 负责将爬取的数据保存到数据库，并更新 Bitmap 统计和趋势榜单
+ * 负责将爬取的数据保存到数据库，并更新 Bitmap 统计
+ *
+ * 注意: 趋势榜单生成已迁移到 scheduler 的 trending.processor.ts
+ * crawler 只负责数据采集，榜单由 scheduler 定时任务统一生成
  */
 
 import {
@@ -9,7 +12,6 @@ import {
   categoryHeatStats,
   productAppearanceStats,
   productSocialStats,
-  trendRanks,
   crawlerLogs,
   productCategories,
 } from "@good-trending/database";
@@ -362,73 +364,6 @@ export async function saveProductSocialStats(
 }
 
 /**
- * 生成趋势榜单
- * 基于社交提及数据计算各周期榜单
- */
-export async function generateTrendRanks(date: Date = new Date()): Promise<void> {
-  const dateStr = formatDate(date);
-
-  const periods = [
-    "TODAY",
-    "YESTERDAY",
-    "THIS_WEEK",
-    "THIS_MONTH",
-    "LAST_7_DAYS",
-    "LAST_15_DAYS",
-    "LAST_30_DAYS",
-  ] as const;
-
-  for (const period of periods) {
-    try {
-      // 获取该周期的统计数据
-      const stats = await getProductStatsByPeriod(period, dateStr);
-
-      // 计算趋势分数并排序
-      const rankedProducts = stats
-        .map((stat) => ({
-          productId: stat.productId,
-          // 趋势分数 = Reddit 提及数 + X 提及数 * 权重
-          score: stat.redditCount + stat.xCount * 0.8,
-          redditCount: stat.redditCount,
-          xCount: stat.xCount,
-        }))
-        .sort((a, b) => b.score - a.score);
-
-      // 保存榜单（前 2000 名）- 使用批量插入优化性能
-      const topProducts = rankedProducts.slice(0, 2000);
-
-      if (topProducts.length > 0) {
-        // 构建批量插入数据
-        const insertData = topProducts.map((product, index) => ({
-          id: createId(),
-          productId: product.productId,
-          periodType: period,
-          statDate: dateStr,
-          rank: index + 1,
-          score: product.score,
-          redditMentions: product.redditCount,
-          xMentions: product.xCount,
-          sourceData: {
-            calculationMethod: "reddit + x*0.8",
-          },
-        }));
-
-        // 批量插入 - 每批 500 条
-        const batchSize = 500;
-        for (let i = 0; i < insertData.length; i += batchSize) {
-          const batch = insertData.slice(i, i + batchSize);
-          await db.insert(trendRanks).values(batch);
-        }
-
-        console.info(`生成 ${period} 榜单完成，共 ${topProducts.length} 个商品`);
-      }
-    } catch (error) {
-      console.error(`生成榜单失败 [${period}]:`, error);
-    }
-  }
-}
-
-/**
  * 保存爬虫日志
  */
 export async function saveCrawlerLog(log: CrawlerLogData): Promise<void> {
@@ -518,87 +453,4 @@ async function checkProductAppearedToday(productId: string, today: string): Prom
 
   // 如果有类目今天被爬取且爬取到了商品，则认为该商品今天出现
   return (result[0]?.totalCrawled ?? 0) > 0;
-}
-
-/**
- * 获取指定周期的商品统计数据
- * 使用类型安全的字段选择，避免 SQL 注入
- */
-async function getProductStatsByPeriod(
-  period: string,
-  dateStr: string
-): Promise<Array<{ productId: string; redditCount: number; xCount: number }>> {
-  // 使用 Drizzle ORM 的类型安全查询，查询所有可能的字段
-  const result = await db
-    .select({
-      productId: productSocialStats.productId,
-      todayRedditCount: productSocialStats.todayRedditCount,
-      todayXCount: productSocialStats.todayXCount,
-      yesterdayRedditCount: productSocialStats.yesterdayRedditCount,
-      yesterdayXCount: productSocialStats.yesterdayXCount,
-      thisWeekRedditCount: productSocialStats.thisWeekRedditCount,
-      thisWeekXCount: productSocialStats.thisWeekXCount,
-      thisMonthRedditCount: productSocialStats.thisMonthRedditCount,
-      thisMonthXCount: productSocialStats.thisMonthXCount,
-      last7DaysRedditCount: productSocialStats.last7DaysRedditCount,
-      last7DaysXCount: productSocialStats.last7DaysXCount,
-      last15DaysRedditCount: productSocialStats.last15DaysRedditCount,
-      last15DaysXCount: productSocialStats.last15DaysXCount,
-      last30DaysRedditCount: productSocialStats.last30DaysRedditCount,
-      last30DaysXCount: productSocialStats.last30DaysXCount,
-      last60DaysRedditCount: productSocialStats.last60DaysRedditCount,
-      last60DaysXCount: productSocialStats.last60DaysXCount,
-    })
-    .from(productSocialStats)
-    .where(eq(productSocialStats.statDate, dateStr));
-
-  // 根据周期选择对应的字段值（类型安全的 switch）
-  return result.map((row) => {
-    let redditCount = 0;
-    let xCount = 0;
-
-    switch (period) {
-      case "TODAY":
-        redditCount = row.todayRedditCount;
-        xCount = row.todayXCount;
-        break;
-      case "YESTERDAY":
-        redditCount = row.yesterdayRedditCount;
-        xCount = row.yesterdayXCount;
-        break;
-      case "THIS_WEEK":
-        redditCount = row.thisWeekRedditCount;
-        xCount = row.thisWeekXCount;
-        break;
-      case "THIS_MONTH":
-        redditCount = row.thisMonthRedditCount;
-        xCount = row.thisMonthXCount;
-        break;
-      case "LAST_7_DAYS":
-        redditCount = row.last7DaysRedditCount;
-        xCount = row.last7DaysXCount;
-        break;
-      case "LAST_15_DAYS":
-        redditCount = row.last15DaysRedditCount;
-        xCount = row.last15DaysXCount;
-        break;
-      case "LAST_30_DAYS":
-        redditCount = row.last30DaysRedditCount;
-        xCount = row.last30DaysXCount;
-        break;
-      case "LAST_60_DAYS":
-        redditCount = row.last60DaysRedditCount;
-        xCount = row.last60DaysXCount;
-        break;
-      default:
-        redditCount = row.todayRedditCount;
-        xCount = row.todayXCount;
-    }
-
-    return {
-      productId: row.productId,
-      redditCount,
-      xCount,
-    };
-  });
 }

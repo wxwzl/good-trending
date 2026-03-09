@@ -1,6 +1,6 @@
 {
   "siteName": "Good Trending",
-  "siteDescription": "Discover trending products from X and Amazon",
+  "siteDescription": "Discover trending products from Reddit and Amazon",
   "navigation": {
     "home": "Home",
     "trending": "Trending",
@@ -34,15 +34,15 @@
   },
   "home": {
     "title": "Discover What's Trending",
-    "subtitle": "Track the hottest products from X Platform and Amazon daily",
+    "subtitle": "Track the hottest products from Reddit and Amazon daily",
     "viewTrending": "View Trending",
     "browseTopics": "Browse Topics",
     "topProducts": "Top products right now",
     "browseByCategory": "Browse by category",
     "features": {
       "xPlatform": {
-        "title": "X Platform",
-        "description": "Track trending products discussed on X Platform in real-time"
+        "title": "Reddit",
+        "description": "Track trending products discussed on Reddit in real-time"
       },
       "amazon": {
         "title": "Amazon",
@@ -57,13 +57,13 @@
   "metadata": {
     "home": {
       "title": "Discover What's Trending",
-      "description": "Track the hottest products from X Platform and Amazon daily",
-      "keywords": "trending,hot,popular,X Platform,Amazon,discover"
+      "description": "Track the hottest products from Reddit and Amazon daily",
+      "keywords": "trending,hot,popular,Reddit,Amazon,discover"
     },
     "trending": {
       "title": "Trending Products",
-      "description": "Discover the hottest trending products from X Platform and Amazon today",
-      "keywords": "trending,hot,popular,X Platform,Amazon"
+      "description": "Discover the hottest trending products from Reddit and Amazon today",
+      "keywords": "trending,hot,popular,Reddit,Amazon"
     },
     "topics": {
       "title": "Browse Topics",
@@ -85,8 +85,8 @@
     "defaultTitle": "Good Trending - Discover What's Trending",
     "titleTemplate": "%s | Good Trending",
     "siteName": "Good Trending",
-    "siteDescription": "Track the hottest products from X Platform and Amazon daily",
-    "defaultKeywords": "trending,products,amazon,twitter,x platform,deals",
+    "siteDescription": "Track the hottest products from Reddit and Amazon daily",
+    "defaultKeywords": "trending,products,amazon,reddit,deals",
     "ogImageAlt": "Good Trending - Discover What's Trending",
     "locale": "en_US",
     "alternateLocale": "zh_CN",
@@ -101,7 +101,7 @@
     "score": "Trending Score",
     "source": {
       "title": "Source",
-      "x_platform": "X Platform",
+      "x_platform": "Reddit",
       "amazon": "Amazon"
     },
     "filters": {
@@ -127,7 +127,7 @@
     "notFound": "Product Not Found",
     "description": "Description",
     "sourceLabels": {
-      "x_platform": "X Platform",
+      "x_platform": "Reddit",
       "amazon": "Amazon"
     }
   },
@@ -158,7 +158,7 @@
     "features": {
       "realTimeDiscovery": {
         "title": "Real-time Discovery",
-        "description": "Track trending products from X Platform and Amazon in real-time"
+        "description": "Track trending products from Reddit and Amazon in real-time"
       },
       "smartRanking": {
         "title": "Smart Ranking",

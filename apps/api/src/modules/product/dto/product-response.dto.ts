@@ -60,17 +60,17 @@ export class ProductResponseDto implements ProductResponse {
   sourceUrl: string;
 
   @ApiProperty({
-    description: '来源 ID',
-    example: '1234567890',
+    description: '亚马逊商品 ID (ASIN)',
+    example: 'B0BDHWDR12',
   })
-  sourceId: string;
+  amazonId: string;
 
   @ApiProperty({
-    description: '数据来源类型',
+    description: '数据来源平台（从哪里发现的）',
     enum: SourceType,
     example: SourceType.X_PLATFORM,
   })
-  sourceType: SourceType;
+  discoveredFrom: SourceType;
 
   @ApiProperty({
     description: '创建时间',

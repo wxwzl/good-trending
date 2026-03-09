@@ -1,17 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import {
-  trends,
+  trendRanks,
   products,
-  topics,
-  productTopics,
+  categories,
+  productCategories,
 } from '@good-trending/database';
 import { eq, desc, and, gte, lte, count, inArray, sql } from 'drizzle-orm';
 import {
   GetTrendingDto,
   PaginatedTrendingResponseDto,
 } from './dto/trending.dto';
-import { Period } from '@good-trending/dto';
 import { CacheService, CacheKeys, CacheTTLConfig } from '../../common/cache';
 
 /**

@@ -8,7 +8,7 @@ import {
   createProduct,
   type SourceType as DbSourceType,
 } from '@good-trending/database';
-import { products, productTopics, productTags } from '@good-trending/database';
+import { products, productCategories } from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { SourceType } from './dto/get-products.dto';

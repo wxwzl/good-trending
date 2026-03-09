@@ -4,19 +4,15 @@ import {
   IsInt,
   Min,
   Max,
-  IsEnum,
+  IsString,
   IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
-  Period,
   type GetTrendingRequest,
   type TrendingItem,
   type PaginatedTrendingResponse,
 } from '@good-trending/dto';
-
-// 重新导出 Period，以便其他模块可以继续从当前文件导入
-export { Period } from '@good-trending/dto';
 
 /**
  * 获取趋势数据 DTO
@@ -48,20 +44,19 @@ export class GetTrendingDto implements GetTrendingRequest {
   limit?: number = 20;
 
   @ApiPropertyOptional({
-    description: '时间范围',
-    enum: Period,
-    default: Period.DAILY,
+    description: '时间范围: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
+    example: 'TODAY',
   })
   @IsOptional()
-  @IsEnum(Period)
-  period?: Period = Period.DAILY;
+  @IsString()
+  period?: string = 'TODAY';
 
   @ApiPropertyOptional({
     description: '分类 ID 筛选',
     example: 'clh1234567890abcdef',
   })
   @IsOptional()
-  topicId?: string;
+  categoryId?: string;
 
   @ApiPropertyOptional({
     description: '开始日期',
@@ -90,12 +85,6 @@ export class TrendingItemDto implements TrendingItem {
     example: 'clh1234567890abcdef',
   })
   id: string;
-
-  @ApiProperty({
-    description: '排名',
-    example: 1,
-  })
-  rank: number;
 
   @ApiProperty({
     description: '商品 ID',
@@ -128,34 +117,40 @@ export class TrendingItemDto implements TrendingItem {
   productPrice: string | null;
 
   @ApiProperty({
+    description: '榜单类型: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS',
+    example: 'TODAY',
+  })
+  periodType: string;
+
+  @ApiProperty({
+    description: '统计日期',
+    example: '2026-03-05',
+  })
+  statDate: string;
+
+  @ApiProperty({
+    description: '排名',
+    example: 1,
+  })
+  rank: number;
+
+  @ApiProperty({
     description: '趋势分数',
     example: 95.5,
   })
   score: number;
 
   @ApiProperty({
-    description: '提及次数',
+    description: 'Reddit 提及数',
     example: 1500,
   })
-  mentions: number;
+  redditMentions: number;
 
   @ApiProperty({
-    description: '浏览次数',
-    example: 50000,
-  })
-  views: number;
-
-  @ApiProperty({
-    description: '点赞数',
+    description: 'X 平台提及数',
     example: 2500,
   })
-  likes: number;
-
-  @ApiProperty({
-    description: '日期',
-    example: '2026-03-05',
-  })
-  date: string;
+  xMentions: number;
 }
 
 /**

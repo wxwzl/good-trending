@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { db } from '@good-trending/database';
-import { products, productTopics } from '@good-trending/database';
+import { products, productCategories } from '@good-trending/database';
 import { eq, ilike, or, and, desc, count, inArray } from 'drizzle-orm';
 import {
   SearchQueryDto,
@@ -22,7 +22,7 @@ export class SearchService {
    * 搜索商品
    */
   async search(query: SearchQueryDto): Promise<SearchResponseDto> {
-    const { q, page = 1, limit = 10, sourceType, topicId } = query;
+    const { q, page = 1, limit = 10, discoveredFrom, categoryId } = query;
 
     // Validate search query
     if (!q || q.trim().length === 0) {
@@ -61,21 +61,21 @@ export class SearchService {
       ),
     ];
 
-    if (sourceType) {
+    if (discoveredFrom) {
       searchConditions.push(
         eq(
-          products.sourceType,
-          sourceType as (typeof SourceType)[keyof typeof SourceType],
+          products.discoveredFrom,
+          discoveredFrom as (typeof SourceType)[keyof typeof SourceType],
         ),
       );
     }
 
     // 如果指定了分类，筛选该分类下的商品
-    if (topicId) {
+    if (categoryId) {
       const topicProducts = await db
-        .select({ productId: productTopics.productId })
-        .from(productTopics)
-        .where(eq(productTopics.topicId, topicId));
+        .select({ productId: productCategories.productId })
+        .from(productCategories)
+        .where(eq(productCategories.categoryId, categoryId));
 
       const productIds = topicProducts.map((tp) => tp.productId);
       if (productIds.length === 0) {
@@ -104,7 +104,7 @@ export class SearchService {
         image: products.image,
         price: products.price,
         currency: products.currency,
-        sourceType: products.sourceType,
+        discoveredFrom: products.discoveredFrom,
       })
       .from(products)
       .where(and(...searchConditions))
@@ -135,8 +135,8 @@ export class SearchService {
         image: item.image ?? undefined,
         price: item.price ?? undefined,
         currency: item.currency ?? undefined,
-        sourceType:
-          item.sourceType as (typeof SourceType)[keyof typeof SourceType],
+        discoveredFrom:
+          item.discoveredFrom as (typeof SourceType)[keyof typeof SourceType],
         relevanceScore,
       };
     });

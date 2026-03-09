@@ -58,12 +58,12 @@ export class SearchQueryDto implements SearchProductsRequest {
   limit?: number = 10;
 
   @ApiPropertyOptional({
-    description: '数据来源筛选',
+    description: '数据来源平台筛选',
     enum: SourceType,
   })
   @IsOptional()
   @IsEnum(SourceType)
-  sourceType?: SourceType;
+  discoveredFrom?: SourceType;
 
   @ApiPropertyOptional({
     description: '分类 ID 筛选',
@@ -71,7 +71,7 @@ export class SearchQueryDto implements SearchProductsRequest {
   })
   @IsOptional()
   @IsString()
-  topicId?: string;
+  categoryId?: string;
 }
 
 /**
@@ -122,10 +122,10 @@ export class SearchResultItemDto implements SearchResultItem {
   currency?: string;
 
   @ApiProperty({
-    description: '来源类型',
+    description: '数据来源平台',
     enum: SourceType,
   })
-  sourceType: SourceType;
+  discoveredFrom: SourceType;
 
   @ApiProperty({
     description: '相关度分数',

@@ -51,13 +51,13 @@ export class GetProductsDto implements GetProductsRequest {
   limit?: number = 10;
 
   @ApiPropertyOptional({
-    description: '数据来源类型筛选',
+    description: '数据来源平台筛选',
     enum: SourceType,
     example: SourceType.X_PLATFORM,
   })
   @IsOptional()
   @IsEnum(SourceType)
-  sourceType?: SourceType;
+  discoveredFrom?: SourceType;
 
   @ApiPropertyOptional({
     description: '关键词搜索',

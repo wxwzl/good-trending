@@ -51,7 +51,7 @@ export class ProductService {
     const {
       page = 1,
       limit = 10,
-      sourceType,
+      discoveredFrom,
       keyword,
       sortBy = SortField.CREATED_AT,
       order = SortOrder.DESC,
@@ -62,7 +62,7 @@ export class ProductService {
     const safeLimit = Math.min(Math.max(1, limit), 100);
 
     // 构建缓存键
-    const filters = JSON.stringify({ sourceType, keyword, sortBy, order });
+    const filters = JSON.stringify({ discoveredFrom, keyword, sortBy, order });
     const cacheKey = CacheKeys.PRODUCT_LIST(safePage, safeLimit, filters);
 
     // 尝试从缓存获取
@@ -74,7 +74,7 @@ export class ProductService {
     }
 
     this.logger.debug(
-      `Fetching products: page=${safePage}, limit=${safeLimit}, sourceType=${sourceType}`,
+      `Fetching products: page=${safePage}, limit=${safeLimit}, discoveredFrom=${discoveredFrom}`,
     );
 
     const result = await this.productRepository.findMany({
@@ -201,8 +201,8 @@ export class ProductService {
       price: dto.price,
       currency: dto.currency,
       sourceUrl: dto.sourceUrl,
-      sourceId: dto.sourceId,
-      sourceType: dto.sourceType,
+      amazonId: dto.amazonId,
+      discoveredFrom: dto.discoveredFrom,
     });
 
     // 清除商品列表缓存

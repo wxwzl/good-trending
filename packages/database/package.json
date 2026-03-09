@@ -27,6 +27,8 @@
     "db:migrate:dev": "cross-env APP_ENV=development node scripts/migrate.cjs",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/seed.ts",
+    "db:reset": "tsx src/scripts/reset-database.ts",
+    "db:cleanup": "tsx src/scripts/cleanup-data.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "lint:staged": "eslint --fix",

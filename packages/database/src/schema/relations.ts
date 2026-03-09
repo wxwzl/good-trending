@@ -1,65 +1,83 @@
 import { relations } from "drizzle-orm";
 import {
   products,
-  productHistories,
-  topics,
-  productTopics,
-  tags,
-  productTags,
-  trends,
+  categories,
+  productCategories,
+  categoryHeatStats,
+  productAppearanceStats,
+  productSocialStats,
+  trendRanks,
+  crawlerLogs,
 } from "./tables";
 
-// 商品关联关系
-export const productsRelations = relations(products, ({ many }) => ({
-  topics: many(productTopics),
-  tags: many(productTags),
-  trends: many(trends),
-  histories: many(productHistories),
+// ==================== 类目关系 ====================
+
+export const categoriesRelations = relations(categories, ({ many }) =>> ({
+  heatStats: many(categoryHeatStats),
+  productCategories: many(productCategories),
+  crawlerLogs: many(crawlerLogs),
 }));
 
-export const productHistoriesRelations = relations(productHistories, ({ one }) => ({
+export const categoryHeatStatsRelations = relations(categoryHeatStats, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryHeatStats.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+// ==================== 商品关系 ====================
+
+export const productsRelations = relations(products, ({ many, one }) => ({
+  productCategories: many(productCategories),
+  appearanceStats: one(productAppearanceStats, {
+    fields: [products.id],
+    references: [productAppearanceStats.productId],
+  }),
+  socialStats: many(productSocialStats),
+  trendRanks: many(trendRanks),
+}));
+
+export const productCategoriesRelations = relations(productCategories, ({ one }) => ({
   product: one(products, {
-    fields: [productHistories.productId],
+    fields: [productCategories.productId],
+    references: [products.id],
+  }),
+  category: one(categories, {
+    fields: [productCategories.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+// ==================== 商品统计关系 ====================
+
+export const productAppearanceStatsRelations = relations(productAppearanceStats, ({ one }) => ({
+  product: one(products, {
+    fields: [productAppearanceStats.productId],
     references: [products.id],
   }),
 }));
 
-// 分类关联关系
-export const topicsRelations = relations(topics, ({ many }) => ({
-  products: many(productTopics),
-}));
-
-export const productTopicsRelations = relations(productTopics, ({ one }) => ({
+export const productSocialStatsRelations = relations(productSocialStats, ({ one }) => ({
   product: one(products, {
-    fields: [productTopics.productId],
+    fields: [productSocialStats.productId],
     references: [products.id],
   }),
-  topic: one(topics, {
-    fields: [productTopics.topicId],
-    references: [topics.id],
-  }),
 }));
 
-// 标签关联关系
-export const tagsRelations = relations(tags, ({ many }) => ({
-  products: many(productTags),
-}));
+// ==================== 趋势榜单关系 ====================
 
-export const productTagsRelations = relations(productTags, ({ one }) => ({
+export const trendRanksRelations = relations(trendRanks, ({ one }) => ({
   product: one(products, {
-    fields: [productTags.productId],
+    fields: [trendRanks.productId],
     references: [products.id],
   }),
-  tag: one(tags, {
-    fields: [productTags.tagId],
-    references: [tags.id],
-  }),
 }));
 
-// 趋势关联关系
-export const trendsRelations = relations(trends, ({ one }) => ({
-  product: one(products, {
-    fields: [trends.productId],
-    references: [products.id],
+// ==================== 爬虫日志关系 ====================
+
+export const crawlerLogsRelations = relations(crawlerLogs, ({ one }) => ({
+  category: one(categories, {
+    fields: [crawlerLogs.categoryId],
+    references: [categories.id],
   }),
 }));

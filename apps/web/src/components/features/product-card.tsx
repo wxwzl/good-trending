@@ -23,7 +23,7 @@ interface ProductCardProps {
 }
 
 const sourceLabels = {
-  x_platform: "X",
+  x_platform: "reddit",
   amazon: "Amazon",
 };
 

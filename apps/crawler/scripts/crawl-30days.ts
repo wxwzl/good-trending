@@ -88,21 +88,17 @@ async function main() {
     logger.info(`📅 模拟 ${dateStr} 的定时任务`);
     logger.info("=".repeat(60));
 
-    // ========== 步骤1: 爬取昨天类目热度 ==========
-    logger.info(`\n📊 步骤1: 爬取昨天类目热度...`);
-    await crawlYesterdayCategoryHeat(currentDate, headless);
+    // ========== 步骤1: 爬取昨天类目热度和商品（合并处理） ==========
+    logger.info(`\n📊 步骤1: 爬取昨天类目热度和商品...`);
+    await crawlYesterdayData(currentDate, headless);
 
-    // ========== 步骤2: 爬取昨天商品 ==========
-    logger.info(`\n🛍️ 步骤2: 爬取昨天商品...`);
-    await crawlYesterdayProducts(currentDate, headless);
-
-    // ========== 步骤3: 更新 Bitmap 统计 ==========
-    logger.info(`\n📈 步骤3: 更新 Bitmap 统计...`);
+    // ========== 步骤2: 更新 Bitmap 统计 ==========
+    logger.info(`\n📈 步骤2: 更新 Bitmap 统计...`);
     const bitmapUpdated = await updateAllProductsBitmap(currentDate);
     logger.info(`   ✅ Bitmap 更新完成: ${bitmapUpdated} 个商品`);
 
-    // ========== 步骤4: 爬取社交提及（限制数量） ==========
-    logger.info(`\n💬 步骤4: 爬取商品社交提及...`);
+    // ========== 步骤3: 爬取社交提及（限制数量） ==========
+    logger.info(`\n💬 步骤3: 爬取商品社交提及...`);
     await crawlProductMentions(currentDate, headless, 30);
 
     // 注意: 趋势榜单由 scheduler 定时任务生成，不在爬虫流程中处理
@@ -112,14 +108,19 @@ async function main() {
   }
 
   /**
-   * 爬取昨天类目热度
+   * 爬取昨天数据（类目热度 + 商品发现，合并处理）
+   * 访问一个类目搜索页时，同时记录热度并提取商品，避免重复遍历
    */
-  async function crawlYesterdayCategoryHeat(currentDate, headless) {
+  async function crawlYesterdayData(currentDate, headless) {
     const yesterday = new Date(currentDate);
     yesterday.setDate(yesterday.getDate() - 1);
 
     const startTime = new Date();
-    const log = {
+    const yesterdayStr = formatDate(yesterday);
+    const todayStr = formatDate(currentDate);
+
+    // 类目热度统计日志
+    const heatLog = {
       taskType: "CATEGORY_HEAT",
       sourceType: "REDDIT",
       status: "RUNNING",
@@ -128,50 +129,8 @@ async function main() {
       itemsSaved: 0,
     };
 
-    let crawler = null;
-
-    try {
-      const categoryList = await getAllCategories();
-      logger.info(`   加载了 ${categoryList.length} 个类目`);
-
-      crawler = new GoogleSearchCrawler(
-        { headless, timeout: 60000 },
-        { categoryConfig: { maxResultsPerCategory: 10, searchDelayRange: [3000, 6000] } }
-      );
-
-      // 爬取昨天类目热度
-      const result = await crawler.crawlYesterdayCategoryHeat(categoryList, currentDate);
-      const savedCount = await saveCategoryHeatStats(result.data);
-
-      log.status = result.success ? "COMPLETED" : "FAILED";
-      log.itemsFound = result.data.length;
-      log.itemsSaved = savedCount;
-
-      logger.info(`   ✅ 昨天类目热度保存完成: ${savedCount} 条`);
-    } catch (error) {
-      log.status = "FAILED";
-      log.errors = [{ message: error.message || String(error) }];
-      logger.error("   ❌ 昨天类目热度爬取失败:", error);
-    } finally {
-      if (crawler) {
-        await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
-      }
-      const endTime = new Date();
-      log.endTime = endTime;
-      log.duration = endTime.getTime() - startTime.getTime();
-      await saveCrawlerLog(log);
-    }
-  }
-
-  /**
-   * 爬取昨天商品（逐个类目处理，边爬边保存）
-   */
-  async function crawlYesterdayProducts(currentDate, headless) {
-    const yesterday = new Date(currentDate);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const startTime = new Date();
-    const log = {
+    // 商品发现日志
+    const productLog = {
       taskType: "PRODUCT_DISCOVERY",
       sourceType: "REDDIT",
       status: "RUNNING",
@@ -181,15 +140,24 @@ async function main() {
     };
 
     let crawler = null;
-    const seenAsins = new Set<string>(); // 用于去重
-    let totalFound = 0;
-    let totalSaved = 0;
-    let totalSkipped = 0;
+    const seenAsins = new Set<string>(); // 用于商品去重
+    const heatStats = []; // 类目热度统计
+    let totalProductsFound = 0;
+    let totalProductsSaved = 0;
+    let totalProductsSkipped = 0;
     const errors: string[] = [];
 
     try {
       const categoryList = await getAllCategories();
       logger.info(`   加载了 ${categoryList.length} 个类目`);
+
+      // 测试模式：限制类目数量
+      const maxCategories = parseInt(process.env.CRAWLER_MAX_CATEGORIES || "0", 10);
+      const categoriesToProcess =
+        maxCategories > 0 ? categoryList.slice(0, maxCategories) : categoryList;
+      if (maxCategories > 0 && categoriesToProcess.length < categoryList.length) {
+        logger.info(`   测试模式：限制处理 ${categoriesToProcess.length} 个类目`);
+      }
 
       crawler = new GoogleSearchCrawler(
         { headless, timeout: 60000 },
@@ -205,38 +173,57 @@ async function main() {
       // 初始化浏览器
       await crawler.initBrowser();
 
-      // 逐个类目处理
-      for (let i = 0; i < categoryList.length; i++) {
-        const category = categoryList[i];
-        logger.info(`   [${i + 1}/${categoryList.length}] 处理类目: ${category.name}`);
+      // 逐个类目处理：同时记录热度并提取商品
+      for (let i = 0; i < categoriesToProcess.length; i++) {
+        const category = categoriesToProcess[i];
+        logger.info(`   [${i + 1}/${categoriesToProcess.length}] 处理类目: ${category.name}`);
 
         try {
-          // 搜索该类目
           const keyword = category.searchKeywords || category.name;
-          const yesterdayStr = formatDate(yesterday);
-          const todayStr = formatDate(currentDate);
 
+          // ===== 搜索 Reddit（昨天一天）=====
           const redditQuery = `site:reddit.com "${keyword}" after:${yesterdayStr} before:${todayStr}`;
-          logger.info(`   搜索: ${redditQuery}`);
+          logger.info(`   搜索 Reddit: ${redditQuery}`);
 
           const redditResult = await crawler.performGoogleSearch(redditQuery);
-          logger.info(`   找到 ${redditResult.links.length} 个搜索结果`);
+          logger.info(`   Reddit 结果: ${redditResult.links.length} 个`);
 
-          // 从 Reddit 结果中提取亚马逊商品（边爬边保存模式）
+          // 延迟后搜索 X
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // ===== 搜索 X（昨天一天）=====
+          const xQuery = `site:x.com "${keyword}" after:${yesterdayStr} before:${todayStr}`;
+          logger.info(`   搜索 X: ${xQuery}`);
+
+          const xResult = await crawler.performGoogleSearch(xQuery);
+          logger.info(`   X 结果: ${xResult.links.length} 个`);
+
+          // ===== 记录类目热度 =====
+          heatStats.push({
+            categoryId: category.id,
+            categoryName: category.name,
+            statDate: yesterday,
+            redditResultCount: 0, // 今天数据为0
+            xResultCount: 0,
+            yesterdayRedditCount: redditResult.totalResults || redditResult.links.length,
+            yesterdayXCount: xResult.totalResults || xResult.links.length,
+          });
+
+          // ===== 提取商品（边爬边保存）=====
           let categorySavedCount = 0;
           let categoryDuplicateCount = 0;
 
-          const redditProducts = await crawler.extractAmazonProductsFromLinks(
+          await crawler.extractAmazonProductsFromLinks(
             redditResult.links.slice(0, 30),
             async (product) => {
-              // 检查是否已存在（全局去重）
+              // 全局去重检查
               if (seenAsins.has(product.amazonId)) {
                 categoryDuplicateCount++;
                 return;
               }
               seenAsins.add(product.amazonId);
 
-              // 立即保存单个商品
+              // 立即保存商品
               const productWithCategory = {
                 ...product,
                 discoveredFromCategory: category.id,
@@ -246,21 +233,21 @@ async function main() {
               const saveResult = await saveCrawledProducts([productWithCategory], "REDDIT");
               if (saveResult.savedCount > 0) {
                 categorySavedCount++;
-                totalSaved++;
+                totalProductsSaved++;
               } else if (saveResult.skippedCount > 0) {
                 categoryDuplicateCount++;
-                totalSkipped++;
+                totalProductsSkipped++;
               }
             }
           );
 
+          totalProductsFound += categorySavedCount + categoryDuplicateCount;
+
           logger.info(
-            `   ✅ 类目 [${category.name}] 完成: 本类目新商品 ${categorySavedCount}, 重复/跳过 ${categoryDuplicateCount}`
+            `   ✅ 类目 [${category.name}] 完成: 热度(R:${redditResult.links.length},X:${xResult.links.length}), 新商品:${categorySavedCount}, 重复:${categoryDuplicateCount}`
           );
 
-          totalFound += redditProducts.length;
-
-          // 延迟避免被封
+          // 类目间延迟避免被封
           const delay = Math.floor(Math.random() * 5000) + 5000; // 5-10秒
           logger.info(`   ⏳ 等待 ${delay}ms 后处理下一个类目...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -271,25 +258,41 @@ async function main() {
         }
       }
 
-      log.status = errors.length === 0 ? "COMPLETED" : "FAILED";
-      log.itemsFound = totalFound;
-      log.itemsSaved = totalSaved;
+      // 保存类目热度统计
+      const heatSavedCount = await saveCategoryHeatStats(heatStats);
+      heatLog.status = "COMPLETED";
+      heatLog.itemsFound = heatStats.length;
+      heatLog.itemsSaved = heatSavedCount;
+      logger.info(`   ✅ 类目热度保存完成: ${heatSavedCount} 条`);
 
+      // 商品发现日志
+      productLog.status = errors.length === 0 ? "COMPLETED" : "FAILED";
+      productLog.itemsFound = totalProductsFound;
+      productLog.itemsSaved = totalProductsSaved;
       logger.info(
-        `   ✅ 昨天商品爬取完成: 总计新商品 ${totalSaved}, 跳过 ${totalSkipped}, 错误 ${errors.length}`
+        `   ✅ 商品爬取完成: 新商品 ${totalProductsSaved}, 跳过 ${totalProductsSkipped}, 错误 ${errors.length}`
       );
     } catch (error) {
-      log.status = "FAILED";
-      log.errors = [{ message: error.message || String(error) }];
-      logger.error("   ❌ 昨天商品爬取失败:", error);
+      heatLog.status = "FAILED";
+      productLog.status = "FAILED";
+      const errorMsg = { message: error.message || String(error) };
+      heatLog.errors = [errorMsg];
+      productLog.errors = [errorMsg];
+      logger.error("   ❌ 数据爬取失败:", error);
     } finally {
       if (crawler) {
         await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
       }
       const endTime = new Date();
-      log.endTime = endTime;
-      log.duration = endTime.getTime() - startTime.getTime();
-      await saveCrawlerLog(log);
+      const duration = endTime.getTime() - startTime.getTime();
+      heatLog.endTime = endTime;
+      heatLog.duration = duration;
+      productLog.endTime = endTime;
+      productLog.duration = duration;
+
+      // 保存爬虫日志
+      await saveCrawlerLog(heatLog);
+      await saveCrawlerLog(productLog);
     }
   }
 

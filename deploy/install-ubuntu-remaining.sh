@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Good-Trending Ubuntu 22.04 部署环境安装脚本
-# 一键安装所有必要的软件和依赖
+# Good-Trending Ubuntu 22.04 部署环境安装脚本（剩余部分）
+# 用于继续安装 PostgreSQL、Redis、Nginx 等
 #
 # 使用方法:
-# 1. chmod +x install-ubuntu.sh
-# 2. sudo ./install-ubuntu.sh
+# 1. chmod +x install-ubuntu-remaining.sh
+# 2. sudo ./install-ubuntu-remaining.sh
 #
 
 set -e  # 遇到错误立即退出
@@ -44,84 +44,35 @@ fi
 CURRENT_USER=${SUDO_USER:-$USER}
 CURRENT_USER_HOME=$(eval echo ~$CURRENT_USER)
 
-log_info "开始安装 Good-Trending 部署环境..."
+log_info "继续安装 Good-Trending 部署环境（剩余部分）..."
 log_info "当前用户: $CURRENT_USER"
-log_info "用户目录: $CURRENT_USER_HOME"
-
-# ============================================
-# 1. 系统更新
-# ============================================
-log_info "更新软件包索引..."
-apt-get update -y
-
-# ============================================
-# 2. 安装基础工具
-# ============================================
-log_info "安装基础工具..."
-apt-get install -y \
-    curl \
-    wget \
-    git \
-    vim \
-    htop \
-    tree \
-    unzip \
-    build-essential \
-    software-properties-common \
-    apt-transport-https \
-    ca-certificates \
-    gnupg \
-    lsb-release
-
-log_success "基础工具安装完成"
-
-# ============================================
-# 3. 安装 Node.js 20.x
-# ============================================
-log_info "安装 Node.js 20.x..."
-if ! command -v node &> /dev/null || [ "$(node -v | cut -d'v' -f2 | cut -d'.' -f1)" != "20" ]; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
-    log_success "Node.js $(node -v) 安装完成"
-else
-    log_warn "Node.js $(node -v) 已安装，跳过"
-fi
-
-# 配置 npm 使用国内镜像（可选）
-# npm config set registry https://registry.npmmirror.com
-
-log_success "Node.js 安装完成: $(node -v), npm: $(npm -v)"
-
-# ============================================
-# 4. 安装 PM2
-# ============================================
-log_info "安装 PM2..."
-if ! command -v pm2 &> /dev/null; then
-    npm install -g pm2
-    log_success "PM2 安装完成: $(pm2 -v)"
-else
-    log_warn "PM2 $(pm2 -v) 已安装，跳过"
-fi
-
-# ============================================
-# 5. 安装 pnpm
-# ============================================
-log_info "安装 pnpm..."
-if ! command -v pnpm &> /dev/null; then
-    npm install -g pnpm
-    log_success "pnpm 安装完成: $(pnpm -v)"
-else
-    log_warn "pnpm $(pnpm -v) 已安装，跳过"
-fi
 
 # ============================================
 # 6. 安装 PostgreSQL 16
 # ============================================
 log_info "安装 PostgreSQL 16..."
 if ! command -v psql &> /dev/null; then
-    # 添加 PostgreSQL 国内镜像源（清华）
-    sh -c 'echo "deb https://mirrors.tuna.tsinghua.edu.cn/postgresql/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-    wget --quiet -O - https://mirrors.tuna.tsinghua.edu.cn/postgresql/repos/apt/ACCC4CF8.asc | apt-key add -
+    # 添加 PostgreSQL 官方源（使用 keyring 方式，apt-key 已弃用）
+    log_info "添加 PostgreSQL 官方源..."
+
+    # 安装依赖
+    apt-get install -y postgresql-common
+
+    # 使用 PostgreSQL 官方脚本添加源（自动处理 GPG 密钥）
+    yes | /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh || true
+
+    # 如果官方脚本失败，使用备用方案
+    if [ ! -f /etc/apt/sources.list.d/pgdg.list ]; then
+        log_warn "官方脚本失败，使用备用方案..."
+
+        # 下载并保存 GPG 密钥到 keyring（现代方式）
+        wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+            gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
+
+        # 添加源，使用 signed-by 指向 keyring
+        echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    fi
+
     apt-get update
     apt-get install -y postgresql-16 postgresql-client-16 postgresql-contrib-16
 
@@ -172,7 +123,7 @@ else
 fi
 
 # ============================================
-# 9. 配置防火墙
+# 9. 配置防火墙（默认禁用）
 # ============================================
 # log_info "配置防火墙..."
 # if command -v ufw &> /dev/null; then
@@ -193,9 +144,9 @@ fi
 # fi
 
 # ============================================
-# 10. 创建部署目录（示例）
+# 10. 创建部署目录
 # ============================================
-log_info "创建示例部署目录..."
+log_info "创建部署目录..."
 DEPLOY_DIR="/opt/good-trending"
 mkdir -p $DEPLOY_DIR
 chown -R $CURRENT_USER:$CURRENT_USER $DEPLOY_DIR
@@ -255,7 +206,7 @@ EOF
 log_success "系统参数优化完成"
 
 # ============================================
-# 13. 安装完成
+# 安装完成
 # ============================================
 echo ""
 echo "=========================================="
@@ -263,10 +214,6 @@ echo "  Good-Trending 部署环境安装完成！"
 echo "=========================================="
 echo ""
 echo "已安装软件:"
-echo "  - Node.js: $(node -v)"
-echo "  - npm: $(npm -v)"
-echo "  - pnpm: $(pnpm -v)"
-echo "  - PM2: $(pm2 -v)"
 echo "  - PostgreSQL: $(psql --version | awk '{print $3}')"
 echo "  - Redis: $(redis-cli --version | awk '{print $2}')"
 echo "  - Nginx: $(nginx -v 2>&1 | awk -F'/' '{print $2}')"

@@ -19,8 +19,8 @@ export interface ProductCreateInput {
   price?: string;
   currency?: string;
   sourceUrl: string;
-  sourceId: string;
-  sourceType: string;
+  amazonId: string;
+  discoveredFrom: string;
 }
 
 export interface ProductUpdateInput {

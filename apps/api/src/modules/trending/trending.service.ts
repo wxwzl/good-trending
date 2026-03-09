@@ -37,8 +37,8 @@ export class TrendingService {
     const {
       page = 1,
       limit = 20,
-      period = Period.DAILY,
-      topicId,
+      period = 'TODAY',
+      categoryId,
       startDate,
       endDate,
     } = query;
@@ -77,20 +77,20 @@ export class TrendingService {
       productImage: string | null;
       productPrice: string | null;
       score: number;
-      mentions: number;
-      views: number;
-      likes: number;
+      redditMentions: number;
+      xMentions: number;
       rank: number;
-      date: string;
+      statDate: string;
+      periodType: string;
     }>;
     let total: number;
 
-    if (period === Period.DAILY) {
+    if (period === 'TODAY') {
       // 日趋势：直接查询当天的数据
       const result = await this.getDailyTrendingData(
         safePage,
         safeLimit,
-        topicId,
+        categoryId,
         end, // 使用 end 日期（今天）
       );
       trendData = result.items;
@@ -100,7 +100,7 @@ export class TrendingService {
       const result = await this.getAggregatedTrendingData(
         safePage,
         safeLimit,
-        topicId,
+        categoryId,
         start,
         end,
         period,
@@ -111,7 +111,7 @@ export class TrendingService {
 
     const response: PaginatedTrendingResponseDto = {
       items: trendData.map((item, index) => ({
-        id: `${item.productId}-${item.date}`,
+        id: `${item.productId}-${item.statDate}`,
         rank: item.rank ?? (safePage - 1) * safeLimit + index + 1,
         productId: item.productId,
         productSlug: item.productSlug || item.productId,
@@ -119,10 +119,10 @@ export class TrendingService {
         productImage: item.productImage ?? null,
         productPrice: item.productPrice ?? null,
         score: Number(item.score),
-        mentions: item.mentions,
-        views: item.views,
-        likes: item.likes,
-        date: item.date,
+        redditMentions: item.redditMentions,
+        xMentions: item.xMentions,
+        statDate: item.statDate,
+        periodType: item.periodType,
       })),
       total,
       page: safePage,
@@ -145,7 +145,7 @@ export class TrendingService {
   private async getDailyTrendingData(
     page: number,
     limit: number,
-    topicId: string | undefined,
+    categoryId: string | undefined,
     date: string,
   ): Promise<{
     items: Array<{
@@ -155,11 +155,11 @@ export class TrendingService {
       productImage: string | null;
       productPrice: string | null;
       score: number;
-      mentions: number;
-      views: number;
-      likes: number;
+      redditMentions: number;
+      xMentions: number;
       rank: number;
-      date: string;
+      statDate: string;
+      periodType: string;
     }>;
     total: number;
   }> {
@@ -167,21 +167,21 @@ export class TrendingService {
       | ReturnType<typeof eq>
       | ReturnType<typeof and>
       | ReturnType<typeof inArray>
-    )[] = [eq(trends.date, date)];
+    )[] = [eq(trendRanks.statDate, date), eq(trendRanks.periodType, 'TODAY')];
 
     // 如果指定了分类，添加分类筛选
-    if (topicId) {
-      const topicProducts = await db
-        .select({ productId: productTopics.productId })
-        .from(productTopics)
-        .where(eq(productTopics.topicId, topicId));
+    if (categoryId) {
+      const categoryProducts = await db
+        .select({ productId: productCategories.productId })
+        .from(productCategories)
+        .where(eq(productCategories.categoryId, categoryId));
 
-      if (topicProducts.length === 0) {
+      if (categoryProducts.length === 0) {
         return { items: [], total: 0 };
       }
 
-      const productIds = topicProducts.map((tp) => tp.productId);
-      conditions.push(inArray(trends.productId, productIds));
+      const productIds = categoryProducts.map((cp) => cp.productId);
+      conditions.push(inArray(trendRanks.productId, productIds));
     }
 
     const offset = (page - 1) * limit;
@@ -189,29 +189,29 @@ export class TrendingService {
     // 查询趋势数据
     const trendData = await db
       .select({
-        productId: trends.productId,
+        productId: trendRanks.productId,
         productSlug: products.slug,
         productName: products.name,
         productImage: products.image,
         productPrice: products.price,
-        score: trends.score,
-        mentions: trends.mentions,
-        views: trends.views,
-        likes: trends.likes,
-        rank: trends.rank,
-        date: trends.date,
+        score: trendRanks.score,
+        redditMentions: trendRanks.redditMentions,
+        xMentions: trendRanks.xMentions,
+        rank: trendRanks.rank,
+        statDate: trendRanks.statDate,
+        periodType: trendRanks.periodType,
       })
-      .from(trends)
-      .innerJoin(products, eq(trends.productId, products.id))
+      .from(trendRanks)
+      .innerJoin(products, eq(trendRanks.productId, products.id))
       .where(and(...conditions))
-      .orderBy(desc(trends.score))
+      .orderBy(desc(trendRanks.score))
       .limit(limit)
       .offset(offset);
 
     // 查询总数
     const totalResult = await db
       .select({ count: count() })
-      .from(trends)
+      .from(trendRanks)
       .where(and(...conditions));
 
     return {
@@ -227,10 +227,10 @@ export class TrendingService {
   private async getAggregatedTrendingData(
     page: number,
     limit: number,
-    topicId: string | undefined,
+    categoryId: string | undefined,
     startDate: string,
     endDate: string,
-    period: Period,
+    period: string,
   ): Promise<{
     items: Array<{
       productId: string;
@@ -239,37 +239,37 @@ export class TrendingService {
       productImage: string | null;
       productPrice: string | null;
       score: number;
-      mentions: number;
-      views: number;
-      likes: number;
+      redditMentions: number;
+      xMentions: number;
       rank: number;
-      date: string;
+      statDate: string;
+      periodType: string;
     }>;
     total: number;
   }> {
     // 如果指定了分类，先获取该分类下的商品ID
-    let topicProductIds: string[] | undefined;
-    if (topicId) {
-      const topicProducts = await db
-        .select({ productId: productTopics.productId })
-        .from(productTopics)
-        .where(eq(productTopics.topicId, topicId));
+    let categoryProductIds: string[] | undefined;
+    if (categoryId) {
+      const categoryProducts = await db
+        .select({ productId: productCategories.productId })
+        .from(productCategories)
+        .where(eq(productCategories.categoryId, categoryId));
 
-      if (topicProducts.length === 0) {
+      if (categoryProducts.length === 0) {
         return { items: [], total: 0 };
       }
 
-      topicProductIds = topicProducts.map((tp) => tp.productId);
+      categoryProductIds = categoryProducts.map((cp) => cp.productId);
     }
 
     // 构建日期范围条件
     const dateConditions = [
-      gte(trends.date, startDate),
-      lte(trends.date, endDate),
+      gte(trendRanks.statDate, startDate),
+      lte(trendRanks.statDate, endDate),
     ];
 
-    if (topicProductIds) {
-      dateConditions.push(inArray(trends.productId, topicProductIds));
+    if (categoryProductIds) {
+      dateConditions.push(inArray(trendRanks.productId, categoryProductIds));
     }
 
     // 聚合查询：计算每个商品在日期范围内的综合分数
@@ -278,7 +278,7 @@ export class TrendingService {
     // 这样可以平衡持续热门和近期爆发的商品
     const aggregatedData = await db
       .select({
-        productId: trends.productId,
+        productId: trendRanks.productId,
         productSlug: sql<string>`MAX(${products.slug})`.as('product_slug'),
         productName: sql<string>`MAX(${products.name})`.as('product_name'),
         productImage: sql<string | null>`MAX(${products.image})`.as(
@@ -288,25 +288,24 @@ export class TrendingService {
           'product_price',
         ),
         // 综合分数计算
-        avgScore: sql<number>`AVG(${trends.score})`.as('avg_score'),
-        maxScore: sql<number>`MAX(${trends.score})`.as('max_score'),
+        avgScore: sql<number>`AVG(${trendRanks.score})`.as('avg_score'),
+        maxScore: sql<number>`MAX(${trendRanks.score})`.as('max_score'),
         latestScore:
-          sql<number>`MAX(CASE WHEN ${trends.date} = ${endDate} THEN ${trends.score} ELSE 0 END)`.as(
+          sql<number>`MAX(CASE WHEN ${trendRanks.statDate} = ${endDate} THEN ${trendRanks.score} ELSE 0 END)`.as(
             'latest_score',
           ),
         // 累计指标
-        totalMentions: sql<number>`SUM(${trends.mentions})`.as(
-          'total_mentions',
+        totalRedditMentions: sql<number>`SUM(${trendRanks.redditMentions})`.as(
+          'total_reddit_mentions',
         ),
-        totalViews: sql<number>`SUM(${trends.views})`.as('total_views'),
-        totalLikes: sql<number>`SUM(${trends.likes})`.as('total_likes'),
+        totalXMentions: sql<number>`SUM(${trendRanks.xMentions})`.as('total_x_mentions'),
         // 数据天数
-        dataDays: sql<number>`COUNT(DISTINCT ${trends.date})`.as('data_days'),
+        dataDays: sql<number>`COUNT(DISTINCT ${trendRanks.statDate})`.as('data_days'),
       })
-      .from(trends)
-      .innerJoin(products, eq(trends.productId, products.id))
+      .from(trendRanks)
+      .innerJoin(products, eq(trendRanks.productId, products.id))
       .where(and(...dateConditions))
-      .groupBy(trends.productId);
+      .groupBy(trendRanks.productId);
 
     // 计算综合分数并排序
     const scoredData = aggregatedData.map((item) => {
@@ -317,7 +316,7 @@ export class TrendingService {
 
       // 根据周期调整权重
       let score: number;
-      if (period === Period.WEEKLY) {
+      if (period === 'THIS_WEEK') {
         // 周趋势：平均分40% + 最高分30% + 最新分30%
         score = avgScore * 0.4 + maxScore * 0.3 + latestScore * 0.3;
       } else {
@@ -326,7 +325,7 @@ export class TrendingService {
       }
 
       // 数据完整性惩罚：数据天数越少，分数越低
-      const expectedDays = period === Period.WEEKLY ? 7 : 30;
+      const expectedDays = period === 'THIS_WEEK' ? 7 : 30;
       const completenessPenalty = Math.min(dataDays / expectedDays, 1);
       score = score * (0.7 + 0.3 * completenessPenalty);
 
@@ -342,11 +341,11 @@ export class TrendingService {
         productImage: item.productImage,
         productPrice: item.productPrice,
         score: Math.round(score * 10) / 10, // 保留一位小数
-        mentions: Number(item.totalMentions) || 0,
-        views: Number(item.totalViews) || 0,
-        likes: Number(item.totalLikes) || 0,
+        redditMentions: Number(item.totalRedditMentions) || 0,
+        xMentions: Number(item.totalXMentions) || 0,
         rank: 0, // 稍后计算
-        date: endDate,
+        statDate: endDate,
+        periodType: period,
       };
     });
 
@@ -372,21 +371,21 @@ export class TrendingService {
    * 获取每日趋势
    */
   async getDailyTrending(query: Omit<GetTrendingDto, 'period'>) {
-    return this.getTrending({ ...query, period: Period.DAILY });
+    return this.getTrending({ ...query, period: 'TODAY' });
   }
 
   /**
    * 获取每周趋势
    */
   async getWeeklyTrending(query: Omit<GetTrendingDto, 'period'>) {
-    return this.getTrending({ ...query, period: Period.WEEKLY });
+    return this.getTrending({ ...query, period: 'THIS_WEEK' });
   }
 
   /**
    * 获取每月趋势
    */
   async getMonthlyTrending(query: Omit<GetTrendingDto, 'period'>) {
-    return this.getTrending({ ...query, period: Period.MONTHLY });
+    return this.getTrending({ ...query, period: 'THIS_MONTH' });
   }
 
   /**
@@ -394,13 +393,13 @@ export class TrendingService {
    */
   async getTrendingByTopic(topicSlug: string, query: GetTrendingDto) {
     // 查找分类
-    const topic = await db
+    const category = await db
       .select()
-      .from(topics)
-      .where(eq(topics.slug, topicSlug))
+      .from(categories)
+      .where(eq(categories.slug, topicSlug))
       .limit(1);
 
-    if (!topic[0]) {
+    if (!category[0]) {
       return {
         items: [],
         total: 0,
@@ -410,14 +409,14 @@ export class TrendingService {
       };
     }
 
-    return this.getTrending({ ...query, topicId: topic[0].id });
+    return this.getTrending({ ...query, categoryId: category[0].id });
   }
 
   /**
    * 计算日期范围
    */
   private getDateRange(
-    period: Period,
+    period: string,
     customStart?: string,
     customEnd?: string,
   ): { start: string; end: string } {
@@ -429,19 +428,35 @@ export class TrendingService {
     }
 
     switch (period) {
-      case Period.DAILY:
+      case 'TODAY':
         return { start: today, end: today };
-      case Period.WEEKLY: {
+      case 'YESTERDAY': {
+        const yesterday = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        return {
+          start: yesterday.toISOString().split('T')[0],
+          end: yesterday.toISOString().split('T')[0],
+        };
+      }
+      case 'THIS_WEEK':
+      case 'LAST_7_DAYS': {
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         return {
           start: weekAgo.toISOString().split('T')[0],
           end: today,
         };
       }
-      case Period.MONTHLY: {
+      case 'THIS_MONTH':
+      case 'LAST_30_DAYS': {
         const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         return {
           start: monthAgo.toISOString().split('T')[0],
+          end: today,
+        };
+      }
+      case 'LAST_15_DAYS': {
+        const days15Ago = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+        return {
+          start: days15Ago.toISOString().split('T')[0],
           end: today,
         };
       }

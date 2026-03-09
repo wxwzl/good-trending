@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { db } from '@good-trending/database';
-import { topics, products, productTopics } from '@good-trending/database';
+import { categories, products, productCategories } from '@good-trending/database';
 import { eq, desc, count, inArray } from 'drizzle-orm';
 import { SourceType } from '@good-trending/dto';
 import {
@@ -36,50 +36,50 @@ export class TopicService {
     const offset = (safePage - 1) * safeLimit;
 
     // 查询分类列表，包含商品数量
-    const topicsData = await db
+    const categoriesData = await db
       .select({
-        id: topics.id,
-        name: topics.name,
-        slug: topics.slug,
-        description: topics.description,
-        imageUrl: topics.imageUrl,
-        createdAt: topics.createdAt,
-        updatedAt: topics.updatedAt,
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        description: categories.description,
+        imageUrl: categories.imageUrl,
+        createdAt: categories.createdAt,
+        updatedAt: categories.updatedAt,
       })
-      .from(topics)
-      .orderBy(desc(topics.createdAt))
+      .from(categories)
+      .orderBy(desc(categories.createdAt))
       .limit(safeLimit)
       .offset(offset);
 
     // 查询总数
-    const totalResult = await db.select({ count: count() }).from(topics);
+    const totalResult = await db.select({ count: count() }).from(categories);
     const total = totalResult[0]?.count ?? 0;
 
     // 批量获取所有分类的商品数量（避免 N+1 查询）
-    const topicIds = topicsData.map((topic) => topic.id);
+    const categoryIds = categoriesData.map((category) => category.id);
     const productCounts = await db
       .select({
-        topicId: productTopics.topicId,
+        categoryId: productCategories.categoryId,
         count: count(),
       })
-      .from(productTopics)
-      .where(inArray(productTopics.topicId, topicIds))
-      .groupBy(productTopics.topicId);
+      .from(productCategories)
+      .where(inArray(productCategories.categoryId, categoryIds))
+      .groupBy(productCategories.categoryId);
 
     // 将商品数量映射到分类
     const countMap = new Map(
-      productCounts.map((item) => [item.topicId, item.count]),
+      productCounts.map((item) => [item.categoryId, item.count]),
     );
 
-    const topicsWithCount = topicsData.map((topic) => ({
-      ...topic,
-      productCount: countMap.get(topic.id) ?? 0,
-      createdAt: topic.createdAt.toISOString(),
-      updatedAt: topic.updatedAt.toISOString(),
+    const categoriesWithCount = categoriesData.map((category) => ({
+      ...category,
+      productCount: countMap.get(category.id) ?? 0,
+      createdAt: category.createdAt.toISOString(),
+      updatedAt: category.updatedAt.toISOString(),
     }));
 
     return {
-      items: topicsWithCount,
+      items: categoriesWithCount,
       total,
       page: safePage,
       limit: safeLimit,
@@ -96,27 +96,27 @@ export class TopicService {
       throw new NotFoundException('Invalid topic slug');
     }
 
-    const topic = await db
+    const category = await db
       .select()
-      .from(topics)
-      .where(eq(topics.slug, slug.trim()))
+      .from(categories)
+      .where(eq(categories.slug, slug.trim()))
       .limit(1);
 
-    if (!topic[0]) {
+    if (!category[0]) {
       throw new NotFoundException(`Topic with slug ${slug} not found`);
     }
 
     // 获取商品数量
     const productCountResult = await db
       .select({ count: count() })
-      .from(productTopics)
-      .where(eq(productTopics.topicId, topic[0].id));
+      .from(productCategories)
+      .where(eq(productCategories.categoryId, category[0].id));
 
     return {
-      ...topic[0],
+      ...category[0],
       productCount: productCountResult[0]?.count ?? 0,
-      createdAt: topic[0].createdAt.toISOString(),
-      updatedAt: topic[0].updatedAt.toISOString(),
+      createdAt: category[0].createdAt.toISOString(),
+      updatedAt: category[0].updatedAt.toISOString(),
     };
   }
 
@@ -133,13 +133,13 @@ export class TopicService {
     const offset = (safePage - 1) * safeLimit;
 
     // 查找分类
-    const topic = await db
+    const category = await db
       .select()
-      .from(topics)
-      .where(eq(topics.slug, slug))
+      .from(categories)
+      .where(eq(categories.slug, slug))
       .limit(1);
 
-    if (!topic[0]) {
+    if (!category[0]) {
       throw new NotFoundException(`Topic with slug ${slug} not found`);
     }
 
@@ -154,14 +154,14 @@ export class TopicService {
         price: products.price,
         currency: products.currency,
         sourceUrl: products.sourceUrl,
-        sourceId: products.sourceId,
-        sourceType: products.sourceType,
+        amazonId: products.amazonId,
+        discoveredFrom: products.discoveredFrom,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
       })
       .from(products)
-      .innerJoin(productTopics, eq(products.id, productTopics.productId))
-      .where(eq(productTopics.topicId, topic[0].id))
+      .innerJoin(productCategories, eq(products.id, productCategories.productId))
+      .where(eq(productCategories.categoryId, category[0].id))
       .orderBy(desc(products.createdAt))
       .limit(safeLimit)
       .offset(offset);
@@ -169,15 +169,15 @@ export class TopicService {
     // 查询总数
     const totalResult = await db
       .select({ count: count() })
-      .from(productTopics)
-      .where(eq(productTopics.topicId, topic[0].id));
+      .from(productCategories)
+      .where(eq(productCategories.categoryId, category[0].id));
 
     const total = totalResult[0]?.count ?? 0;
 
     // 转换日期为字符串
     const items = productsData.map((product) => ({
       ...product,
-      sourceType: product.sourceType as SourceType,
+      discoveredFrom: product.discoveredFrom as SourceType,
       createdAt:
         product.createdAt instanceof Date
           ? product.createdAt.toISOString()
@@ -204,8 +204,8 @@ export class TopicService {
     // 检查 slug 是否已存在
     const existing = await db
       .select()
-      .from(topics)
-      .where(eq(topics.slug, dto.slug))
+      .from(categories)
+      .where(eq(categories.slug, dto.slug))
       .limit(1);
 
     if (existing[0]) {
@@ -215,8 +215,8 @@ export class TopicService {
     // 检查名称是否已存在
     const existingName = await db
       .select()
-      .from(topics)
-      .where(eq(topics.name, dto.name))
+      .from(categories)
+      .where(eq(categories.name, dto.name))
       .limit(1);
 
     if (existingName[0]) {
@@ -226,7 +226,7 @@ export class TopicService {
     this.logger.log(`Creating topic: ${dto.name}`);
 
     const result = await db
-      .insert(topics)
+      .insert(categories)
       .values({
         name: dto.name,
         slug: dto.slug,
@@ -251,13 +251,13 @@ export class TopicService {
     dto: UpdateTopicDto,
   ): Promise<TopicResponseDto> {
     // 查找分类
-    const topic = await db
+    const category = await db
       .select()
-      .from(topics)
-      .where(eq(topics.slug, slug))
+      .from(categories)
+      .where(eq(categories.slug, slug))
       .limit(1);
 
-    if (!topic[0]) {
+    if (!category[0]) {
       throw new NotFoundException(`Topic with slug ${slug} not found`);
     }
 
@@ -271,16 +271,16 @@ export class TopicService {
     if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
 
     const result = await db
-      .update(topics)
+      .update(categories)
       .set(updateData)
-      .where(eq(topics.id, topic[0].id))
+      .where(eq(categories.id, category[0].id))
       .returning();
 
     // 获取商品数量
     const productCountResult = await db
       .select({ count: count() })
-      .from(productTopics)
-      .where(eq(productTopics.topicId, result[0].id));
+      .from(productCategories)
+      .where(eq(productCategories.categoryId, result[0].id));
 
     return {
       ...result[0],

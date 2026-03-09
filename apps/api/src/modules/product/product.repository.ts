@@ -24,13 +24,13 @@ import {
  *
  * 性能优化说明：
  * 1. 索引使用：
- *    - product_source_idx: 用于 sourceType + sourceId 查询
- *    - product_created_at_idx: 用于时间排序
+ *    - product_slug_idx: 用于 slug 查询
+ *    - product_first_seen_idx: 用于时间排序
  *    - product_source_url_unique: 用于来源 URL 唯一性检查
  *
  * 2. N+1 查询预防：
  *    - findMany 方法使用 Promise.all 并行执行 count 查询
- *    - getProductTopics/getProductTags 应在需要时批量查询
+ *    - getProductCategories 应在需要时批量查询
  *
  * 3. 分页优化：
  *    - 使用 limit + offset 实现分页
@@ -57,7 +57,7 @@ export class ProductRepository {
     if (sourceType) {
       conditions.push(
         eq(
-          products.sourceType,
+          products.discoveredFrom,
           sourceType as (typeof SourceType)[keyof typeof SourceType],
         ),
       );
@@ -146,7 +146,7 @@ export class ProductRepository {
   /**
    * 创建商品
    * 使用共享的数据库模块
-   * 如果 sourceId 已存在，抛出 ConflictException
+   * 如果 amazonId 已存在，抛出 ConflictException
    */
   async create(input: ProductCreateInput) {
     const product = await createProduct({
@@ -157,13 +157,13 @@ export class ProductRepository {
       price: input.price ? parseFloat(input.price) : undefined,
       currency: input.currency,
       sourceUrl: input.sourceUrl,
-      sourceId: input.sourceId,
-      sourceType: input.sourceType as DbSourceType,
+      sourceId: input.amazonId,
+      sourceType: input.discoveredFrom as DbSourceType,
     });
 
     if (product === null) {
       throw new ConflictException(
-        `Product with sourceType ${input.sourceType} and sourceId ${input.sourceId} already exists`,
+        `Product with discoveredFrom ${input.discoveredFrom} and amazonId ${input.amazonId} already exists`,
       );
     }
 
@@ -230,20 +230,10 @@ export class ProductRepository {
   /**
    * 获取商品的分类
    */
-  async getProductTopics(productId: string) {
+  async getProductCategories(productId: string) {
     return db
-      .select({ topicId: productTopics.topicId })
-      .from(productTopics)
-      .where(eq(productTopics.productId, productId));
-  }
-
-  /**
-   * 获取商品的标签
-   */
-  async getProductTags(productId: string) {
-    return db
-      .select({ tagId: productTags.tagId })
-      .from(productTags)
-      .where(eq(productTags.productId, productId));
+      .select({ categoryId: productCategories.categoryId })
+      .from(productCategories)
+      .where(eq(productCategories.productId, productId));
   }
 }

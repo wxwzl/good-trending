@@ -71,11 +71,11 @@ async function verifyDatabaseConnection(): Promise<boolean> {
   try {
     logger.info("验证数据库连接...");
 
-    // 尝试执行简单查询
-    const result = await db.execute(sql`SELECT 1 as health_check`);
+    // 尝试查询类目表，验证数据库连接
+    const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(categories);
 
     if (result && result.length > 0) {
-      logger.info("✅ 数据库连接成功");
+      logger.info(`✅ 数据库连接成功 (类目表有数据)`);
       return true;
     }
 

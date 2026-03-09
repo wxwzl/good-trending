@@ -6,7 +6,7 @@
  * pnpm db:seed:categories
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { join } from "path";
 import { readFileSync } from "fs";
 import { drizzle } from "drizzle-orm/node-postgres";

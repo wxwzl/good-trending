@@ -3,7 +3,7 @@
  * 查询数据库中的商品记录
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { products, categories, productCategories } from "../src/schema";

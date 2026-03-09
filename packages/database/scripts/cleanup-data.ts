@@ -14,7 +14,7 @@
  * pnpm db:cleanup
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { lt, and, eq, sql } from "drizzle-orm";

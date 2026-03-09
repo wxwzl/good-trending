@@ -16,6 +16,7 @@ export default tseslint.config(
       "node_modules/**",
       "coverage/**",
       "migrations/**",
+      "scripts/**",
       "*.config.ts",
       "*.config.js",
       "*.config.mjs",

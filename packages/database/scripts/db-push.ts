@@ -3,7 +3,7 @@
  * 先加载环境变量，再执行 drizzle-kit push
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { execSync } from "child_process";
 import path from "path";
 

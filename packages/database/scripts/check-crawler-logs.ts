@@ -3,7 +3,7 @@
  * 查询数据库中保存的爬虫日志
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { crawlerLogs } from "../src/schema";

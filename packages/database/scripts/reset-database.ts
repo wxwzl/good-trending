@@ -6,7 +6,7 @@
  * pnpm db:reset
  */
 
-import "../src/loadEnv";
+import "./loadEnv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../src/schema";

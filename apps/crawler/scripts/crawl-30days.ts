@@ -150,14 +150,14 @@ async function main() {
     try {
       const categoryList = await getAllCategories();
       logger.info(`   加载了 ${categoryList.length} 个类目`);
-
+      const categoriesToProcess = categoryList; // 目前不限制类目数量
       // 测试模式：限制类目数量
-      const maxCategories = parseInt(process.env.CRAWLER_MAX_CATEGORIES || "0", 10);
-      const categoriesToProcess =
-        maxCategories > 0 ? categoryList.slice(0, maxCategories) : categoryList;
-      if (maxCategories > 0 && categoriesToProcess.length < categoryList.length) {
-        logger.info(`   测试模式：限制处理 ${categoriesToProcess.length} 个类目`);
-      }
+      // const maxCategories = parseInt(process.env.CRAWLER_MAX_CATEGORIES || "0", 10);
+      // const categoriesToProcess =
+      //   maxCategories > 0 ? categoryList.slice(0, maxCategories) : categoryList;
+      // if (maxCategories > 0 && categoriesToProcess.length < categoryList.length) {
+      //   logger.info(`   测试模式：限制处理 ${categoriesToProcess.length} 个类目`);
+      // }
 
       crawler = new GoogleSearchCrawler(
         { headless, timeout: 60000 },

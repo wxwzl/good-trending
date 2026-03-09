@@ -550,8 +550,13 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   private async performGoogleSearch(query: string): Promise<{ totalResults: number; links: SearchResult[]; source: "serpapi" | "browser" }> {
     this.logger.info(`执行搜索: ${query}`);
 
-    // 使用搜索服务（自动处理 SerpAPI -> 浏览器回退）
-    const result = await this.searchService.search(query);
+    // 确保浏览器已初始化
+    if (!this.page) {
+      await this.initBrowser();
+    }
+
+    // 使用搜索服务，传入当前页面的实例（复用浏览器）
+    const result = await this.searchService.search(query, this.page || undefined);
 
     if (!result.success) {
       throw new Error(`搜索失败: ${result.error}`);

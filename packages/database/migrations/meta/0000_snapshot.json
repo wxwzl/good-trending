@@ -1,5 +1,5 @@
 {
-  "id": "fbbb90b0-20c6-4de0-a3d6-161249d03901",
+  "id": "1adf6866-1d9a-4973-bb50-17b7dc3ec11f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -410,28 +410,28 @@
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "0"
         },
         "last_15_days_bitmap": {
           "name": "last_15_days_bitmap",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "0"
         },
         "last_30_days_bitmap": {
           "name": "last_30_days_bitmap",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "0"
         },
         "last_60_days_bitmap": {
           "name": "last_60_days_bitmap",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "0"
         },
         "last_update_date": {
           "name": "last_update_date",

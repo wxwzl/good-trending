@@ -86,7 +86,14 @@ log_success "依赖安装完成"
 # ============================================
 log_info "[2/5] 构建服务 (api, web, scheduler)..."
 pnpm run build:deploy
-log_success "构建完成"
+log_success "应用构建完成"
+
+# 构建 crawler 脚本
+log_info "构建 crawler 30天数据爬取脚本..."
+cd apps/crawler
+pnpm run build:script
+cd ../..
+log_success "Crawler 脚本构建完成"
 
 # ============================================
 # 3. 检查构建结果
@@ -146,29 +153,23 @@ mkdir -p deploy/migrations
 
 # 打包所有必要文件
 tar -czf $DEPLOY_PACKAGE \
-    apps/api/dist \
-    apps/api/package.json \
-    apps/web/.next \
-    apps/web/public \
-    apps/web/package.json \
-    apps/scheduler/dist \
-    apps/scheduler/package.json \
+    deploy/app/api/dist \
+    deploy/app/api/package.json \
+    deploy/app/web/.next \
+    deploy/app/web/public \
+    deploy/app/web/package.json \
+    deploy/app/scheduler/dist \
+    deploy/app/scheduler/package.json \
     deploy/.env.production \
     deploy/ecosystem.config.js \
     deploy/nginx \
+    deploy/app/crawler/run-crawl-30days.sh \
     deploy/migrations \
     deploy/scripts \
     deploy/init-database.sh \
     deploy/scripts/start-services.sh \
     deploy/install-ubuntu.sh \
     deploy/install-ubuntu-remaining.sh \
-    deploy/DATABASE-DEPLOY.md \
-    deploy/DATABASE-MAINTENANCE.md \
-    deploy/POSTGRESQL-TROUBLESHOOTING.md \
-    package.json \
-    pnpm-workspace.yaml \
-    pnpm-lock.yaml \
-    turbo.json \
     --exclude='node_modules' \
     --exclude='.git' 2>/dev/null || true
 

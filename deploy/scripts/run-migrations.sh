@@ -38,28 +38,15 @@ log_error() {
 # ============================================
 MIGRATIONS_DIR="${1:-deploy/migrations}"
 
+# 写死的数据库连接
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/good_trending"
+
 log_info "=========================================="
 log_info "数据库迁移执行脚本"
 log_info "=========================================="
 log_info "迁移目录: $MIGRATIONS_DIR"
+log_info "数据库: postgresql://postgres:***@localhost:5432/good_trending"
 log_info "=========================================="
-echo ""
-
-# ============================================
-# 检查环境变量
-# ============================================
-if [ -z "$DATABASE_URL" ]; then
-    log_error "未设置 DATABASE_URL 环境变量"
-    echo ""
-    echo "请先设置数据库连接:"
-    echo "  export DATABASE_URL=postgresql://user:password@localhost:5432/good_trending"
-    echo ""
-    exit 1
-fi
-
-# 显示数据库连接信息（隐藏密码）
-DB_DISPLAY=$(echo "$DATABASE_URL" | sed 's/:[^:@]*@/:***@/')
-log_info "数据库: $DB_DISPLAY"
 echo ""
 
 # ============================================

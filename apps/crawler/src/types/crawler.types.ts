@@ -162,19 +162,5 @@ export interface CrawlerLogData {
 // Note: CrawlerConfig 接口已移动到 ../crawlers/BaseCrawler.ts
 // 使用时请导入: import { CrawlerConfig } from "../crawlers/BaseCrawler";
 
-/**
- * 类目爬取配置
- */
-export interface CategoryCrawlConfig {
-  /** 同时处理的类目数 */
-  concurrency?: number;
-  /** 每个类目最大爬取结果数 */
-  maxResultsPerCategory?: number;
-  /** 每个类目提取的最大商品数 */
-  maxProductsPerCategory?: number;
-  /** 搜索延迟范围 (毫秒) */
-  searchDelayRange?: [number, number];
-}
-
 // Note: Bitmap 工具函数已移动到 ../utils/bitmap.ts
 // 使用时请直接导入: import { updateBitmap, countBitmap, bitmapToString } from "../utils/bitmap";

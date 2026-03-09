@@ -15,9 +15,22 @@ import {
   type CategoryHeatResult,
   type CrawledProduct,
   type SearchPlatform,
-  type CategoryCrawlConfig,
   type CategoryData,
 } from "../types/crawler.types";
+
+/**
+ * 类目爬取配置
+ */
+export interface CategoryCrawlConfig {
+  /** 同时处理的类目数 */
+  concurrency?: number;
+  /** 每个类目最大爬取结果数 */
+  maxResultsPerCategory?: number;
+  /** 每个类目提取的最大商品数 */
+  maxProductsPerCategory?: number;
+  /** 搜索延迟范围 (毫秒) */
+  searchDelayRange?: [number, number];
+}
 
 /**
  * 爬虫执行结果

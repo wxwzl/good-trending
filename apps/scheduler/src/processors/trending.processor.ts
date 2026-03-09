@@ -1,6 +1,6 @@
 /**
  * 趋势任务处理器
- * 处理趋势数据更新任务
+ * 处理趋势数据更新任务 - 使用新的表结构 (productSocialStats, trendRanks)
  */
 import { Worker, Job } from "bullmq";
 import { createSchedulerLogger } from "../utils/logger";
@@ -15,156 +15,206 @@ const logger = createSchedulerLogger("trending-processor");
 let trendingWorker: Worker<TrendingJobData, TrendingJobResult> | null = null;
 
 /**
+ * 周期类型定义
+ */
+const PERIOD_TYPES = [
+  "TODAY",
+  "YESTERDAY",
+  "THIS_WEEK",
+  "THIS_MONTH",
+  "LAST_7_DAYS",
+  "LAST_15_DAYS",
+  "LAST_30_DAYS",
+  "LAST_60_DAYS",
+] as const;
+
+type PeriodType = (typeof PERIOD_TYPES)[number];
+
+/**
  * 计算商品的趋势分数
  *
  * @description
- * 基于多个因素计算综合热门度分数：
- * 1. 时间衰减：越近的数据权重越高
- * 2. 商品历史数据：价格变化、销量等
- * 3. 随机因素：用于打散相同分数的商品
+ * 基于社交提及数据计算综合热门度分数：
+ * 1. Reddit 提及数（权重 1.0）
+ * 2. X 平台提及数（权重 0.8）
+ * 3. 时间衰减：越新的商品分数越高
  *
- * @param product - 商品数据
- * @param historyData - 历史数据
- * @returns 0-100 的热门度分数
+ * @param redditCount - Reddit 提及数
+ * @param xCount - X 平台提及数
+ * @param createdAt - 商品创建时间
+ * @returns 趋势分数
  */
-function calculateTrendingScore(
-  product: {
-    id: string;
-    createdAt: Date;
-    sourceType: string;
-  },
-  historyData: {
-    price?: string | null;
-    rank?: number | null;
-    salesCount?: number | null;
-    reviewCount?: number | null;
-    rating?: number | null;
-  }[]
-): number {
-  // 基础分数
-  let score = 50;
+function calculateTrendingScore(redditCount: number, xCount: number, createdAt: Date): number {
+  // 基础分数：Reddit 提及数 + X 提及数 * 权重
+  let score = redditCount + xCount * 0.8;
 
-  // 时间衰减：越新的商品分数越高
-  const daysSinceCreated = Math.floor(
-    (Date.now() - product.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  const timeDecay = Math.max(0, 1 - daysSinceCreated / 30); // 30 天内衰减
-  score += timeDecay * 20; // 最多加 20 分
+  // 时间衰减因子：越新的商品权重越高
+  const daysSinceCreated = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+  const timeDecay = Math.max(0.5, 1 - daysSinceCreated / 60); // 60 天内衰减，最低 0.5
+  score = score * timeDecay;
 
-  // 历史数据加权
-  if (historyData.length > 0) {
-    const latestHistory = historyData[0];
-
-    // 排名因素：排名越靠前分数越高
-    if (latestHistory.rank !== null && latestHistory.rank !== undefined) {
-      const rankBonus = Math.max(0, (100 - latestHistory.rank) / 10);
-      score += rankBonus;
-    }
-
-    // 评分因素
-    if (latestHistory.rating !== null && latestHistory.rating !== undefined) {
-      const ratingBonus = (latestHistory.rating / 5) * 10;
-      score += ratingBonus;
-    }
-
-    // 评论数因素
-    if (latestHistory.reviewCount !== null && latestHistory.reviewCount !== undefined) {
-      const reviewBonus = Math.min(latestHistory.reviewCount / 100, 10);
-      score += reviewBonus;
-    }
-
-    // 销量因素
-    if (latestHistory.salesCount !== null && latestHistory.salesCount !== undefined) {
-      const salesBonus = Math.min(latestHistory.salesCount / 1000, 10);
-      score += salesBonus;
-    }
-  }
-
-  // 来源类型加权：X 平台的内容通常更有时效性
-  if (product.sourceType === "X_PLATFORM") {
-    score += 5;
-  }
-
-  // 确保分数在 0-100 范围内
-  return Math.round(Math.min(100, Math.max(0, score)));
+  // 确保分数非负
+  return Math.max(0, score);
 }
 
 /**
- * 更新趋势数据
+ * 根据周期获取对应的字段值
+ */
+function getSocialCountsByPeriod(
+  period: PeriodType,
+  stat: {
+    todayRedditCount: number;
+    todayXCount: number;
+    yesterdayRedditCount: number;
+    yesterdayXCount: number;
+    thisWeekRedditCount: number;
+    thisWeekXCount: number;
+    thisMonthRedditCount: number;
+    thisMonthXCount: number;
+    last7DaysRedditCount: number;
+    last7DaysXCount: number;
+    last15DaysRedditCount: number;
+    last15DaysXCount: number;
+    last30DaysRedditCount: number;
+    last30DaysXCount: number;
+    last60DaysRedditCount: number;
+    last60DaysXCount: number;
+  }
+): { redditCount: number; xCount: number } {
+  switch (period) {
+    case "TODAY":
+      return { redditCount: stat.todayRedditCount, xCount: stat.todayXCount };
+    case "YESTERDAY":
+      return { redditCount: stat.yesterdayRedditCount, xCount: stat.yesterdayXCount };
+    case "THIS_WEEK":
+      return { redditCount: stat.thisWeekRedditCount, xCount: stat.thisWeekXCount };
+    case "THIS_MONTH":
+      return { redditCount: stat.thisMonthRedditCount, xCount: stat.thisMonthXCount };
+    case "LAST_7_DAYS":
+      return { redditCount: stat.last7DaysRedditCount, xCount: stat.last7DaysXCount };
+    case "LAST_15_DAYS":
+      return { redditCount: stat.last15DaysRedditCount, xCount: stat.last15DaysXCount };
+    case "LAST_30_DAYS":
+      return { redditCount: stat.last30DaysRedditCount, xCount: stat.last30DaysXCount };
+    case "LAST_60_DAYS":
+      return { redditCount: stat.last60DaysRedditCount, xCount: stat.last60DaysXCount };
+    default:
+      return { redditCount: stat.todayRedditCount, xCount: stat.todayXCount };
+  }
+}
+
+/**
+ * 生成所有周期的趋势榜单
+ * 基于 productSocialStats 表的数据生成趋势排名
  *
  * @returns 更新的记录数
  */
 async function updateTrendingData(): Promise<number> {
-  const { db, products, trends, productHistories } = await import("@good-trending/database");
-  const { eq, desc, and } = await import("drizzle-orm");
+  const { db, products, productSocialStats, trendRanks } = await import("@good-trending/database");
+  const { eq, and } = await import("drizzle-orm");
+  const { createId } = await import("@paralleldrive/cuid2");
 
-  logger.info("Starting trending data update...");
-
-  // 获取所有商品
-  const allProducts = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      createdAt: products.createdAt,
-      sourceType: products.sourceType,
-    })
-    .from(products)
-    .orderBy(desc(products.createdAt))
-    .limit(1000); // 限制处理数量
-
-  logger.info(`Found ${allProducts.length} products to process`);
+  logger.info("Starting trending ranks generation...");
 
   const today = new Date().toISOString().split("T")[0];
-  let updatedCount = 0;
+  let totalUpdatedCount = 0;
 
-  // 批量处理商品
-  for (let i = 0; i < allProducts.length; i++) {
-    const product = allProducts[i];
-
+  // 为每个周期生成榜单
+  for (const period of PERIOD_TYPES) {
     try {
-      // 获取商品历史数据
-      const historyData = await db
-        .select()
-        .from(productHistories)
-        .where(eq(productHistories.productId, product.id))
-        .orderBy(desc(productHistories.date))
-        .limit(30);
+      logger.info(`Generating trend ranks for period: ${period}`);
 
-      // 计算趋势分数
-      const score = calculateTrendingScore(product, historyData);
+      // 获取今天的社交统计数据
+      const socialStats = await db
+        .select({
+          productId: productSocialStats.productId,
+          todayRedditCount: productSocialStats.todayRedditCount,
+          todayXCount: productSocialStats.todayXCount,
+          yesterdayRedditCount: productSocialStats.yesterdayRedditCount,
+          yesterdayXCount: productSocialStats.yesterdayXCount,
+          thisWeekRedditCount: productSocialStats.thisWeekRedditCount,
+          thisWeekXCount: productSocialStats.thisWeekXCount,
+          thisMonthRedditCount: productSocialStats.thisMonthRedditCount,
+          thisMonthXCount: productSocialStats.thisMonthXCount,
+          last7DaysRedditCount: productSocialStats.last7DaysRedditCount,
+          last7DaysXCount: productSocialStats.last7DaysXCount,
+          last15DaysRedditCount: productSocialStats.last15DaysRedditCount,
+          last15DaysXCount: productSocialStats.last15DaysXCount,
+          last30DaysRedditCount: productSocialStats.last30DaysRedditCount,
+          last30DaysXCount: productSocialStats.last30DaysXCount,
+          last60DaysRedditCount: productSocialStats.last60DaysRedditCount,
+          last60DaysXCount: productSocialStats.last60DaysXCount,
+        })
+        .from(productSocialStats)
+        .where(eq(productSocialStats.statDate, today));
 
-      // 检查今天是否已有趋势记录
-      const existingTrend = await db
-        .select()
-        .from(trends)
-        .where(and(eq(trends.productId, product.id), eq(trends.date, today)))
-        .limit(1);
-
-      if (existingTrend.length > 0) {
-        // 更新现有记录
-        await db
-          .update(trends)
-          .set({
-            score,
-            rank: i + 1,
-          })
-          .where(eq(trends.id, existingTrend[0].id));
-      } else {
-        // 创建新记录
-        await db.insert(trends).values({
-          productId: product.id,
-          date: today,
-          rank: i + 1,
-          score,
-          mentions: 0,
-          views: 0,
-          likes: 0,
-        });
+      // 获取商品创建时间
+      const productIds = socialStats.map((s) => s.productId);
+      if (productIds.length === 0) {
+        logger.info(`No social stats found for period ${period}`);
+        continue;
       }
 
-      updatedCount++;
+      const productData = await db
+        .select({
+          id: products.id,
+          createdAt: products.createdAt,
+        })
+        .from(products)
+        .where(eq(products.id, productIds[0])); // Drizzle 需要单独处理 IN 查询
+
+      const productCreateTimeMap = new Map(productData.map((p) => [p.id, p.createdAt]));
+
+      // 计算趋势分数并排序
+      const rankedProducts = socialStats
+        .map((stat) => {
+          const { redditCount, xCount } = getSocialCountsByPeriod(period, stat);
+          const createdAt = productCreateTimeMap.get(stat.productId) || new Date();
+          const score = calculateTrendingScore(redditCount, xCount, createdAt);
+
+          return {
+            productId: stat.productId,
+            score,
+            redditMentions: redditCount,
+            xMentions: xCount,
+          };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      // 批量保存榜单（前 2000 名）
+      const topProducts = rankedProducts.slice(0, 2000);
+
+      if (topProducts.length > 0) {
+        // 先删除该周期旧数据
+        await db
+          .delete(trendRanks)
+          .where(and(eq(trendRanks.periodType, period), eq(trendRanks.statDate, today)));
+
+        // 批量插入新数据
+        const insertData = topProducts.map((product, index) => ({
+          id: createId(),
+          productId: product.productId,
+          periodType: period,
+          statDate: today,
+          rank: index + 1,
+          score: product.score,
+          redditMentions: product.redditMentions,
+          xMentions: product.xMentions,
+          sourceData: { calculationMethod: "reddit + x*0.8" },
+        }));
+
+        // 分批插入，每批 500 条
+        const batchSize = 500;
+        for (let i = 0; i < insertData.length; i += batchSize) {
+          const batch = insertData.slice(i, i + batchSize);
+          await db.insert(trendRanks).values(batch);
+        }
+
+        totalUpdatedCount += topProducts.length;
+        logger.info(`Generated ${topProducts.length} ranks for period ${period}`);
+      }
     } catch (error) {
-      logger.error(`Failed to update trending for product ${product.id}`, {
+      logger.error(`Failed to generate trend ranks for period ${period}`, {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -185,21 +235,25 @@ async function updateTrendingData(): Promise<number> {
     });
   }
 
-  logger.info(`Trending data update completed: ${updatedCount} records updated`);
+  logger.info(`Trending ranks generation completed: ${totalUpdatedCount} records updated`);
 
-  return updatedCount;
+  return totalUpdatedCount;
 }
 
 /**
- * 计算所有商品的趋势分数
+ * 计算今日趋势分数
+ * 基于今天的社交提及数据计算趋势分数
  *
  * @returns 计算的商品数量
  */
 async function calculateAllTrendingScores(): Promise<number> {
-  const { db, products, trends, productHistories } = await import("@good-trending/database");
+  const { db, products, productSocialStats, trendRanks } = await import("@good-trending/database");
   const { eq, desc, and, gte } = await import("drizzle-orm");
+  const { createId } = await import("@paralleldrive/cuid2");
 
-  logger.info("Starting trending score calculation...");
+  logger.info("Starting TODAY trending score calculation...");
+
+  const today = new Date().toISOString().split("T")[0];
 
   // 获取最近 30 天的商品
   const thirtyDaysAgo = new Date();
@@ -209,59 +263,77 @@ async function calculateAllTrendingScores(): Promise<number> {
     .select({
       id: products.id,
       createdAt: products.createdAt,
-      sourceType: products.sourceType,
     })
     .from(products)
     .where(gte(products.createdAt, thirtyDaysAgo));
 
   logger.info(`Found ${recentProducts.length} recent products to calculate`);
 
+  // 获取今天的社交统计数据
+  const socialStats = await db
+    .select({
+      productId: productSocialStats.productId,
+      todayRedditCount: productSocialStats.todayRedditCount,
+      todayXCount: productSocialStats.todayXCount,
+    })
+    .from(productSocialStats)
+    .where(eq(productSocialStats.statDate, today));
+
+  const socialStatsMap = new Map(socialStats.map((s) => [s.productId, s]));
+
+  // 计算每个商品的分数
+  const scoredProducts = recentProducts.map((product) => {
+    const stat = socialStatsMap.get(product.id);
+    const redditCount = stat?.todayRedditCount || 0;
+    const xCount = stat?.todayXCount || 0;
+    const score = calculateTrendingScore(redditCount, xCount, product.createdAt);
+
+    return {
+      productId: product.id,
+      score,
+      redditMentions: redditCount,
+      xMentions: xCount,
+    };
+  });
+
+  // 按分数排序
+  const rankedProducts = scoredProducts.sort((a, b) => b.score - a.score);
+
   let calculatedCount = 0;
 
-  for (const product of recentProducts) {
-    try {
-      // 获取商品历史数据
-      const historyData = await db
-        .select()
-        .from(productHistories)
-        .where(eq(productHistories.productId, product.id))
-        .orderBy(desc(productHistories.date))
-        .limit(30);
+  try {
+    // 先删除今天的旧数据
+    await db
+      .delete(trendRanks)
+      .where(and(eq(trendRanks.periodType, "TODAY"), eq(trendRanks.statDate, today)));
 
-      // 计算趋势分数
-      const score = calculateTrendingScore(product, historyData);
+    // 批量插入新数据
+    const insertData = rankedProducts.map((product, index) => ({
+      id: createId(),
+      productId: product.productId,
+      periodType: "TODAY",
+      statDate: today,
+      rank: index + 1,
+      score: product.score,
+      redditMentions: product.redditMentions,
+      xMentions: product.xMentions,
+      sourceData: { calculationMethod: "reddit + x*0.8" },
+    }));
 
-      // 更新或创建今天的趋势记录
-      const today = new Date().toISOString().split("T")[0];
-      const existingTrend = await db
-        .select()
-        .from(trends)
-        .where(and(eq(trends.productId, product.id), eq(trends.date, today)))
-        .limit(1);
-
-      if (existingTrend.length > 0) {
-        await db.update(trends).set({ score }).where(eq(trends.id, existingTrend[0].id));
-      } else {
-        await db.insert(trends).values({
-          productId: product.id,
-          date: today,
-          rank: 0, // 排名在 updateTrendingData 中计算
-          score,
-          mentions: 0,
-          views: 0,
-          likes: 0,
-        });
-      }
-
-      calculatedCount++;
-    } catch (error) {
-      logger.error(`Failed to calculate score for product ${product.id}`, {
-        error: error instanceof Error ? error.message : String(error),
-      });
+    // 分批插入
+    const batchSize = 500;
+    for (let i = 0; i < insertData.length; i += batchSize) {
+      const batch = insertData.slice(i, i + batchSize);
+      await db.insert(trendRanks).values(batch);
+      calculatedCount += batch.length;
     }
-  }
 
-  logger.info(`Trending score calculation completed: ${calculatedCount} products processed`);
+    logger.info(`TODAY trend ranks calculation completed: ${calculatedCount} products processed`);
+  } catch (error) {
+    logger.error(`Failed to calculate trend ranks`, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return calculatedCount;
 }

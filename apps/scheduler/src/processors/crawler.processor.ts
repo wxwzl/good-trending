@@ -20,13 +20,15 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
  */
 async function importCrawler() {
   const { GoogleSearchCrawler } = await import("@good-trending/crawler/google");
-  const {
+  const { saveCategoryHeatStats, saveCrawledProducts, saveProductSocialStats, saveCrawlerLog } =
+    await import("@good-trending/crawler/services");
+  return {
+    GoogleSearchCrawler,
     saveCategoryHeatStats,
     saveCrawledProducts,
     saveProductSocialStats,
     saveCrawlerLog,
-  } = await import("@good-trending/crawler/services");
-  return { GoogleSearchCrawler, saveCategoryHeatStats, saveCrawledProducts, saveProductSocialStats, saveCrawlerLog };
+  };
 }
 
 /**
@@ -35,6 +37,7 @@ async function importCrawler() {
 async function processCategoryHeatJob(job: Job<CrawlerJobData>): Promise<CrawlerJobResult> {
   const { data } = job;
   const startTime = new Date();
+  let crawler: any = null;
 
   logger.info(`Processing category heat job`, {
     jobId: job.id,
@@ -69,7 +72,7 @@ async function processCategoryHeatJob(job: Job<CrawlerJobData>): Promise<Crawler
     logger.info(`Loaded ${categoryList.length} categories`);
 
     // 创建爬虫实例
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless: data.headless ?? true, timeout: 60000 },
       {
         serpApiKey: process.env.SERPAPI_KEY,
@@ -106,7 +109,10 @@ async function processCategoryHeatJob(job: Job<CrawlerJobData>): Promise<Crawler
       duration: result.duration,
       itemsFound: result.totalProducts,
       itemsSaved: result.savedProducts,
-      errors: crawlResult.errors.length > 0 ? crawlResult.errors.map((e) => ({ message: e })) : undefined,
+      errors:
+        crawlResult.errors.length > 0
+          ? crawlResult.errors.map((e: string) => ({ message: e }))
+          : undefined,
       metadata: {
         traceId: data.traceId,
         triggeredBy: data.triggeredBy,
@@ -135,6 +141,13 @@ async function processCategoryHeatJob(job: Job<CrawlerJobData>): Promise<Crawler
     result.completedAt = endTime.toISOString();
 
     throw error;
+  } finally {
+    // 确保浏览器关闭
+    if (crawler && typeof crawler.closeBrowser === "function") {
+      await crawler
+        .closeBrowser()
+        .catch((err: any) => logger.error(`Failed to close browser: ${err}`));
+    }
   }
 }
 
@@ -144,6 +157,7 @@ async function processCategoryHeatJob(job: Job<CrawlerJobData>): Promise<Crawler
 async function processProductDiscoveryJob(job: Job<CrawlerJobData>): Promise<CrawlerJobResult> {
   const { data } = job;
   const startTime = new Date();
+  let crawler: any = null;
 
   logger.info(`Processing product discovery job`, {
     jobId: job.id,
@@ -178,7 +192,7 @@ async function processProductDiscoveryJob(job: Job<CrawlerJobData>): Promise<Cra
     logger.info(`Loaded ${categoryList.length} categories for product discovery`);
 
     // 创建爬虫实例
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless: data.headless ?? true, timeout: 60000 },
       {
         serpApiKey: process.env.SERPAPI_KEY,
@@ -216,7 +230,10 @@ async function processProductDiscoveryJob(job: Job<CrawlerJobData>): Promise<Cra
       duration: result.duration,
       itemsFound: result.totalProducts,
       itemsSaved: result.savedProducts,
-      errors: crawlResult.errors.length > 0 ? crawlResult.errors.map((e) => ({ message: e })) : undefined,
+      errors:
+        crawlResult.errors.length > 0
+          ? crawlResult.errors.map((e: string) => ({ message: e }))
+          : undefined,
       metadata: {
         traceId: data.traceId,
         triggeredBy: data.triggeredBy,
@@ -245,6 +262,13 @@ async function processProductDiscoveryJob(job: Job<CrawlerJobData>): Promise<Cra
     result.completedAt = endTime.toISOString();
 
     throw error;
+  } finally {
+    // 确保浏览器关闭
+    if (crawler && typeof crawler.closeBrowser === "function") {
+      await crawler
+        .closeBrowser()
+        .catch((err: any) => logger.error(`Failed to close browser: ${err}`));
+    }
   }
 }
 
@@ -254,6 +278,7 @@ async function processProductDiscoveryJob(job: Job<CrawlerJobData>): Promise<Cra
 async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<CrawlerJobResult> {
   const { data } = job;
   const startTime = new Date();
+  let crawler: any = null;
 
   logger.info(`Processing product mentions job`, {
     jobId: job.id,
@@ -287,7 +312,7 @@ async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<Craw
     logger.info(`Loaded ${productList.length} products for mention crawling`);
 
     // 创建爬虫实例
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless: data.headless ?? true, timeout: 60000 },
       {
         serpApiKey: process.env.SERPAPI_KEY,
@@ -300,7 +325,9 @@ async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<Craw
     // 逐个处理商品
     for (const product of productList) {
       try {
-        logger.info(`Processing product [${processedCount + 1}/${productList.length}]: ${product.name}`);
+        logger.info(
+          `Processing product [${processedCount + 1}/${productList.length}]: ${product.name}`
+        );
 
         // 爬取提及数
         const mentions = await crawler.crawlProductMentions(product.name, date);
@@ -337,7 +364,8 @@ async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<Craw
       duration: result.duration,
       itemsFound: result.totalProducts,
       itemsSaved: result.savedProducts,
-      errors: result.errorCount > 0 ? [{ message: `${result.errorCount} products failed` }] : undefined,
+      errors:
+        result.errorCount > 0 ? [{ message: `${result.errorCount} products failed` }] : undefined,
       metadata: {
         traceId: data.traceId,
         triggeredBy: data.triggeredBy,
@@ -367,6 +395,13 @@ async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<Craw
     result.completedAt = endTime.toISOString();
 
     throw error;
+  } finally {
+    // 确保浏览器关闭
+    if (crawler && typeof crawler.closeBrowser === "function") {
+      await crawler
+        .closeBrowser()
+        .catch((err: any) => logger.error(`Failed to close browser: ${err}`));
+    }
   }
 }
 
@@ -376,6 +411,7 @@ async function processProductMentionsJob(job: Job<CrawlerJobData>): Promise<Craw
 async function processYesterdayStatsJob(job: Job<CrawlerJobData>): Promise<CrawlerJobResult> {
   const { data } = job;
   const startTime = new Date();
+  let crawler: any = null;
 
   logger.info(`Processing yesterday stats job`, {
     jobId: job.id,
@@ -393,7 +429,8 @@ async function processYesterdayStatsJob(job: Job<CrawlerJobData>): Promise<Crawl
   };
 
   try {
-    const { GoogleSearchCrawler, saveCategoryHeatStats, saveCrawledProducts, saveCrawlerLog } = await importCrawler();
+    const { GoogleSearchCrawler, saveCategoryHeatStats, saveCrawledProducts, saveCrawlerLog } =
+      await importCrawler();
     const { db, categories } = await import("@good-trending/database");
 
     // 获取所有类目
@@ -409,7 +446,7 @@ async function processYesterdayStatsJob(job: Job<CrawlerJobData>): Promise<Crawl
     logger.info(`Loaded ${categoryList.length} categories for yesterday stats`);
 
     // 创建爬虫实例
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless: data.headless ?? true, timeout: 60000 },
       {
         serpApiKey: process.env.SERPAPI_KEY,
@@ -450,7 +487,10 @@ async function processYesterdayStatsJob(job: Job<CrawlerJobData>): Promise<Crawl
       duration: result.duration,
       itemsFound: result.totalProducts,
       itemsSaved: result.savedProducts,
-      errors: productResult.errors.length > 0 ? productResult.errors.map((e) => ({ message: e })) : undefined,
+      errors:
+        productResult.errors.length > 0
+          ? productResult.errors.map((e: string) => ({ message: e }))
+          : undefined,
       metadata: {
         traceId: data.traceId,
         triggeredBy: data.triggeredBy,
@@ -480,6 +520,13 @@ async function processYesterdayStatsJob(job: Job<CrawlerJobData>): Promise<Crawl
     result.completedAt = endTime.toISOString();
 
     throw error;
+  } finally {
+    // 确保浏览器关闭
+    if (crawler && typeof crawler.closeBrowser === "function") {
+      await crawler
+        .closeBrowser()
+        .catch((err: any) => logger.error(`Failed to close browser: ${err}`));
+    }
   }
 }
 
@@ -517,7 +564,9 @@ async function processCrawlerJob(job: Job<CrawlerJobData>): Promise<CrawlerJobRe
  * @param concurrency - 并发数
  * @returns Worker 实例
  */
-export function createCrawlerProcessor(concurrency: number = 1): Worker<CrawlerJobData, CrawlerJobResult> {
+export function createCrawlerProcessor(
+  concurrency: number = 1
+): Worker<CrawlerJobData, CrawlerJobResult> {
   if (crawlerWorker) {
     return crawlerWorker;
   }

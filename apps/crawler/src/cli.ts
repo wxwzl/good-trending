@@ -25,7 +25,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 console.log("✅ 环境变量加载完成");
-console.log(`   DATABASE_URL: ${process.env.DATABASE_URL.replace(/:\/\/[^:]+:[^@]+@/, "://***:***@")}`);
+console.log(
+  `   DATABASE_URL: ${process.env.DATABASE_URL.replace(/:\/\/[^:]+:[^@]+@/, "://***:***@")}`
+);
 // =====================================================
 
 import yargs from "yargs";
@@ -42,10 +44,7 @@ import {
   generateTrendRanks,
   saveCrawlerLog,
 } from "./services";
-import type {
-  CategoryData,
-  CrawlerLogData,
-} from "./types/crawler.types";
+import type { CategoryData, CrawlerLogData } from "./types/crawler.types";
 
 // 创建日志记录器
 const logger = createLogger({
@@ -124,13 +123,15 @@ async function crawlCategoryHeat(headless: boolean): Promise<void> {
     itemsSaved: 0,
   };
 
+  let crawler: GoogleSearchCrawler | null = null;
+
   try {
     // 获取类目
     const categoryList = await getAllCategories();
     logger.info(`加载了 ${categoryList.length} 个类目`);
 
     // 创建爬虫
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless, timeout: 60000 },
       { categoryConfig: { maxResultsPerCategory: 10, searchDelayRange: [3000, 6000] } }
     );
@@ -147,13 +148,15 @@ async function crawlCategoryHeat(headless: boolean): Promise<void> {
     log.itemsSaved = savedCount;
 
     logger.info(`类目热度爬取完成: ${savedCount}/${result.data.length}`);
-
-    await crawler["closeBrowser"]();
   } catch (error) {
     log.status = "FAILED";
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("类目热度爬取失败:", error);
   } finally {
+    // 确保浏览器关闭
+    if (crawler) {
+      await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
+    }
     const endTime = new Date();
     log.endTime = endTime;
     log.duration = endTime.getTime() - startTime.getTime();
@@ -177,13 +180,15 @@ async function crawlProducts(headless: boolean): Promise<void> {
     itemsSaved: 0,
   };
 
+  let crawler: GoogleSearchCrawler | null = null;
+
   try {
     // 获取类目
     const categoryList = await getAllCategories();
     logger.info(`加载了 ${categoryList.length} 个类目`);
 
     // 创建爬虫
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless, timeout: 60000 },
       {
         categoryConfig: {
@@ -205,16 +210,16 @@ async function crawlProducts(headless: boolean): Promise<void> {
     log.itemsFound = result.data.length;
     log.itemsSaved = saveResult.savedCount;
 
-    logger.info(
-      `商品发现完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`
-    );
-
-    await crawler["closeBrowser"]();
+    logger.info(`商品发现完成: 新商品 ${saveResult.savedCount}, 跳过 ${saveResult.skippedCount}`);
   } catch (error) {
     log.status = "FAILED";
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("商品发现爬取失败:", error);
   } finally {
+    // 确保浏览器关闭
+    if (crawler) {
+      await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
+    }
     const endTime = new Date();
     log.endTime = endTime;
     log.duration = endTime.getTime() - startTime.getTime();
@@ -238,16 +243,16 @@ async function crawlProductMentions(headless: boolean): Promise<void> {
     itemsSaved: 0,
   };
 
+  let crawler: GoogleSearchCrawler | null = null;
+
   try {
     // 获取所有商品
-    const productList = await db
-      .select({ id: products.id, name: products.name })
-      .from(products);
+    const productList = await db.select({ id: products.id, name: products.name }).from(products);
 
     logger.info(`加载了 ${productList.length} 个商品`);
 
     // 创建爬虫
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless, timeout: 60000 },
       { categoryConfig: { searchDelayRange: [3000, 5000] } }
     );
@@ -282,13 +287,15 @@ async function crawlProductMentions(headless: boolean): Promise<void> {
     log.itemsSaved = processedCount;
 
     logger.info(`商品社交提及爬取完成: ${processedCount}/${productList.length}`);
-
-    await crawler["closeBrowser"]();
   } catch (error) {
     log.status = "FAILED";
     log.errors = [{ message: error instanceof Error ? error.message : String(error) }];
     logger.error("商品社交提及爬取失败:", error);
   } finally {
+    // 确保浏览器关闭
+    if (crawler) {
+      await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
+    }
     const endTime = new Date();
     log.endTime = endTime;
     log.duration = endTime.getTime() - startTime.getTime();
@@ -349,13 +356,15 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
     itemsSaved: 0,
   };
 
+  let crawler: GoogleSearchCrawler | null = null;
+
   try {
     // 获取类目
     const categoryList = await getAllCategories();
     logger.info(`加载了 ${categoryList.length} 个类目`);
 
     // 创建爬虫
-    const crawler = new GoogleSearchCrawler(
+    crawler = new GoogleSearchCrawler(
       { headless, timeout: 60000 },
       {
         categoryConfig: {
@@ -383,8 +392,6 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
     log.itemsFound = productResult.data.length;
     log.itemsSaved = saveResult.savedCount;
 
-    await crawler["closeBrowser"]();
-
     const endTime = new Date();
     logger.info(
       `=== 昨天数据统计爬取完成，耗时 ${(endTime.getTime() - startTime.getTime()) / 1000}s ===`
@@ -395,6 +402,10 @@ async function crawlYesterdayData(headless: boolean): Promise<void> {
     logger.error("昨天数据统计爬取失败:", error);
     throw error;
   } finally {
+    // 确保浏览器关闭
+    if (crawler) {
+      await crawler.closeBrowser().catch((err) => logger.error("关闭浏览器失败:", err));
+    }
     const endTime = new Date();
     log.endTime = endTime;
     log.duration = endTime.getTime() - startTime.getTime();

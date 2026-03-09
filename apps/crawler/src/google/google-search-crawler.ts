@@ -245,47 +245,95 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     // 本周数据（周一到今天）
     const weekStart = this.getWeekStart(date);
     periodResults["THIS_WEEK"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(weekStart)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(weekStart)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(weekStart)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(weekStart)
+      ),
     };
 
     // 本月数据（1号到今天）
     const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
     periodResults["THIS_MONTH"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(monthStart)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(monthStart)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(monthStart)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(monthStart)
+      ),
     };
 
     // 近7天
     const last7Days = new Date(date);
     last7Days.setDate(last7Days.getDate() - 7);
     periodResults["LAST_7_DAYS"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(last7Days)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(last7Days)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(last7Days)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(last7Days)
+      ),
     };
 
     // 近15天
     const last15Days = new Date(date);
     last15Days.setDate(last15Days.getDate() - 15);
     periodResults["LAST_15_DAYS"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(last15Days)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(last15Days)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(last15Days)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(last15Days)
+      ),
     };
 
     // 近30天
     const last30Days = new Date(date);
     last30Days.setDate(last30Days.getDate() - 30);
     periodResults["LAST_30_DAYS"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(last30Days)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(last30Days)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(last30Days)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(last30Days)
+      ),
     };
 
     // 近60天
     const last60Days = new Date(date);
     last60Days.setDate(last60Days.getDate() - 60);
     periodResults["LAST_60_DAYS"] = {
-      reddit: await this.searchProductMentionCount(productName, "REDDIT", this.formatDate(last60Days)),
-      x: await this.searchProductMentionCount(productName, "X_PLATFORM", this.formatDate(last60Days)),
+      reddit: await this.searchProductMentionCount(
+        productName,
+        "REDDIT",
+        this.formatDate(last60Days)
+      ),
+      x: await this.searchProductMentionCount(
+        productName,
+        "X_PLATFORM",
+        this.formatDate(last60Days)
+      ),
     };
 
     return {
@@ -547,7 +595,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 执行 Google 搜索
    * 优先使用 SerpAPI，失败时回退到浏览器
    */
-  private async performGoogleSearch(query: string): Promise<{ totalResults: number; links: SearchResult[]; source: "serpapi" | "browser" }> {
+  private async performGoogleSearch(
+    query: string
+  ): Promise<{ totalResults: number; links: SearchResult[]; source: "serpapi" | "browser" }> {
     this.logger.info(`执行搜索: ${query}`);
 
     // 确保浏览器已初始化
@@ -604,7 +654,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
 
           // 访问亚马逊获取商品信息
           const productInfo = await this.extractAmazonProductInfo(amazonUrl);
-          if (productInfo && !('error' in productInfo)) {
+          if (productInfo && !("error" in productInfo)) {
             seenAsins.add(asin);
             products.push({
               name: productInfo.name,
@@ -621,8 +671,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
           }
 
           // 限制商品数量
-          const maxProducts =
-            this.searchConfig.categoryConfig?.maxProductsPerCategory ?? 10;
+          const maxProducts = this.searchConfig.categoryConfig?.maxProductsPerCategory ?? 10;
           if (products.length >= maxProducts) {
             return products;
           }
@@ -653,13 +702,13 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
           const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const resp = await fetch(url, {
-            method: 'HEAD',
-            redirect: 'manual',
-            signal: controller.signal
+            method: "HEAD",
+            redirect: "manual",
+            signal: controller.signal,
           });
 
           clearTimeout(timeoutId);
-          return resp.headers.get('location') || null;
+          return resp.headers.get("location") || null;
         } catch (e) {
           return null;
         }
@@ -680,7 +729,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 点击 "Read more" 和 "View entire discussion" 按钮
    */
   private async expandRedditContent(): Promise<void> {
-    if (!this.page) return;
+    if (!this.page) {
+      return;
+    }
 
     try {
       // 点击所有 "Read more" 按钮
@@ -691,7 +742,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         for (const btn of Array.from(readMoreButtons)) {
           if (btn.textContent?.includes("Read more")) {
             (btn as HTMLElement).click();
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise((r) => setTimeout(r, 500));
           }
         }
       });
@@ -729,10 +780,14 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * - 规范化并过滤非商品链接
    */
   private async extractAmazonLinksFromRedditPost(url: string): Promise<string[]> {
-    if (!this.page) return [];
+    if (!this.page) {
+      return [];
+    }
 
     const success = await this.navigateWithRetry(url);
-    if (!success) return [];
+    if (!success) {
+      return [];
+    }
 
     // 等待页面加载（Reddit使用JavaScript渲染）
     await this.delay(3000);
@@ -757,7 +812,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       const shortLinks = document.querySelectorAll('a[href*="amzn.to"]');
       shortLinks.forEach((el) => {
         const href = el.getAttribute("href") || "";
-        if (href) links.push(href);
+        if (href) {
+          links.push(href);
+        }
       });
 
       // 3. 查找可能包含链接的文本内容
@@ -791,7 +848,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
 
     for (const link of rawLinks) {
       // 跳过已处理的
-      if (processedLinks.has(link)) continue;
+      if (processedLinks.has(link)) {
+        continue;
+      }
       processedLinks.add(link);
 
       // 处理短链接 (amzn.to)
@@ -858,7 +917,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   private normalizeAmazonUrl(url: string): string | null {
     // 提取 ASIN
     const asin = this.extractAsinFromUrl(url);
-    if (!asin) return null;
+    if (!asin) {
+      return null;
+    }
 
     // 构建标准链接
     return `https://www.amazon.com/dp/${asin}`;
@@ -878,7 +939,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     reviewCount?: string;
     availability?: string;
   } | null> {
-    if (!this.page) return null;
+    if (!this.page) {
+      return null;
+    }
 
     // 使用智能重试导航
     const { success, antiBot } = await this.navigateWithSmartRetry(url, 3);
@@ -894,24 +957,24 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     return this.page.evaluate(() => {
       // 检查页面是否有效（不是错误页面）
       const errorSelectors = [
-        '#g\ img', // 狗狗图片错误页
+        "#g\ img", // 狗狗图片错误页
         '[src*="error"]', // 错误图片
         '.a-box-inner:has-text("not found")', // 商品未找到
         '.a-box-inner:has-text("unavailable")', // 商品不可用
       ];
       for (const sel of errorSelectors) {
         if (document.querySelector(sel)) {
-          return { error: 'page_error', name: '' };
+          return { error: "page_error", name: "" };
         }
       }
 
       // 商品名称 - 尝试多种选择器
       let name: string | undefined;
       const nameSelectors = [
-        '#productTitle',
-        '#ebooksProductTitle',
-        '.product-title',
-        'h1.a-size-large',
+        "#productTitle",
+        "#ebooksProductTitle",
+        ".product-title",
+        "h1.a-size-large",
         '[data-testid="product-title"]',
       ];
       for (const selector of nameSelectors) {
@@ -922,12 +985,14 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         }
       }
 
-      if (!name) return null;
+      if (!name) {
+        return null;
+      }
 
       // 品牌
       let brand: string | undefined;
       const brandSelectors = [
-        '#bylineInfo',
+        "#bylineInfo",
         '.a-link-normal[href*="brand"]',
         '[data-testid="brand"]',
         'a[href*="field-brand"]',
@@ -935,7 +1000,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       for (const selector of brandSelectors) {
         const el = document.querySelector(selector);
         if (el?.textContent?.trim()) {
-          brand = el.textContent.trim().replace('Brand: ', '').replace('Visit the ', '');
+          brand = el.textContent.trim().replace("Brand: ", "").replace("Visit the ", "");
           break;
         }
       }
@@ -943,17 +1008,17 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       // 价格 - 尝试更多选择器
       let price: string | undefined;
       const priceSelectors = [
-        '.a-price.a-text-price.a-size-medium.apexPriceToPay .a-offscreen', // 主要价格
-        '.a-price .a-offscreen',
-        '#priceblock_ourprice',
-        '#priceblock_dealprice',
-        '#priceblock_saleprice',
-        '.a-price-whole',
+        ".a-price.a-text-price.a-size-medium.apexPriceToPay .a-offscreen", // 主要价格
+        ".a-price .a-offscreen",
+        "#priceblock_ourprice",
+        "#priceblock_dealprice",
+        "#priceblock_saleprice",
+        ".a-price-whole",
         '[data-a-color="price"] .a-offscreen',
-        '.a-price-range',
-        '.a-color-price',
-        '.a-text-price .a-offscreen',
-        '.kindle-price .a-offscreen', // Kindle价格
+        ".a-price-range",
+        ".a-color-price",
+        ".a-text-price .a-offscreen",
+        ".kindle-price .a-offscreen", // Kindle价格
         '[data-testid="price"]',
       ];
       for (const selector of priceSelectors) {
@@ -967,20 +1032,20 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       // 库存状态
       let availability: string | undefined;
       const availabilitySelectors = [
-        '#availability span',
-        '.a-color-success',
-        '.a-color-state',
+        "#availability span",
+        ".a-color-success",
+        ".a-color-state",
         '[data-testid="availability-status"]',
       ];
       for (const selector of availabilitySelectors) {
         const el = document.querySelector(selector);
         if (el?.textContent?.trim()) {
           const text = el.textContent.trim().toLowerCase();
-          if (text.includes('in stock') || text.includes('available')) {
-            availability = 'in_stock';
+          if (text.includes("in stock") || text.includes("available")) {
+            availability = "in_stock";
             break;
-          } else if (text.includes('out of stock') || text.includes('unavailable')) {
-            availability = 'out_of_stock';
+          } else if (text.includes("out of stock") || text.includes("unavailable")) {
+            availability = "out_of_stock";
             break;
           }
         }
@@ -989,46 +1054,47 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       // 图片 - 优先获取高分辨率
       let image: string | undefined;
       const imgSelectors = [
-        '#landingImage[data-old-hires]', // 高分辨率
-        '#landingImage',
-        '#imgBlkFront',
-        '#ebooksImgBlkFront',
-        '#hiResImage',
-        '[data-old-hires]',
-        '#main-image',
-        '.a-dynamic-image',
-        '.itemNo0.maintain-height img', // 另一种图片容器
+        "#landingImage[data-old-hires]", // 高分辨率
+        "#landingImage",
+        "#imgBlkFront",
+        "#ebooksImgBlkFront",
+        "#hiResImage",
+        "[data-old-hires]",
+        "#main-image",
+        ".a-dynamic-image",
+        ".itemNo0.maintain-height img", // 另一种图片容器
       ];
       for (const selector of imgSelectors) {
         const imgEl = document.querySelector(selector);
-        const src = imgEl?.getAttribute('data-old-hires') ||
-                    imgEl?.getAttribute('src') ||
-                    imgEl?.getAttribute('data-src');
+        const src =
+          imgEl?.getAttribute("data-old-hires") ||
+          imgEl?.getAttribute("src") ||
+          imgEl?.getAttribute("data-src");
         if (src && !src.includes("data:image") && !src.includes("grey-pixel")) {
           // 转换为高分辨率URL
-          image = src.replace(/_\w+_\./, '_SL1500_.'); // 尝试获取大图
+          image = src.replace(/_\w+_\./, "_SL1500_."); // 尝试获取大图
           break;
         }
       }
 
       // 商品描述 - 增强提取
-      let description = '';
+      let description = "";
       const bulletSelectors = [
-        '#feature-bullets ul li span.a-list-item',
-        '#feature-bullets ul li',
-        '.a-unordered-list.a-nostyle li',
-        '#productDescription p',
-        '#productDescription span',
+        "#feature-bullets ul li span.a-list-item",
+        "#feature-bullets ul li",
+        ".a-unordered-list.a-nostyle li",
+        "#productDescription p",
+        "#productDescription span",
         '[data-feature-name="productDescription"]',
-        '#bookDescription_feature_div', // 图书描述
-        '#aplus_feature_div', // A+内容
+        "#bookDescription_feature_div", // 图书描述
+        "#aplus_feature_div", // A+内容
       ];
       for (const selector of bulletSelectors) {
         const elements = document.querySelectorAll(selector);
         if (elements.length > 0) {
           const texts = Array.from(elements)
-            .map(el => el.textContent?.trim())
-            .filter(text => text && text.length > 10 && !text.includes("Make sure"))
+            .map((el) => el.textContent?.trim())
+            .filter((text) => text && text.length > 10 && !text.includes("Make sure"))
             .slice(0, 5);
           if (texts.length > 0) {
             description = texts.join("; ").substring(0, 500);
@@ -1044,7 +1110,7 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         '.a-icon-alt[textContent*="out of"]',
         'span[data-hook="rating-out-of-text"]',
         '[data-testid="reviews-average-rating"]',
-        '.a-size-base.a-color-base',
+        ".a-size-base.a-color-base",
       ];
       for (const selector of ratingSelectors) {
         const ratingEl = document.querySelector(selector);
@@ -1062,9 +1128,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       const reviewSelectors = [
         '[data-hook="total-review-count"]',
         'a[href*="#customerReviews"]',
-        '.a-size-base.a-color-secondary',
+        ".a-size-base.a-color-secondary",
         '[data-testid="reviews-link"]',
-        '#acrCustomerReviewText',
+        "#acrCustomerReviewText",
       ];
       for (const selector of reviewSelectors) {
         const reviewEl = document.querySelector(selector);
@@ -1086,28 +1152,35 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
    * 检测多种反爬虫标志
    */
   private async checkForAntiBot(): Promise<{ detected: boolean; type: string }> {
-    if (!this.page) return { detected: false, type: "" };
+    if (!this.page) {
+      return { detected: false, type: "" };
+    }
 
     const indicators = [
       { selector: 'form[action*="captcha"]', text: "", type: "captcha_form" },
-      { selector: 'h1', text: "Robot Check", type: "robot_check" },
-      { selector: 'h1', text: "Enter the characters you see below", type: "captcha" },
-      { selector: 'body', text: "To discuss automated access", type: "automated_access" },
-      { selector: 'title', text: "503", type: "service_unavailable" },
-      { selector: '.a-box-inner', text: "unusual traffic", type: "unusual_traffic" },
-      { selector: 'body', text: "Sorry, we just need to make sure", type: "verification" },
+      { selector: "h1", text: "Robot Check", type: "robot_check" },
+      { selector: "h1", text: "Enter the characters you see below", type: "captcha" },
+      { selector: "body", text: "To discuss automated access", type: "automated_access" },
+      { selector: "title", text: "503", type: "service_unavailable" },
+      { selector: ".a-box-inner", text: "unusual traffic", type: "unusual_traffic" },
+      { selector: "body", text: "Sorry, we just need to make sure", type: "verification" },
       { selector: 'img[src*="captcha"]', text: "", type: "captcha_image" },
-      { selector: 'body', text: "Request throttled", type: "throttled" },
-      { selector: 'body', text: "Amazon.com", type: "page_title" },
-      { selector: '#productTitle', text: "", type: "product_page" },
+      { selector: "body", text: "Request throttled", type: "throttled" },
+      { selector: "body", text: "Amazon.com", type: "page_title" },
+      { selector: "#productTitle", text: "", type: "product_page" },
     ];
 
     for (const { selector, text, type } of indicators) {
-      const found = await this.page.evaluate((sel, txt) => {
-        const el = document.querySelector(sel);
-        if (!txt) return !!el;
-        return el?.textContent?.includes(txt) || false;
-      }, selector, text);
+      const found = await this.page.evaluate(
+        ([sel, txt]: [string, string]) => {
+          const el = document.querySelector(sel);
+          if (!txt) {
+            return !!el;
+          }
+          return el?.textContent?.includes(txt) || false;
+        },
+        [selector, text] as [string, string]
+      );
 
       if (found) {
         this.logger.warn(`反爬虫检测: ${type}`);
@@ -1128,7 +1201,9 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     for (let i = 0; i < maxRetries; i++) {
       try {
         const success = await this.navigateWithRetry(url);
-        if (!success) continue;
+        if (!success) {
+          continue;
+        }
 
         await this.delay(2000);
 
@@ -1180,10 +1255,14 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   private extractAsinFromUrl(url: string): string | null {
     // 匹配 /dp/ASIN 或 /gp/product/ASIN
     const dpMatch = url.match(/\/dp\/([A-Z0-9]{10})/i);
-    if (dpMatch) return dpMatch[1].toUpperCase();
+    if (dpMatch) {
+      return dpMatch[1].toUpperCase();
+    }
 
     const gpMatch = url.match(/\/gp\/product\/([A-Z0-9]{10})/i);
-    if (gpMatch) return gpMatch[1].toUpperCase();
+    if (gpMatch) {
+      return gpMatch[1].toUpperCase();
+    }
 
     return null;
   }

@@ -27,9 +27,7 @@ import { updateBitmap } from "@good-trending/shared";
 /**
  * 保存类目热度统计
  */
-export async function saveCategoryHeatStats(
-  stats: CategoryHeatResult[]
-): Promise<number> {
+export async function saveCategoryHeatStats(stats: CategoryHeatResult[]): Promise<number> {
   let savedCount = 0;
 
   for (const stat of stats) {
@@ -155,10 +153,10 @@ export async function saveCrawledProducts(
       // 初始化 Bitmap 统计
       await db.insert(productAppearanceStats).values({
         productId,
-        last7DaysBitmap: 1, // 今天出现
-        last15DaysBitmap: 1,
-        last30DaysBitmap: 1,
-        last60DaysBitmap: 1,
+        last7DaysBitmap: 1n, // 今天出现
+        last15DaysBitmap: 1n,
+        last30DaysBitmap: 1n,
+        last60DaysBitmap: 1n,
         lastUpdateDate: productData.firstSeenAt.toISOString().split("T")[0],
       });
 
@@ -197,9 +195,7 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
     try {
       // 计算上次更新到今天的天数差
       const lastUpdate = stat.lastUpdateDate ? new Date(stat.lastUpdateDate) : date;
-      const daysDiff = Math.floor(
-        (date.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const daysDiff = Math.floor((date.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (daysDiff <= 0) {
         // 今天已经更新过
@@ -210,17 +206,47 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
       const todayAppeared = await checkProductAppearedToday(stat.productId, today);
 
       // 使用 shared 包的 BigInt bitmap 函数
-      let newBitmap7 = BigInt(stat.bitmap7 || 0);
-      let newBitmap15 = BigInt(stat.bitmap15 || 0);
-      let newBitmap30 = BigInt(stat.bitmap30 || 0);
-      let newBitmap60 = BigInt(stat.bitmap60 || 0);
+      // 注意：从数据库读取的是 bigint 类型，已经是 BigInt
+      let newBitmap7 = typeof stat.bitmap7 === "bigint" ? stat.bitmap7 : BigInt(stat.bitmap7 || 0);
+      let newBitmap15 =
+        typeof stat.bitmap15 === "bigint" ? stat.bitmap15 : BigInt(stat.bitmap15 || 0);
+      let newBitmap30 =
+        typeof stat.bitmap30 === "bigint" ? stat.bitmap30 : BigInt(stat.bitmap30 || 0);
+      let newBitmap60 =
+        typeof stat.bitmap60 === "bigint" ? stat.bitmap60 : BigInt(stat.bitmap60 || 0);
 
       // 滑动窗口更新（每天左移一位）
-      for (let i = 0; i < daysDiff; i++) {
-        newBitmap7 = updateBitmap(newBitmap7, 7, false);
-        newBitmap15 = updateBitmap(newBitmap15, 15, false);
-        newBitmap30 = updateBitmap(newBitmap30, 30, false);
-        newBitmap60 = updateBitmap(newBitmap60, 60, false);
+      // 如果天数差大于等于窗口大小，直接清零（所有位都移出窗口）
+      if (daysDiff >= 7) {
+        newBitmap7 = 0n;
+      } else {
+        for (let i = 0; i < daysDiff; i++) {
+          newBitmap7 = updateBitmap(newBitmap7, 7, false);
+        }
+      }
+
+      if (daysDiff >= 15) {
+        newBitmap15 = 0n;
+      } else {
+        for (let i = 0; i < daysDiff; i++) {
+          newBitmap15 = updateBitmap(newBitmap15, 15, false);
+        }
+      }
+
+      if (daysDiff >= 30) {
+        newBitmap30 = 0n;
+      } else {
+        for (let i = 0; i < daysDiff; i++) {
+          newBitmap30 = updateBitmap(newBitmap30, 30, false);
+        }
+      }
+
+      if (daysDiff >= 60) {
+        newBitmap60 = 0n;
+      } else {
+        for (let i = 0; i < daysDiff; i++) {
+          newBitmap60 = updateBitmap(newBitmap60, 60, false);
+        }
       }
 
       // 设置今天的状态
@@ -231,7 +257,7 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
         newBitmap60 = newBitmap60 | 1n;
       }
 
-      // 更新数据库
+      // 更新数据库 - bigint 类型可以直接存储
       await db
         .update(productAppearanceStats)
         .set({
@@ -259,10 +285,7 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
 export async function saveProductSocialStats(
   productId: string,
   statDate: Date,
-  periodResults: Record<
-    string,
-    { reddit: number; x: number }
-  >
+  periodResults: Record<string, { reddit: number; x: number }>
 ): Promise<void> {
   try {
     const today = periodResults["TODAY"] || { reddit: 0, x: 0 };
@@ -281,10 +304,7 @@ export async function saveProductSocialStats(
       .select({ id: productSocialStats.id })
       .from(productSocialStats)
       .where(
-        and(
-          eq(productSocialStats.productId, productId),
-          eq(productSocialStats.statDate, dateStr)
-        )
+        and(eq(productSocialStats.productId, productId), eq(productSocialStats.statDate, dateStr))
       )
       .limit(1);
 
@@ -374,27 +394,34 @@ export async function generateTrendRanks(date: Date = new Date()): Promise<void>
         }))
         .sort((a, b) => b.score - a.score);
 
-      // 保存榜单（前 2000 名）
+      // 保存榜单（前 2000 名）- 使用批量插入优化性能
       const topProducts = rankedProducts.slice(0, 2000);
 
-      for (let i = 0; i < topProducts.length; i++) {
-        const product = topProducts[i];
-        await db.insert(trendRanks).values({
+      if (topProducts.length > 0) {
+        // 构建批量插入数据
+        const insertData = topProducts.map((product, index) => ({
           id: createId(),
           productId: product.productId,
           periodType: period,
           statDate: dateStr,
-          rank: i + 1,
+          rank: index + 1,
           score: product.score,
           redditMentions: product.redditCount,
           xMentions: product.xCount,
           sourceData: {
             calculationMethod: "reddit + x*0.8",
           },
-        });
-      }
+        }));
 
-      console.log(`生成 ${period} 榜单完成，共 ${topProducts.length} 个商品`);
+        // 批量插入 - 每批 500 条
+        const batchSize = 500;
+        for (let i = 0; i < insertData.length; i += batchSize) {
+          const batch = insertData.slice(i, i + batchSize);
+          await db.insert(trendRanks).values(batch);
+        }
+
+        console.log(`生成 ${period} 榜单完成，共 ${topProducts.length} 个商品`);
+      }
     } catch (error) {
       console.error(`生成榜单失败 [${period}]:`, error);
     }
@@ -473,10 +500,7 @@ async function generateUniqueSlug(baseSlug: string): Promise<string> {
  * 检查商品今天是否出现在任何类目中
  * 通过检查该商品关联的类目今天是否有爬取记录
  */
-async function checkProductAppearedToday(
-  productId: string,
-  today: string
-): Promise<boolean> {
+async function checkProductAppearedToday(productId: string, today: string): Promise<boolean> {
   // 查询该商品关联的类目今天是否有爬取记录
   const result = await db
     .select({
@@ -498,42 +522,83 @@ async function checkProductAppearedToday(
 
 /**
  * 获取指定周期的商品统计数据
+ * 使用类型安全的字段选择，避免 SQL 注入
  */
 async function getProductStatsByPeriod(
   period: string,
   dateStr: string
 ): Promise<Array<{ productId: string; redditCount: number; xCount: number }>> {
-  // 根据周期选择字段
-  const redditField = getPeriodField(period, "reddit");
-  const xField = getPeriodField(period, "x");
-
+  // 使用 Drizzle ORM 的类型安全查询，查询所有可能的字段
   const result = await db
     .select({
       productId: productSocialStats.productId,
-      redditCount: sql`${sql.raw(redditField)}`.mapWith(Number),
-      xCount: sql`${sql.raw(xField)}`.mapWith(Number),
+      todayRedditCount: productSocialStats.todayRedditCount,
+      todayXCount: productSocialStats.todayXCount,
+      yesterdayRedditCount: productSocialStats.yesterdayRedditCount,
+      yesterdayXCount: productSocialStats.yesterdayXCount,
+      thisWeekRedditCount: productSocialStats.thisWeekRedditCount,
+      thisWeekXCount: productSocialStats.thisWeekXCount,
+      thisMonthRedditCount: productSocialStats.thisMonthRedditCount,
+      thisMonthXCount: productSocialStats.thisMonthXCount,
+      last7DaysRedditCount: productSocialStats.last7DaysRedditCount,
+      last7DaysXCount: productSocialStats.last7DaysXCount,
+      last15DaysRedditCount: productSocialStats.last15DaysRedditCount,
+      last15DaysXCount: productSocialStats.last15DaysXCount,
+      last30DaysRedditCount: productSocialStats.last30DaysRedditCount,
+      last30DaysXCount: productSocialStats.last30DaysXCount,
+      last60DaysRedditCount: productSocialStats.last60DaysRedditCount,
+      last60DaysXCount: productSocialStats.last60DaysXCount,
     })
     .from(productSocialStats)
     .where(eq(productSocialStats.statDate, dateStr));
 
-  return result;
-}
+  // 根据周期选择对应的字段值（类型安全的 switch）
+  return result.map((row) => {
+    let redditCount = 0;
+    let xCount = 0;
 
-/**
- * 获取周期对应的字段名
- */
-function getPeriodField(period: string, platform: "reddit" | "x"): string {
-  const prefix = platform === "reddit" ? "today_reddit_count" : "today_x_count";
+    switch (period) {
+      case "TODAY":
+        redditCount = row.todayRedditCount;
+        xCount = row.todayXCount;
+        break;
+      case "YESTERDAY":
+        redditCount = row.yesterdayRedditCount;
+        xCount = row.yesterdayXCount;
+        break;
+      case "THIS_WEEK":
+        redditCount = row.thisWeekRedditCount;
+        xCount = row.thisWeekXCount;
+        break;
+      case "THIS_MONTH":
+        redditCount = row.thisMonthRedditCount;
+        xCount = row.thisMonthXCount;
+        break;
+      case "LAST_7_DAYS":
+        redditCount = row.last7DaysRedditCount;
+        xCount = row.last7DaysXCount;
+        break;
+      case "LAST_15_DAYS":
+        redditCount = row.last15DaysRedditCount;
+        xCount = row.last15DaysXCount;
+        break;
+      case "LAST_30_DAYS":
+        redditCount = row.last30DaysRedditCount;
+        xCount = row.last30DaysXCount;
+        break;
+      case "LAST_60_DAYS":
+        redditCount = row.last60DaysRedditCount;
+        xCount = row.last60DaysXCount;
+        break;
+      default:
+        redditCount = row.todayRedditCount;
+        xCount = row.todayXCount;
+    }
 
-  const fieldMap: Record<string, string> = {
-    TODAY: prefix.replace("today_", "today_"),
-    YESTERDAY: prefix.replace("today_", "yesterday_"),
-    THIS_WEEK: prefix.replace("today_", "this_week_"),
-    THIS_MONTH: prefix.replace("today_", "this_month_"),
-    LAST_7_DAYS: prefix.replace("today_", "last_7_days_"),
-    LAST_15_DAYS: prefix.replace("today_", "last_15_days_"),
-    LAST_30_DAYS: prefix.replace("today_", "last_30_days_"),
-  };
-
-  return fieldMap[period] || prefix;
+    return {
+      productId: row.productId,
+      redditCount,
+      xCount,
+    };
+  });
 }

@@ -8,6 +8,7 @@
  * - 每天凌晨计算趋势榜单
  */
 import { Queue } from "bullmq";
+import cron, { type ScheduledTask } from "node-cron";
 import { createSchedulerLogger } from "../utils/logger";
 import {
   getCrawlerQueue,
@@ -24,7 +25,7 @@ const logger = createSchedulerLogger("scheduler");
  */
 interface SchedulerState {
   running: boolean;
-  jobs: Map<string, NodeJS.Timeout>;
+  jobs: Map<string, ScheduledTask>;
 }
 
 const state: SchedulerState = {
@@ -59,90 +60,26 @@ export const CRON_SCHEDULES = {
 } as const;
 
 /**
- * 计算下次执行延迟（毫秒）
+ * 验证 Cron 表达式是否有效
  */
-function getNextDelay(cronExpression: string): number {
-  const parts = cronExpression.split(" ");
-
-  // 处理 */X 格式（每 X 分钟/小时）
-  if (parts[0].startsWith("*/") || parts[1].startsWith("*/")) {
-    const now = new Date();
-
-    // 每 X 小时
-    if (parts[1].startsWith("*/")) {
-      const hours = parseInt(parts[1].substring(2), 10);
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const currentSecond = now.getSeconds();
-
-      const nextHour = Math.floor(currentHour / hours) * hours + hours;
-      const delayHours = nextHour - currentHour;
-      const delayMs =
-        (delayHours * 60 * 60 - currentMinute * 60 - currentSecond) * 1000;
-
-      return delayMs;
-    }
-
-    // 每 X 分钟
-    if (parts[0].startsWith("*/")) {
-      const minutes = parseInt(parts[0].substring(2), 10);
-      const currentMinute = now.getMinutes();
-      const currentSecond = now.getSeconds();
-
-      const nextMinute = Math.ceil((currentMinute + 1) / minutes) * minutes;
-      const delayMinutes = nextMinute - currentMinute;
-      const delayMs = (delayMinutes * 60 - currentSecond) * 1000;
-
-      return delayMs;
-    }
-  }
-
-  // 处理每小时整点 "0 * * * *"
-  if (parts[0] === "0" && parts[1] === "*") {
-    const now = new Date();
-    const currentMinutes = now.getMinutes();
-    const currentSeconds = now.getSeconds();
-    const delayMs =
-      (60 - currentMinutes - 1) * 60 * 1000 + (60 - currentSeconds) * 1000;
-    return delayMs;
-  }
-
-  // 处理每天固定时间 "0 2 * * *"
-  if (parts[0] === "0" && parts[1] !== "*" && parts[2] === "*") {
-    const hour = parseInt(parts[1], 10);
-    const now = new Date();
-    const nextRun = new Date();
-    nextRun.setHours(hour, 0, 0, 0);
-
-    if (nextRun <= now) {
-      nextRun.setDate(nextRun.getDate() + 1);
-    }
-
-    return nextRun.getTime() - now.getTime();
-  }
-
-  // 默认：每小时
-  return 60 * 60 * 1000;
+function validateCronExpression(expression: string): boolean {
+  return cron.validate(expression);
 }
 
 /**
  * 创建定时任务
+ * 使用 node-cron 库支持完整的 Cron 表达式
  */
-function scheduleJob(
-  name: string,
-  cronExpression: string,
-  callback: () => Promise<void>
-): void {
-  const scheduleNext = (): void => {
-    if (!state.running) {
-      return;
-    }
+function scheduleJob(name: string, cronExpression: string, callback: () => Promise<void>): void {
+  if (!validateCronExpression(cronExpression)) {
+    logger.error(`Invalid cron expression for job "${name}": ${cronExpression}`);
+    return;
+  }
 
-    const delay = getNextDelay(cronExpression);
-
-    logger.debug(`Scheduling job "${name}" to run in ${delay}ms`);
-
-    const timeout = setTimeout(async () => {
+  // 创建定时任务
+  const task = cron.schedule(
+    cronExpression,
+    async () => {
       if (!state.running) {
         return;
       }
@@ -158,24 +95,20 @@ function scheduleJob(
           stack: error instanceof Error ? error.stack : undefined,
         });
       }
+    },
+    {
+      timezone: "Asia/Shanghai", // 使用中国时区
+    } as any
+  );
 
-      // 调度下次执行
-      scheduleNext();
-    }, delay);
-
-    state.jobs.set(name, timeout);
-  };
-
-  scheduleNext();
+  state.jobs.set(name, task);
   logger.info(`Scheduled job "${name}" with cron: ${cronExpression}`);
 }
 
 /**
  * 添加类目热度爬取任务
  */
-async function scheduleCategoryHeatJob(
-  queue: Queue<CrawlerJobData>
-): Promise<void> {
+async function scheduleCategoryHeatJob(queue: Queue<CrawlerJobData>): Promise<void> {
   const traceId = generateTraceId();
 
   logger.info(`Adding category heat crawl job to queue`, { traceId });
@@ -207,9 +140,7 @@ async function scheduleCategoryHeatJob(
 /**
  * 添加商品发现任务
  */
-async function scheduleProductDiscoveryJob(
-  queue: Queue<CrawlerJobData>
-): Promise<void> {
+async function scheduleProductDiscoveryJob(queue: Queue<CrawlerJobData>): Promise<void> {
   const traceId = generateTraceId();
 
   logger.info(`Adding product discovery crawl job to queue`, { traceId });
@@ -241,9 +172,7 @@ async function scheduleProductDiscoveryJob(
 /**
  * 添加社交提及统计任务
  */
-async function scheduleProductMentionsJob(
-  queue: Queue<CrawlerJobData>
-): Promise<void> {
+async function scheduleProductMentionsJob(queue: Queue<CrawlerJobData>): Promise<void> {
   const traceId = generateTraceId();
 
   logger.info(`Adding product mentions crawl job to queue`, { traceId });
@@ -310,9 +239,7 @@ async function scheduleTrendingJob(
   logger.info(`Adding trending ${type} job to queue`, { traceId });
 
   await queue.add(
-    type === "update"
-      ? JOB_TYPES.UPDATE_TRENDING
-      : JOB_TYPES.CALCULATE_TRENDING_SCORE,
+    type === "update" ? JOB_TYPES.UPDATE_TRENDING : JOB_TYPES.CALCULATE_TRENDING_SCORE,
     {
       type,
       triggeredBy: "scheduler",
@@ -362,13 +289,9 @@ export function startScheduler(): void {
   });
 
   // 每2小时执行商品发现
-  scheduleJob(
-    "crawl-product-discovery",
-    CRON_SCHEDULES.EVERY_2_HOURS,
-    async () => {
-      await scheduleProductDiscoveryJob(crawlerQueue);
-    }
-  );
+  scheduleJob("crawl-product-discovery", CRON_SCHEDULES.EVERY_2_HOURS, async () => {
+    await scheduleProductDiscoveryJob(crawlerQueue);
+  });
 
   // ========== 每天凌晨执行的任务（昨天完整数据）==========
 
@@ -406,10 +329,10 @@ export function stopScheduler(): void {
 
   state.running = false;
 
-  // 清除所有定时任务
-  for (const [name, timeout] of state.jobs) {
-    clearTimeout(timeout);
-    logger.debug(`Cleared scheduled job: ${name}`);
+  // 停止所有定时任务
+  for (const [name, task] of state.jobs) {
+    task.stop();
+    logger.debug(`Stopped scheduled job: ${name}`);
   }
   state.jobs.clear();
 

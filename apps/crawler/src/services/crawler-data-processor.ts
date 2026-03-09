@@ -22,6 +22,7 @@ import {
   type CrawlerLogData,
 } from "../types/crawler.types";
 import { updateBitmap } from "../utils/bitmap";
+import { formatDate } from "../utils/date";
 
 /**
  * 保存类目热度统计
@@ -38,7 +39,7 @@ export async function saveCategoryHeatStats(stats: CategoryHeatResult[]): Promis
         .where(
           and(
             eq(categoryHeatStats.categoryId, stat.categoryId),
-            eq(categoryHeatStats.statDate, stat.statDate.toISOString().split("T")[0])
+            eq(categoryHeatStats.statDate, formatDate(stat.statDate))
           )
         )
         .limit(1);
@@ -73,7 +74,7 @@ export async function saveCategoryHeatStats(stats: CategoryHeatResult[]): Promis
         await db.insert(categoryHeatStats).values({
           id: createId(),
           categoryId: stat.categoryId,
-          statDate: stat.statDate.toISOString().split("T")[0],
+          statDate: formatDate(stat.statDate),
           redditResultCount: stat.redditResultCount,
           xResultCount: stat.xResultCount,
           yesterdayRedditCount: stat.yesterdayRedditCount ?? 0,
@@ -140,7 +141,7 @@ export async function saveCrawledProducts(
         amazonId: productData.amazonId,
         sourceUrl: productData.sourceUrl,
         discoveredFrom,
-        firstSeenAt: productData.firstSeenAt.toISOString().split("T")[0],
+        firstSeenAt: formatDate(productData.firstSeenAt),
       });
 
       // 创建类目关联
@@ -156,7 +157,7 @@ export async function saveCrawledProducts(
         last15DaysBitmap: 1n,
         last30DaysBitmap: 1n,
         last60DaysBitmap: 1n,
-        lastUpdateDate: productData.firstSeenAt.toISOString().split("T")[0],
+        lastUpdateDate: formatDate(productData.firstSeenAt),
       });
 
       savedCount++;
@@ -174,7 +175,7 @@ export async function saveCrawledProducts(
  * 每天调用一次，更新近7/15/30/60天的出现记录
  */
 export async function updateAllProductsBitmap(date: Date = new Date()): Promise<number> {
-  const today = date.toISOString().split("T")[0];
+  const today = formatDate(date);
   let updatedCount = 0;
 
   // 获取所有商品的统计记录
@@ -296,7 +297,7 @@ export async function saveProductSocialStats(
     const last30Days = periodResults["LAST_30_DAYS"] || { reddit: 0, x: 0 };
     const last60Days = periodResults["LAST_60_DAYS"] || { reddit: 0, x: 0 };
 
-    const dateStr = statDate.toISOString().split("T")[0];
+    const dateStr = formatDate(statDate);
 
     // 检查是否已存在
     const existing = await db
@@ -365,7 +366,7 @@ export async function saveProductSocialStats(
  * 基于社交提及数据计算各周期榜单
  */
 export async function generateTrendRanks(date: Date = new Date()): Promise<void> {
-  const dateStr = date.toISOString().split("T")[0];
+  const dateStr = formatDate(date);
 
   const periods = [
     "TODAY",

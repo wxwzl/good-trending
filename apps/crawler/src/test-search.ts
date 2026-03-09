@@ -30,12 +30,7 @@ const logger = createLogger({
   ],
 });
 
-/**
- * 格式化日期
- */
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
+import { formatDate } from "./utils/date";
 
 /**
  * 构建搜索查询
@@ -49,10 +44,14 @@ function buildSearchQuery(keyword: string, afterDate: string): string {
  */
 function extractAsinFromUrl(url: string): string | null {
   const dpMatch = url.match(/\/dp\/([A-Z0-9]{10})/i);
-  if (dpMatch) return dpMatch[1].toUpperCase();
+  if (dpMatch) {
+    return dpMatch[1].toUpperCase();
+  }
 
   const gpMatch = url.match(/\/gp\/product\/([A-Z0-9]{10})/i);
-  if (gpMatch) return gpMatch[1].toUpperCase();
+  if (gpMatch) {
+    return gpMatch[1].toUpperCase();
+  }
 
   return null;
 }
@@ -68,11 +67,7 @@ async function testSearch() {
   logger.info(`搜索日期范围: ${dateStr} 至今`);
 
   // 测试类目
-  const categories = [
-    "Electronics",
-    "Home & Living",
-    "Fashion",
-  ];
+  const categories = ["Electronics", "Home & Living", "Fashion"];
 
   // 启动浏览器（有头模式）
   logger.info("启动浏览器（有头模式）...");
@@ -135,8 +130,8 @@ async function testSearch() {
           'div[data-ved] a[href^="http"]',
           'div.g a[href^="http"]',
           'a[jsname="UWckNb"]',
-          'div.yuRUbf > a',
-          'a[ping]',
+          "div.yuRUbf > a",
+          "a[ping]",
         ];
 
         for (const selector of selectors) {
@@ -160,7 +155,9 @@ async function testSearch() {
             }
           });
 
-          if (data.links.length > 0) break;
+          if (data.links.length > 0) {
+            break;
+          }
         }
 
         return data;

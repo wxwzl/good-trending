@@ -1,11 +1,10 @@
 /**
  * 爬虫模块类型定义
+ * 注意：SourceType 统一从 @good-trending/database 导入
  */
 
-/**
- * 数据源类型
- */
-export type SourceType = "X_PLATFORM" | "AMAZON";
+// Note: SourceType 已统一从 @good-trending/database 导入
+// 使用时请导入: import { SourceType } from "@good-trending/database";
 
 /**
  * 爬虫执行选项

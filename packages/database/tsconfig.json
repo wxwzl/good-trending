@@ -20,5 +20,5 @@
     "scripts/seed-categories.ts",
     "src/loadEnv.ts"
   ],
-  "exclude": ["node_modules", "dist", "src/seed.ts", "src/cleanup.ts", "scripts/cleanup-data.ts"]
+  "exclude": ["node_modules", "dist"]
 }

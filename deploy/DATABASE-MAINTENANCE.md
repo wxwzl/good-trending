@@ -14,12 +14,12 @@
 
 ### 子目录说明
 
-| 目录/文件 | 说明 |
-|-----------|------|
-| `/var/lib/postgresql/16/main/base/` | 数据库数据文件 |
+| 目录/文件                             | 说明                     |
+| ------------------------------------- | ------------------------ |
+| `/var/lib/postgresql/16/main/base/`   | 数据库数据文件           |
 | `/var/lib/postgresql/16/main/global/` | 全局数据（如用户、权限） |
-| `/etc/postgresql/16/main/` | 配置文件目录 |
-| `/var/log/postgresql/` | 日志文件目录 |
+| `/etc/postgresql/16/main/`            | 配置文件目录             |
+| `/var/log/postgresql/`                | 日志文件目录             |
 
 ### 查看当前数据目录
 
@@ -174,9 +174,9 @@ sudo systemctl status postgresql
 
 ## 6. 相关脚本
 
-| 脚本 | 用途 |
-|------|------|
-| `init-database.sh` | 初始化数据库和用户 |
+| 脚本                          | 用途                 |
+| ----------------------------- | -------------------- |
+| `init-database.sh`            | 初始化数据库和用户   |
 | `install-ubuntu-remaining.sh` | 安装 PostgreSQL 服务 |
 
 ---

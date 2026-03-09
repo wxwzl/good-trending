@@ -21,11 +21,11 @@ sudo systemctl status postgresql
    Main PID: 20392 (code=exited, status=0/SUCCESS)
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `active (exited)` | 主服务脚本已完成启动任务 |
+| 字段              | 说明                                   |
+| ----------------- | -------------------------------------- |
+| `active (exited)` | 主服务脚本已完成启动任务               |
 | `Main PID exited` | wrapper 脚本退出，实际进程由子服务管理 |
-| `enabled` | 开机自启已启用 |
+| `enabled`         | 开机自启已启用                         |
 
 ### 查看具体数据库实例状态
 
@@ -193,10 +193,10 @@ sudo systemctl disable postgresql
 
 ## 7. 相关文档
 
-| 文档 | 用途 |
-|------|------|
+| 文档                      | 用途               |
+| ------------------------- | ------------------ |
 | `DATABASE-MAINTENANCE.md` | 数据备份、目录管理 |
-| `init-database.sh` | 初始化数据库和用户 |
+| `init-database.sh`        | 初始化数据库和用户 |
 
 ---
 

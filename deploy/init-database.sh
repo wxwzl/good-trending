@@ -7,6 +7,16 @@
 # 1. chmod +x init-database.sh
 # 2. sudo -u postgres ./init-database.sh
 #
+# 指定环境变量（可选）：
+# 方式1 - 命令行临时指定：
+#   sudo -u postgres DB_PASSWORD=my_pass DB_USER=myuser ./init-database.sh
+#
+# 方式2 - 先导出再执行：
+#   export DB_PASSWORD=my_pass DB_USER=myuser
+#   sudo -u postgres ./init-database.sh
+#
+# 支持的变量：DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+#
 
 set -e
 

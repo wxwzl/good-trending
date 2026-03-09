@@ -1,10 +1,15 @@
 /**
  * 请求频率限制配置
  *
- * 全局限制: 100 请求/分钟
+ * 全局限制: 100 请求/分钟 (可通过环境变量配置)
  * 搜索接口: 20 请求/分钟
+ *
+ * 环境变量:
+ * - RATE_LIMIT_WINDOW_MS: 限流窗口时间（毫秒），默认 60000 (1分钟)
+ * - RATE_LIMIT_MAX_REQUESTS: 限流最大请求数，默认 100
  */
 import { Injectable, ExecutionContext } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ThrottlerGuard,
   ThrottlerModuleOptions,
@@ -19,18 +24,33 @@ import { ThrottlerStorage } from '@nestjs/throttler/dist/throttler-storage.inter
  */
 @Injectable()
 export class ThrottlerConfigService implements ThrottlerOptionsFactory {
+  constructor(private readonly configService: ConfigService) {}
+
   createThrottlerOptions(): ThrottlerModuleOptions {
+    // 从环境变量读取配置，使用默认值
+    const defaultTtl = this.configService.get<number>(
+      'RATE_LIMIT_WINDOW_MS',
+      60000,
+    );
+    const defaultLimit = this.configService.get<number>(
+      'RATE_LIMIT_MAX_REQUESTS',
+      100,
+    );
+
+    // 搜索接口使用更严格的限制（默认限制的 20%）
+    const searchLimit = Math.max(10, Math.floor(defaultLimit * 0.2));
+
     return {
       throttlers: [
         {
           name: 'default',
-          ttl: 60000, // 1 分钟 (毫秒)
-          limit: 100, // 每分钟 100 次请求
+          ttl: defaultTtl,
+          limit: defaultLimit,
         },
         {
           name: 'search', // 搜索接口特殊限制
-          ttl: 60000, // 1 分钟 (毫秒)
-          limit: 20, // 每分钟 20 次请求
+          ttl: defaultTtl,
+          limit: searchLimit,
         },
       ],
     };

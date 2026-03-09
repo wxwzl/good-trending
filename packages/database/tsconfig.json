@@ -16,6 +16,7 @@
     "scripts/check-crawler-logs.ts",
     "scripts/check-products.ts",
     "scripts/cleanup-data.ts",
+    "scripts/db-push.ts",
     "scripts/reset-database.ts",
     "scripts/seed-categories.ts",
     "src/loadEnv.ts"

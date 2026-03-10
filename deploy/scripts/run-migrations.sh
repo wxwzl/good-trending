@@ -39,13 +39,13 @@ log_error() {
 MIGRATIONS_DIR="${1:-deploy/migrations}"
 
 # 写死的数据库连接
-DATABASE_URL="postgresql://trending:trending-god@localhost:5432/good_trending"
+DATABASE_URL="postgresql://trending:trending-god@127.0.0.1:5432/good_trending"
 
 log_info "=========================================="
 log_info "数据库迁移执行脚本"
 log_info "=========================================="
 log_info "迁移目录: $MIGRATIONS_DIR"
-log_info "数据库: postgresql://postgres:***@localhost:5432/good_trending"
+log_info "数据库: postgresql://trending:***@127.0.0.1:5432/good_trending"
 log_info "=========================================="
 echo ""
 

@@ -47,11 +47,15 @@ export const dynamicParams = true;
 export const revalidate = 300; // Revalidate every 300 seconds
 
 export async function generateStaticParams() {
-  const result = await listTopics({ page: 1, limit: 2 });
+  try {
+    const result = await listTopics({ page: 1, limit: 2 });
 
-  return (result.items || []).map((topic: Topic) => ({
-    slug: topic.slug,
-  }));
+    return (result.items || []).map((topic: Topic) => ({
+      slug: topic.slug,
+    }));
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {

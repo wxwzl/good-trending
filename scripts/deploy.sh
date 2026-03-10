@@ -88,12 +88,12 @@ log_info "[2/5] 构建服务 (api, web, scheduler)..."
 pnpm run build:deploy
 log_success "应用构建完成"
 
-# 构建 crawler 脚本
-log_info "构建 crawler 30天数据爬取脚本..."
-cd apps/crawler
-pnpm run build:script
-cd ../..
-log_success "Crawler 脚本构建完成"
+# # 构建 crawler 脚本
+# log_info "构建 crawler 30天数据爬取脚本..."
+# cd apps/crawler
+# pnpm run build:script
+# cd ../..
+# log_success "Crawler 脚本构建完成"
 
 # ============================================
 # 3. 检查构建结果
@@ -163,9 +163,8 @@ tar -czf $DEPLOY_PACKAGE \
     deploy/app/scheduler/package.json \
     deploy/.env.production \
     deploy/ecosystem.config.js \
+    deploy/category/category.json \
     deploy/nginx \
-    deploy/app/crawler/run-crawl-30days.sh \
-    deploy/app/crawler/scripts \
     deploy/migrations \
     deploy/scripts \
     deploy/init-database.sh \

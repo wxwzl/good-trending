@@ -36,7 +36,7 @@ if (loadedEnvFiles.length > 0) {
     '[api] Warning: No environment file found, using system environment variables',
   );
 }
-
+console.log(`[api] Starting with DATABASE_URL=${process.env.DATABASE_URL},`);
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';

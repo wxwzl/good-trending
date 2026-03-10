@@ -56,8 +56,8 @@
       "id": "scheduler-03",
       "name": "重构product-discovery任务",
       "priority": "medium",
-      "passes": false,
-      "notes": "按新架构重构商品发现任务（旧代码，暂未迁移）"
+      "passes": true,
+      "notes": "按新架构重构完成，创建垂直切片模块"
     },
     {
       "id": "scheduler-04",

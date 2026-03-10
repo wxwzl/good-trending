@@ -17,6 +17,12 @@ import {
 // 导入类目热度任务
 import { CATEGORY_HEAT_SCHEDULE, processCategoryHeatJob } from "./category-heat/index.js";
 
+// 导入商品发现任务
+import {
+  PRODUCT_DISCOVERY_SCHEDULE,
+  processProductDiscoveryJob,
+} from "./product-discovery/index.js";
+
 /**
  * 注册的任务列表
  * 新增任务时在这里添加
@@ -33,6 +39,12 @@ export const REGISTERED_JOBS = [
     cron: CATEGORY_HEAT_SCHEDULE.cron,
     enabled: CATEGORY_HEAT_SCHEDULE.enabled,
     processor: processCategoryHeatJob,
+  },
+  {
+    name: PRODUCT_DISCOVERY_SCHEDULE.name,
+    cron: PRODUCT_DISCOVERY_SCHEDULE.cron,
+    enabled: PRODUCT_DISCOVERY_SCHEDULE.enabled,
+    processor: processProductDiscoveryJob,
   },
 ] as const;
 

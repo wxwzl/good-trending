@@ -81,6 +81,50 @@ export abstract class BaseCrawler<T> {
   }
 
   /**
+   * 获取浏览器启动选项
+   * 子类可以覆盖此方法自定义启动参数
+   */
+  protected getBrowserLaunchOptions(): Parameters<typeof chromium.launch>[0] {
+    const options: Parameters<typeof chromium.launch>[0] = {
+      headless: this.config.headless,
+      args: [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--disable-site-isolation-trials",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--window-size=1920,1080",
+        "--disable-infobars",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-extensions",
+        "--disable-sync",
+        "--disable-translate",
+        "--hide-scrollbars",
+        "--metrics-recording-only",
+        "--mute-audio",
+        "--no-first-run",
+        "--safebrowsing-disable-auto-update",
+        "--password-store=basic",
+        "--use-mock-keychain",
+        "--force-color-profile=srgb",
+      ],
+    };
+
+    if (this.config.proxy) {
+      options.proxy = {
+        server: this.config.proxy,
+      };
+    }
+
+    return options;
+  }
+
+  /**
    * 初始化浏览器
    */
   async initBrowser(): Promise<void> {
@@ -88,17 +132,7 @@ export abstract class BaseCrawler<T> {
       return;
     }
 
-    const launchOptions: Parameters<typeof chromium.launch>[0] = {
-      headless: this.config.headless,
-      args: ["--disable-blink-features=AutomationControlled"],
-    };
-
-    if (this.config.proxy) {
-      launchOptions.proxy = {
-        server: this.config.proxy,
-      };
-    }
-
+    const launchOptions = this.getBrowserLaunchOptions();
     this.browser = await chromium.launch(launchOptions);
 
     const contextOptions: Parameters<Browser["newContext"]>[0] = {
@@ -114,10 +148,21 @@ export abstract class BaseCrawler<T> {
 
     this.page = await this.context.newPage();
 
+    // 调用页面创建钩子（子类可覆盖）
+    await this.onPageCreated();
+
     // 设置请求拦截
     await this.setupRequestInterception();
 
     this.logger.info("Browser initialized successfully");
+  }
+
+  /**
+   * 页面创建后的钩子方法
+   * 子类可以覆盖此方法在页面创建后执行自定义逻辑
+   */
+  protected async onPageCreated(): Promise<void> {
+    // 默认空实现，子类可覆盖
   }
 
   /**

@@ -120,81 +120,28 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
   }
 
   /**
-   * 初始化浏览器（增强版，带 Stealth 注入）
+   * 页面创建后的钩子 - 注入 Stealth 脚本
+   * 覆盖父类方法，在页面创建后注入反检测脚本
    */
-  async initBrowser(): Promise<void> {
-    if (this.browser) {
-      return;
-    }
-
-    const { chromium } = await import("playwright");
-
-    const launchOptions: Parameters<typeof chromium.launch>[0] = {
-      headless: this.config.headless,
-      args: [
-        "--disable-blink-features=AutomationControlled",
-        "--disable-web-security",
-        "--disable-features=IsolateOrigins,site-per-process",
-        "--disable-site-isolation-trials",
-        "--disable-dev-shm-usage",
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-accelerated-2d-canvas",
-        "--disable-gpu",
-        "--window-size=1920,1080",
-        "--disable-infobars",
-        "--disable-background-networking",
-        "--disable-default-apps",
-        "--disable-extensions",
-        "--disable-sync",
-        "--disable-translate",
-        "--hide-scrollbars",
-        "--metrics-recording-only",
-        "--mute-audio",
-        "--no-first-run",
-        "--safebrowsing-disable-auto-update",
-        "--password-store=basic",
-        "--use-mock-keychain",
-        "--force-color-profile=srgb",
-      ],
-    };
-
-    if (this.config.proxy) {
-      launchOptions.proxy = {
-        server: this.config.proxy,
-      };
-    }
-
-    this.browser = await chromium.launch(launchOptions);
-
-    const contextOptions: Parameters<Browser["newContext"]>[0] = {
-      userAgent: this.config.headers["User-Agent"],
-      locale: "en-US",
-      viewport: { width: 1920, height: 1080 },
-    };
-
-    this.context = await this.browser.newContext(contextOptions);
-    this.context.setDefaultTimeout(this.config.timeout);
-    this.page = await this.context.newPage();
-
+  protected async onPageCreated(): Promise<void> {
     // 注入 Stealth 脚本隐藏自动化特征
     await this.injectStealthScript();
-
-    // 设置请求拦截
-    await this.setupRequestInterception();
 
     this.logger.info("Browser initialized with enhanced stealth mode");
   }
 
   /**
    * 注入 Stealth 脚本隐藏自动化特征
+   * 注入失败不会阻止爬虫继续执行
    */
   private async injectStealthScript(): Promise<void> {
     if (!this.page) {
+      this.logger.warn("Cannot inject stealth script: page is null");
       return;
     }
 
-    await this.page.addInitScript(() => {
+    try {
+      await this.page.addInitScript(() => {
       // 覆盖 navigator.webdriver
       Object.defineProperty(navigator, "webdriver", {
         get: () => undefined,
@@ -299,6 +246,14 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
         return originalQuery.call(window.navigator.permissions, parameters);
       };
     });
+
+      this.logger.debug("Stealth script injected successfully");
+    } catch (error) {
+      this.logger.warn("Failed to inject stealth script, continuing without stealth mode", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // 不抛出错误，允许爬虫继续执行
+    }
   }
 
   getName(): string {

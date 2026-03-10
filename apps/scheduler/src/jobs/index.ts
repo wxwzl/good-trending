@@ -14,6 +14,9 @@ import {
   processAIProductDiscoveryJob,
 } from "./ai-product-discovery/index.js";
 
+// 导入类目热度任务
+import { CATEGORY_HEAT_SCHEDULE, processCategoryHeatJob } from "./category-heat/index.js";
+
 /**
  * 注册的任务列表
  * 新增任务时在这里添加
@@ -25,13 +28,12 @@ export const REGISTERED_JOBS = [
     enabled: AI_PRODUCT_DISCOVERY_CONFIG.enabled,
     processor: processAIProductDiscoveryJob,
   },
-  // 后续可以添加更多任务：
-  // {
-  //   name: "category-heat",
-  //   cron: "0 */2 * * *",
-  //   enabled: true,
-  //   processor: processCategoryHeatJob,
-  // },
+  {
+    name: CATEGORY_HEAT_SCHEDULE.name,
+    cron: CATEGORY_HEAT_SCHEDULE.cron,
+    enabled: CATEGORY_HEAT_SCHEDULE.enabled,
+    processor: processCategoryHeatJob,
+  },
 ] as const;
 
 /**

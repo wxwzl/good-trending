@@ -14,8 +14,8 @@
       "id": "crawler-01",
       "name": "提取Google搜索服务",
       "priority": "high",
-      "passes": false,
-      "notes": "从GoogleSearchCrawler提取通用搜索能力"
+      "passes": true,
+      "notes": "GoogleSearchService已存在，GoogleSearchCrawler已在使用"
     },
     {
       "id": "crawler-02",
@@ -49,8 +49,8 @@
       "id": "scheduler-02",
       "name": "重构category-heat任务",
       "priority": "medium",
-      "passes": false,
-      "notes": "按新架构重构类目热度任务（旧代码，暂未迁移）"
+      "passes": true,
+      "notes": "按新架构重构完成，创建垂直切片模块"
     },
     {
       "id": "scheduler-03",

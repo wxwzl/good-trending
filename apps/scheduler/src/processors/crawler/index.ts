@@ -11,6 +11,7 @@ import { processCategoryHeatJob } from "./category-heat.js";
 import { processProductDiscoveryJob } from "./product-discovery.js";
 import { processProductMentionsJob } from "./product-mentions.js";
 import { processYesterdayStatsJob } from "./yesterday-stats.js";
+import { processAIProductDiscoveryJob } from "../../jobs/ai-product-discovery/processor.js";
 
 const logger = createSchedulerLogger("crawler-processor");
 
@@ -22,12 +23,17 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
 /**
  * 处理器映射表
  * 策略模式：根据任务类型路由到对应的处理器
+ *
+ * 注意：新架构的任务需要在这里注册
  */
 const jobHandlers: Record<string, (job: Job<CrawlerJobData>) => Promise<CrawlerJobResult>> = {
+  // 旧架构任务
   "category-heat": processCategoryHeatJob,
   "product-discovery": processProductDiscoveryJob,
   "product-mentions": processProductMentionsJob,
   "yesterday-stats": processYesterdayStatsJob,
+  // 新架构任务
+  "ai-product-discovery": processAIProductDiscoveryJob,
 };
 
 /**

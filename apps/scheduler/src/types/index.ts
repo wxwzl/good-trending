@@ -16,6 +16,7 @@ export type CrawlerInstance = {
   crawlProductMentions: (productName: string, date: Date) => Promise<unknown>;
   crawlYesterdayCategoryHeat: (categories: unknown[]) => Promise<unknown>;
   crawlYesterdayProducts: (categories: unknown[]) => Promise<unknown>;
+  crawlCategoryHeatAndProducts: (categories: unknown[]) => Promise<unknown>;
   [key: string]: unknown;
 };
 

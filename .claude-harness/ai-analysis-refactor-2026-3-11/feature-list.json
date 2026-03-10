@@ -1,0 +1,105 @@
+{
+  "taskName": "AI分析服务实现 & 架构重构",
+  "description": "实现AI分析公共服务，并按新架构重构爬虫包和调度包代码",
+  "startDate": "2026-03-11",
+  "features": [
+    {
+      "id": "ai-01",
+      "name": "完成AI分析公共服务",
+      "priority": "high",
+      "passes": true,
+      "notes": "包括Kimi/百炼/智谱三个提供商，支持超时、重试、错误处理"
+    },
+    {
+      "id": "crawler-01",
+      "name": "提取Google搜索服务",
+      "priority": "high",
+      "passes": false,
+      "notes": "从GoogleSearchCrawler提取通用搜索能力"
+    },
+    {
+      "id": "crawler-02",
+      "name": "提取Amazon搜索服务",
+      "priority": "high",
+      "passes": true,
+      "notes": "创建AmazonSearchService用于关键词搜索"
+    },
+    {
+      "id": "crawler-03",
+      "name": "提取Reddit服务",
+      "priority": "high",
+      "passes": true,
+      "notes": "提取Reddit内容爬取和链接提取"
+    },
+    {
+      "id": "crawler-04",
+      "name": "创建社交提及统计服务",
+      "priority": "high",
+      "passes": true,
+      "notes": "SocialMentionService用于统计商品提及次数"
+    },
+    {
+      "id": "scheduler-01",
+      "name": "创建垂直任务模块结构",
+      "priority": "high",
+      "passes": true,
+      "notes": "建立scheduler/src/jobs/目录结构，创建AIProductDiscovery任务"
+    },
+    {
+      "id": "scheduler-02",
+      "name": "重构category-heat任务",
+      "priority": "medium",
+      "passes": false,
+      "notes": "按新架构重构类目热度任务（旧代码，暂未迁移）"
+    },
+    {
+      "id": "scheduler-03",
+      "name": "重构product-discovery任务",
+      "priority": "medium",
+      "passes": false,
+      "notes": "按新架构重构商品发现任务（旧代码，暂未迁移）"
+    },
+    {
+      "id": "scheduler-04",
+      "name": "创建AIProductDiscovery任务",
+      "priority": "high",
+      "passes": true,
+      "notes": "使用AI分析的完整商品发现任务，包含社交提及统计"
+    },
+    {
+      "id": "scheduler-05",
+      "name": "统一任务注册机制",
+      "priority": "medium",
+      "passes": true,
+      "notes": "简化调度器，统一注册所有任务"
+    },
+    {
+      "id": "cleanup-01",
+      "name": "统一PeriodType类型定义",
+      "priority": "low",
+      "passes": false,
+      "notes": "多处定义PeriodType，需要统一"
+    },
+    {
+      "id": "cleanup-02",
+      "name": "统一AmazonProduct类型定义",
+      "priority": "low",
+      "passes": false,
+      "notes": "AmazonProductInfo和AmazonProduct重复"
+    },
+    {
+      "id": "test-01",
+      "name": "类型检查和构建",
+      "priority": "high",
+      "passes": true,
+      "notes": "新架构代码无类型错误，crawler包构建成功"
+    },
+    {
+      "id": "cleanup-final",
+      "name": "历史代码清理",
+      "priority": "low",
+      "passes": false,
+      "notes": "所有任务迁移完成后，删除旧GoogleSearchCrawler等历史代码和重复类型定义"
+    }
+  ]
+}

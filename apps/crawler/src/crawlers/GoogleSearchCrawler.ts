@@ -999,35 +999,44 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
 
     try {
       // 点击所有 "Read more" 按钮
-      await this.page.evaluate(async () => {
-        const readMoreButtons = document.querySelectorAll(
+      // 使用 Playwright 的 locator 来查找按钮（支持 :has-text）
+      const readMoreButtons = await this.page
+        .locator(
           'button[data-click-id="text"], button:has-text("Read more"), .text-neutral-content-weak'
-        );
-        for (const btn of Array.from(readMoreButtons)) {
-          if (btn.textContent?.includes("Read more")) {
-            (btn as HTMLElement).click();
-            await new Promise((r) => setTimeout(r, 500));
+        )
+        .all();
+
+      for (const btn of readMoreButtons) {
+        try {
+          const text = await btn.textContent();
+          if (text?.includes("Read more")) {
+            await btn.click();
+            await this.delay(500);
           }
+        } catch {
+          // 忽略点击失败的按钮
         }
-      });
+      }
 
       // 点击 "View more comments" / "Continue this thread"
-      let moreCommentsExist = true;
       let attempts = 0;
-      while (moreCommentsExist && attempts < 3) {
-        moreCommentsExist = await this.page.evaluate(() => {
-          const buttons = document.querySelectorAll(
-            'button:has-text("View more comments"), button:has-text("Continue this thread"), [data-testid="more-comments-button"]'
-          );
-          if (buttons.length > 0) {
-            (buttons[0] as HTMLElement).click();
-            return true;
+      while (attempts < 3) {
+        try {
+          const moreCommentsButton = this.page
+            .locator(
+              'button:has-text("View more comments"), button:has-text("Continue this thread"), [data-testid="more-comments-button"]'
+            )
+            .first();
+
+          if (await moreCommentsButton.isVisible({ timeout: 1000 })) {
+            await moreCommentsButton.click();
+            await this.delay(1000);
+            attempts++;
+          } else {
+            break;
           }
-          return false;
-        });
-        if (moreCommentsExist) {
-          await this.delay(1000);
-          attempts++;
+        } catch {
+          break;
         }
       }
     } catch (error) {

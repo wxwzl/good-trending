@@ -42,20 +42,12 @@ interface TopicPageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export const dynamicParams = true;
-
-export const revalidate = 300; // Revalidate every 300 seconds
-
+// generateStaticParams 需要至少返回一个结果
+// 构建时 API 可能不可用，返回一些默认分类
 export async function generateStaticParams() {
-  try {
-    const result = await listTopics({ page: 1, limit: 2 });
-
-    return (result.items || []).map((topic: Topic) => ({
-      slug: topic.slug,
-    }));
-  } catch (error) {
-    return [];
-  }
+  // 返回一些默认分类作为静态路径
+  // 其他路径将在首次访问时生成
+  return [{ slug: "premium-beauty" }, { slug: "pet-supplies" }, { slug: "office-products" }];
 }
 
 export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {

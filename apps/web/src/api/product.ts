@@ -3,6 +3,7 @@
  * 商品相关接口
  */
 import { fetchApi, FetchOptions } from "@/lib/fetch";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Product, PaginatedResponse } from "./types";
 
 interface ListProductsParams {
@@ -30,17 +31,39 @@ export async function listProducts(
 }
 
 /**
- * 获取单个商品
+ * 获取单个商品（带缓存）
  * GET /api/v1/products/:id
+ *
+ * 缓存策略：
+ * - stale: 30分钟
+ * - revalidate: 1小时
+ * - 标签: products, product:{id}
  */
 export async function getProduct(id: string, option?: FetchOptions): Promise<Product> {
-  return fetchApi<Product>(`/products/${id}`, option); // 1小时缓存
+  return fetchApi<Product>(`/products/${id}`, {
+    ...option,
+    next: {
+      revalidate: 3600, // 1小时
+      tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(id)],
+    },
+  });
 }
 
 /**
- * 通过 slug 获取商品
+ * 通过 slug 获取商品（带缓存）
  * GET /api/v1/products/slug/:slug
+ *
+ * 缓存策略：
+ * - stale: 30分钟
+ * - revalidate: 1小时
+ * - 标签: products, product:{slug}
  */
 export async function getProductBySlug(slug: string, option?: FetchOptions): Promise<Product> {
-  return fetchApi<Product>(`/products/slug/${slug}`, option); // 1小时缓存
+  return fetchApi<Product>(`/products/slug/${slug}`, {
+    ...option,
+    next: {
+      revalidate: 3600, // 1小时
+      tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(slug)],
+    },
+  });
 }

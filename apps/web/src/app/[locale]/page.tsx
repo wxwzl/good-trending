@@ -13,6 +13,10 @@ import { listTrending } from "@/api/trending";
 import { listTopics } from "@/api/topic";
 import type { TrendingItem, Topic } from "@/api/types";
 
+// 使用增量静态生成（ISR），每5分钟重新验证
+export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
 interface HomePageProps {
   params: Promise<{ locale: string }>;
 }
@@ -30,10 +34,6 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
     keywords: t("home.keywords").split(","),
   });
 }
-
-// Enable dynamic rendering for this page
-export const dynamic = "force-dynamic";
-export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;

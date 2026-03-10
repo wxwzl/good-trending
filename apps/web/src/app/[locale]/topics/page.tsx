@@ -8,6 +8,9 @@ import { type Locale } from "@/i18n/config";
 import { listTopics } from "@/api/topic";
 import type { Topic } from "@/api/types";
 
+// 使用增量静态生成（ISR），每1小时重新验证
+export const revalidate = 3600;
+
 async function getTopics(): Promise<Topic[]> {
   try {
     const result = await listTopics({ page: 1, limit: 100 });
@@ -35,10 +38,6 @@ export async function generateMetadata({ params }: TopicsPageProps): Promise<Met
     keywords: t("topics.keywords").split(","),
   });
 }
-
-// Enable dynamic rendering for this page
-export const dynamic = "force-dynamic";
-export const revalidate = 3600; // Revalidate every hour
 
 export default async function TopicsPage({ params }: TopicsPageProps) {
   const { locale } = await params;

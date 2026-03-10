@@ -78,6 +78,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // 注意：cacheComponents: true 需要大量代码改造
+  // 当前使用 fetch 级别的缓存策略（next.revalidate + tags）
   // cacheComponents: true,
   reactCompiler: true,
   // 开启 sourcemap 便于调试

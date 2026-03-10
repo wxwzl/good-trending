@@ -21,6 +21,7 @@ export interface FetchOptions extends RequestInit {
   locale?: string;
   next?: {
     revalidate?: number; // Next.js revalidate (秒)
+    tags?: string[]; // 缓存标签
   };
 }
 

@@ -49,9 +49,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   });
 }
 
-// Enable dynamic rendering for this page
-export const dynamic = "force-dynamic";
-export const revalidate = 3600; // Revalidate every hour
+// 使用增量静态生成（ISR），每1小时重新验证
+export const revalidate = 3600;
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { locale, slug } = await params;

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
@@ -7,6 +8,7 @@ import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { listTrending } from "@/api/trending";
+import type { TrendingItem } from "@/api/types";
 
 // 将 URL 参数映射到 API 参数
 const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
@@ -15,8 +17,13 @@ const periodMap: Record<string, "daily" | "weekly" | "monthly"> = {
   month: "monthly",
 };
 
+// 使用增量静态生成（ISR），每5分钟重新验证
+export const revalidate = 300;
+
+// 获取热门数据（API层已缓存）
 async function getTrendingProducts(period?: string, page?: number) {
   const apiPeriod = period ? periodMap[period] || "daily" : "daily";
+
   const result = await listTrending({
     period: apiPeriod,
     page: page || 1,
@@ -30,6 +37,25 @@ async function getTrendingProducts(period?: string, page?: number) {
     limit: result.limit || 10,
     totalPages: result.totalPages || 0,
   };
+}
+
+// 产品列表骨架屏
+function TrendingListSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="h-10 w-full bg-muted animate-pulse rounded" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-32 bg-muted animate-pulse rounded" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface TrendingPageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ period?: string; page?: string }>;
 }
 
 interface TrendingPageProps {
@@ -51,6 +77,23 @@ export async function generateMetadata({ params }: TrendingPageProps): Promise<M
   });
 }
 
+// 异步获取数据组件
+async function TrendingDataFetcher({
+  period,
+  page,
+  locale,
+}: {
+  period?: string;
+  page?: number;
+  locale: string;
+}) {
+  const trendingData = await getTrendingProducts(period, page);
+
+  return (
+    <TrendingContainer initialItems={trendingData.data} initialPeriod={period} locale={locale} />
+  );
+}
+
 export default async function TrendingPage({ params, searchParams }: TrendingPageProps) {
   const { locale } = await params;
   const { period, page } = await searchParams;
@@ -58,7 +101,6 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
   const t = await getTranslations();
 
   const currentPage = parseInt(page || "1", 10);
-  const trendingData = await getTrendingProducts(period, currentPage);
   const lastUpdated = new Date().toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
@@ -66,15 +108,6 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
     hour: "2-digit",
     minute: "2-digit",
   });
-
-  // Prepare items for ItemList JSON-LD
-  const itemListItems = trendingData.data.map((item, index) => ({
-    id: item.productId,
-    name: item.productName,
-    url: `${baseUrl}/${locale}/product/${item.productSlug || item.productId}`,
-    image: item.productImage ?? undefined,
-    position: index + 1,
-  }));
 
   // Breadcrumb items for structured data
   const breadcrumbItems = [
@@ -85,11 +118,6 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
   return (
     <div className="py-8">
       {/* Structured Data */}
-      <ItemListJsonLd
-        name={t("trending.title")}
-        description={t("trending.subtitle")}
-        items={itemListItems}
-      />
       <BreadcrumbJsonLd items={breadcrumbItems} />
 
       <Container>
@@ -106,12 +134,10 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
           </div>
         </header>
 
-        {/* Client-side Container with Filters and List */}
-        <TrendingContainer
-          initialItems={trendingData.data}
-          initialPeriod={period}
-          locale={locale}
-        />
+        {/* Suspense 包裹，支持流式渲染 */}
+        <Suspense fallback={<TrendingListSkeleton />}>
+          <TrendingDataFetcher period={period} page={currentPage} locale={locale} />
+        </Suspense>
       </Container>
     </div>
   );

@@ -171,16 +171,23 @@ export abstract class BaseCrawler<T> {
 
   /**
    * 带重试的页面导航
+   * @param url 目标 URL
+   * @param waitUntil 页面加载完成条件，默认为 'networkidle'，对于动态页面建议使用 'domcontentloaded'
    */
-  protected async navigateWithRetry(url: string): Promise<boolean> {
+  protected async navigateWithRetry(
+    url: string,
+    waitUntil: "networkidle" | "domcontentloaded" | "load" = "networkidle"
+  ): Promise<boolean> {
     let retries = 0;
 
     while (retries < this.config.maxRetries) {
       try {
-        this.logger.debug(`Navigating to: ${url} (attempt ${retries + 1})`);
+        this.logger.debug(
+          `Navigating to: ${url} (attempt ${retries + 1}, waitUntil: ${waitUntil})`
+        );
 
         await this.page?.goto(url, {
-          waitUntil: "networkidle",
+          waitUntil,
           timeout: this.config.timeout,
         });
 

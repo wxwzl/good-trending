@@ -9,6 +9,7 @@
  * 使用 SerpAPI 优先，失败时回退到浏览器爬取
  */
 
+import type { Browser } from "playwright";
 import { Logger } from "winston";
 import { createLoggerInstance } from "@good-trending/shared";
 import { BaseCrawler, type CrawlerConfig, type CrawlResult } from "./BaseCrawler";
@@ -116,6 +117,188 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
     });
 
     this.logger = createLoggerInstance("google-search-crawler");
+  }
+
+  /**
+   * 初始化浏览器（增强版，带 Stealth 注入）
+   */
+  async initBrowser(): Promise<void> {
+    if (this.browser) {
+      return;
+    }
+
+    const { chromium } = await import("playwright");
+
+    const launchOptions: Parameters<typeof chromium.launch>[0] = {
+      headless: this.config.headless,
+      args: [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--disable-site-isolation-trials",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--window-size=1920,1080",
+        "--disable-infobars",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-extensions",
+        "--disable-sync",
+        "--disable-translate",
+        "--hide-scrollbars",
+        "--metrics-recording-only",
+        "--mute-audio",
+        "--no-first-run",
+        "--safebrowsing-disable-auto-update",
+        "--password-store=basic",
+        "--use-mock-keychain",
+        "--force-color-profile=srgb",
+      ],
+    };
+
+    if (this.config.proxy) {
+      launchOptions.proxy = {
+        server: this.config.proxy,
+      };
+    }
+
+    this.browser = await chromium.launch(launchOptions);
+
+    const contextOptions: Parameters<Browser["newContext"]>[0] = {
+      userAgent: this.config.headers["User-Agent"],
+      locale: "en-US",
+      viewport: { width: 1920, height: 1080 },
+    };
+
+    this.context = await this.browser.newContext(contextOptions);
+    this.context.setDefaultTimeout(this.config.timeout);
+    this.page = await this.context.newPage();
+
+    // 注入 Stealth 脚本隐藏自动化特征
+    await this.injectStealthScript();
+
+    // 设置请求拦截
+    await this.setupRequestInterception();
+
+    this.logger.info("Browser initialized with enhanced stealth mode");
+  }
+
+  /**
+   * 注入 Stealth 脚本隐藏自动化特征
+   */
+  private async injectStealthScript(): Promise<void> {
+    if (!this.page) {
+      return;
+    }
+
+    await this.page.addInitScript(() => {
+      // 覆盖 navigator.webdriver
+      Object.defineProperty(navigator, "webdriver", {
+        get: () => undefined,
+        configurable: true,
+      });
+
+      // 模拟 Chrome 运行时
+      (window as any).chrome = {
+        runtime: {
+          OnInstalledReason: {
+            CHROME_UPDATE: "chrome_update",
+            INSTALL: "install",
+            SHARED_MODULE_UPDATE: "shared_module_update",
+            UPDATE: "update",
+          },
+          OnRestartRequiredReason: {
+            APP_UPDATE: "app_update",
+            OS_UPDATE: "os_update",
+            PERIODIC: "periodic",
+          },
+          PlatformArch: {
+            ARM: "arm",
+            ARM64: "arm64",
+            MIPS: "mips",
+            MIPS64: "mips64",
+            MIPS64EL: "mips64el",
+            MIPSel: "mipsel",
+            X86_32: "x86-32",
+            X86_64: "x86-64",
+          },
+          PlatformNaclArch: {
+            ARM: "arm",
+            MIPS: "mips",
+            MIPS64: "mips64",
+            MIPS64EL: "mips64el",
+            MIPSel: "mipsel",
+            Mips64: "mips64",
+            Mips64El: "mips64el",
+            X86_32: "x86-32",
+            X86_64: "x86-64",
+          },
+          PlatformOs: {
+            ANDROID: "android",
+            CROS: "cros",
+            LINUX: "linux",
+            MAC: "mac",
+            OPENBSD: "openbsd",
+            WIN: "win",
+          },
+          RequestUpdateCheckStatus: {
+            NO_UPDATE: "no_update",
+            THROTTLED: "throttled",
+            UPDATE_AVAILABLE: "update_available",
+          },
+        },
+      };
+
+      // 模拟插件
+      Object.defineProperty(navigator, "plugins", {
+        get: () => [
+          {
+            0: {
+              type: "application/x-google-chrome-pdf",
+              suffixes: "pdf",
+              description: "Portable Document Format",
+            },
+            description: "Portable Document Format",
+            filename: "internal-pdf-viewer",
+            length: 1,
+            name: "Chrome PDF Plugin",
+          },
+          {
+            0: {
+              type: "application/pdf",
+              suffixes: "pdf",
+              description: "Portable Document Format",
+            },
+            description: "Portable Document Format",
+            filename: "internal-pdf-viewer",
+            length: 1,
+            name: "Chrome PDF Viewer",
+          },
+        ],
+      });
+
+      // 模拟语言
+      Object.defineProperty(navigator, "languages", {
+        get: () => ["en-US", "en", "zh-CN", "zh"],
+      });
+
+      // 隐藏 Playwright 特有的属性
+      delete (window as any).__playwright;
+      delete (window as any).__pw_manual;
+      delete (window as any).__PW_inspect;
+
+      // 覆盖 Permissions API
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = async (parameters: PermissionDescriptor) => {
+        if (parameters.name === "notifications") {
+          return { state: Notification.permission, onchange: null } as PermissionStatus;
+        }
+        return originalQuery.call(window.navigator.permissions, parameters);
+      };
+    });
   }
 
   getName(): string {
@@ -865,8 +1048,10 @@ export class GoogleSearchCrawler extends BaseCrawler<CrawledProduct> {
       return [];
     }
 
-    const success = await this.navigateWithRetry(url);
+    // 使用 domcontentloaded 而不是 networkidle，因为 Reddit 有很多持续的背景请求
+    const success = await this.navigateWithRetry(url, "domcontentloaded");
     if (!success) {
+      this.logger.warn(`导航到 Reddit 页面失败: ${url}`);
       return [];
     }
 

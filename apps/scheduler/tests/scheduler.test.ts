@@ -76,8 +76,8 @@ describe("Scheduler", () => {
       const status = getSchedulerStatus();
 
       expect(status.running).toBe(true);
-      expect(status.jobs).toContain("crawl-category-heat");
-      expect(status.jobs).toContain("crawl-product-discovery");
+      expect(status.jobs).toContain("category-heat");
+      expect(status.jobs).toContain("product-discovery");
     });
   });
 

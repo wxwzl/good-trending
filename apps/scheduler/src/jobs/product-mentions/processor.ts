@@ -8,6 +8,7 @@ import { createSchedulerLogger } from "../../utils/logger.js";
 import { handleCrawlerError } from "../../utils/error-handler.js";
 import { getProducts } from "../../utils/database-queries.js";
 import { db, productSocialStats } from "@good-trending/database";
+import { and, eq } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { ProductMentionsCrawler } from "./crawler.js";
 import { PRODUCT_MENTIONS_CONFIG } from "./scheduler.js";
@@ -112,35 +113,77 @@ export async function processProductMentionsJob(
 
 /**
  * 保存商品社交统计数据
+ * 使用 upsert 模式：存在则更新，不存在则插入
  */
 async function saveProductSocialStats(result: ProductMentionResult): Promise<void> {
   const today = new Date();
   const statDate = formatDate(today);
 
   try {
-    await db.insert(productSocialStats).values({
-      id: createId(),
-      productId: result.productId,
-      statDate,
-      todayRedditCount: result.stats.today.reddit,
-      todayXCount: result.stats.today.x,
-      yesterdayRedditCount: result.stats.yesterday.reddit,
-      yesterdayXCount: result.stats.yesterday.x,
-      thisWeekRedditCount: result.stats.thisWeek.reddit,
-      thisWeekXCount: result.stats.thisWeek.x,
-      thisMonthRedditCount: result.stats.thisMonth.reddit,
-      thisMonthXCount: result.stats.thisMonth.x,
-      last7DaysRedditCount: result.stats.last7Days.reddit,
-      last7DaysXCount: result.stats.last7Days.x,
-      last15DaysRedditCount: result.stats.last15Days.reddit,
-      last15DaysXCount: result.stats.last15Days.x,
-      last30DaysRedditCount: result.stats.last30Days.reddit,
-      last30DaysXCount: result.stats.last30Days.x,
-      last60DaysRedditCount: result.stats.last60Days.reddit,
-      last60DaysXCount: result.stats.last60Days.x,
-    });
+    // 检查是否已存在
+    const existing = await db
+      .select({ id: productSocialStats.id })
+      .from(productSocialStats)
+      .where(
+        and(
+          eq(productSocialStats.productId, result.productId),
+          eq(productSocialStats.statDate, statDate)
+        )
+      )
+      .limit(1);
 
-    logger.debug(`保存商品社交统计: ${result.productName}`);
+    if (existing.length > 0) {
+      // 更新现有记录
+      await db
+        .update(productSocialStats)
+        .set({
+          todayRedditCount: result.stats.today.reddit,
+          todayXCount: result.stats.today.x,
+          yesterdayRedditCount: result.stats.yesterday.reddit,
+          yesterdayXCount: result.stats.yesterday.x,
+          thisWeekRedditCount: result.stats.thisWeek.reddit,
+          thisWeekXCount: result.stats.thisWeek.x,
+          thisMonthRedditCount: result.stats.thisMonth.reddit,
+          thisMonthXCount: result.stats.thisMonth.x,
+          last7DaysRedditCount: result.stats.last7Days.reddit,
+          last7DaysXCount: result.stats.last7Days.x,
+          last15DaysRedditCount: result.stats.last15Days.reddit,
+          last15DaysXCount: result.stats.last15Days.x,
+          last30DaysRedditCount: result.stats.last30Days.reddit,
+          last30DaysXCount: result.stats.last30Days.x,
+          last60DaysRedditCount: result.stats.last60Days.reddit,
+          last60DaysXCount: result.stats.last60Days.x,
+          updatedAt: new Date(),
+        })
+        .where(eq(productSocialStats.id, existing[0].id));
+
+      logger.debug(`更新商品社交统计: ${result.productName}`);
+    } else {
+      // 插入新记录
+      await db.insert(productSocialStats).values({
+        id: createId(),
+        productId: result.productId,
+        statDate,
+        todayRedditCount: result.stats.today.reddit,
+        todayXCount: result.stats.today.x,
+        yesterdayRedditCount: result.stats.yesterday.reddit,
+        yesterdayXCount: result.stats.yesterday.x,
+        thisWeekRedditCount: result.stats.thisWeek.reddit,
+        thisWeekXCount: result.stats.thisWeek.x,
+        thisMonthRedditCount: result.stats.thisMonth.reddit,
+        thisMonthXCount: result.stats.thisMonth.x,
+        last7DaysRedditCount: result.stats.last7Days.reddit,
+        last7DaysXCount: result.stats.last7Days.x,
+        last15DaysRedditCount: result.stats.last15Days.reddit,
+        last15DaysXCount: result.stats.last15Days.x,
+        last30DaysRedditCount: result.stats.last30Days.reddit,
+        last30DaysXCount: result.stats.last30Days.x,
+        last60DaysRedditCount: result.stats.last60Days.reddit,
+        last60DaysXCount: result.stats.last60Days.x,
+      });
+
+      logger.debug(`插入商品社交统计: ${result.productName}`);
+    }
   } catch (error) {
     logger.error(`保存商品社交统计失败 ${result.productName}: ${error}`);
     throw error;

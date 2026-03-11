@@ -74,6 +74,13 @@
       "notes": "简化调度器，统一注册所有任务"
     },
     {
+      "id": "scheduler-06",
+      "name": "重构yesterday-stats任务",
+      "priority": "medium",
+      "passes": true,
+      "notes": "按新架构重构完成，合并类目热度和商品发现"
+    },
+    {
       "id": "cleanup-01",
       "name": "统一PeriodType类型定义",
       "priority": "low",

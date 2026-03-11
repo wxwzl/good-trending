@@ -23,6 +23,9 @@ import {
   processProductDiscoveryJob,
 } from "./product-discovery/index.js";
 
+// 导入昨天数据统计任务
+import { YESTERDAY_STATS_SCHEDULE, processYesterdayStatsJob } from "./yesterday-stats/index.js";
+
 /**
  * 注册的任务列表
  * 新增任务时在这里添加
@@ -45,6 +48,12 @@ export const REGISTERED_JOBS = [
     cron: PRODUCT_DISCOVERY_SCHEDULE.cron,
     enabled: PRODUCT_DISCOVERY_SCHEDULE.enabled,
     processor: processProductDiscoveryJob,
+  },
+  {
+    name: YESTERDAY_STATS_SCHEDULE.name,
+    cron: YESTERDAY_STATS_SCHEDULE.cron,
+    enabled: YESTERDAY_STATS_SCHEDULE.enabled,
+    processor: processYesterdayStatsJob,
   },
 ] as const;
 

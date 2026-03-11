@@ -81,6 +81,13 @@
       "notes": "按新架构重构完成，合并类目热度和商品发现"
     },
     {
+      "id": "scheduler-07",
+      "name": "重构product-mentions任务",
+      "priority": "medium",
+      "passes": true,
+      "notes": "按新架构重构完成，使用SocialMentionService统计提及"
+    },
+    {
       "id": "cleanup-01",
       "name": "统一PeriodType类型定义",
       "priority": "low",

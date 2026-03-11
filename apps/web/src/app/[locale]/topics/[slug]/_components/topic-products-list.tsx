@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ProductCard } from "./product-card";
+import { ProductCard } from "@/components/features/product-card";
 import { getTopicProducts } from "@/api/topic";
 import { useTranslations } from "next-intl";
 import type { Product } from "@/api/types";

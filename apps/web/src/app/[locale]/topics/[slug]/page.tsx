@@ -7,7 +7,7 @@ import { Link } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
 import { getTopic, getTopicProducts, listTopics } from "@/api/topic";
-import { TopicProductsList } from "@/components/features/topic-products-list";
+import { TopicProductsList } from "./_components/topic-products-list";
 import type { Topic, Product } from "@/api/types";
 
 interface TopicWithProducts extends Topic {

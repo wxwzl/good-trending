@@ -112,8 +112,8 @@
       "id": "cleanup-final",
       "name": "历史代码清理",
       "priority": "low",
-      "passes": false,
-      "notes": "所有任务迁移完成后，删除旧GoogleSearchCrawler等历史代码和重复类型定义"
+      "passes": true,
+      "notes": "已删除旧GoogleSearchCrawler、旧处理器文件、dynamic-imports等"
     }
   ]
 }

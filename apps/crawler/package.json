@@ -6,7 +6,6 @@
     ".": "./src/index.ts",
     "./index": "./src/index.ts",
     "./manager": "./src/manager.ts",
-    "./googleSearchCrawler": "./src/crawlers/GoogleSearchCrawler.ts",
     "./services": "./src/services/index.ts",
     "./crawlers/*": "./src/crawlers/*.ts"
   },

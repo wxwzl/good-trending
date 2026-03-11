@@ -2,8 +2,15 @@
  * 数据库查询工具
  * 提取重复的查询逻辑
  */
-import { importDatabase } from "./dynamic-imports.js";
+import {
+  db,
+  categories,
+  products,
+  productSocialStats,
+  productAppearanceStats,
+} from "@good-trending/database";
 import { createSchedulerLogger } from "./logger.js";
+import { gte, eq, inArray } from "drizzle-orm";
 
 const logger = createSchedulerLogger("db-queries");
 
@@ -30,14 +37,16 @@ export interface ProductInfo {
  * @returns 类目列表
  */
 export async function getAllCategories(): Promise<CategoryInfo[]> {
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const categories = dbMod.categories;
-
   logger.debug("Fetching all categories");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = await db.select().from(categories as any);
+  const result = await db
+    .select({
+      id: categories.id,
+      name: categories.name,
+      slug: categories.slug,
+      searchKeywords: categories.searchKeywords,
+    })
+    .from(categories);
 
   logger.debug(`Fetched ${result.length} categories`);
 
@@ -50,19 +59,19 @@ export async function getAllCategories(): Promise<CategoryInfo[]> {
  * @returns 商品列表
  */
 export async function getProducts(limit: number): Promise<ProductInfo[]> {
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const products = dbMod.products;
-
   logger.debug(`Fetching up to ${limit} products`);
 
-  const result = await (
-    db.select().from(products as any) as { limit: (n: number) => Promise<unknown[]> }
-  ).limit(limit);
+  const result = await db
+    .select({
+      id: products.id,
+      name: products.name,
+    })
+    .from(products)
+    .limit(limit);
 
   logger.debug(`Fetched ${result.length} products`);
 
-  return result as ProductInfo[];
+  return result;
 }
 
 /**
@@ -71,21 +80,18 @@ export async function getProducts(limit: number): Promise<ProductInfo[]> {
  * @returns 商品列表
  */
 export async function getRecentProducts(days: number): Promise<{ id: string; createdAt: Date }[]> {
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const products = dbMod.products;
-
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
   logger.debug(`Fetching products created after ${cutoffDate.toISOString()}`);
 
-  const { gte } = await import("drizzle-orm");
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const query = (db as any).select().from(products);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result: any = await (query.where as any)(gte((products as any).createdAt, cutoffDate));
+  const result = await db
+    .select({
+      id: products.id,
+      createdAt: products.createdAt,
+    })
+    .from(products)
+    .where(gte(products.createdAt, cutoffDate));
 
   logger.debug(`Fetched ${result.length} recent products`);
 
@@ -97,42 +103,31 @@ export async function getRecentProducts(days: number): Promise<{ id: string; cre
  * @param statDate - 统计日期 (YYYY-MM-DD)
  * @returns 社交统计数据
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getTodaySocialStats(statDate: string): Promise<any[]> {
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const productSocialStats = dbMod.productSocialStats;
-
+export async function getTodaySocialStats(statDate: string) {
   logger.debug(`Fetching social stats for ${statDate}`);
-
-  const { eq } = await import("drizzle-orm");
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stats = productSocialStats as Record<string, any>;
 
   const result = await db
     .select({
-      productId: stats.productId,
-      todayRedditCount: stats.todayRedditCount,
-      todayXCount: stats.todayXCount,
-      yesterdayRedditCount: stats.yesterdayRedditCount,
-      yesterdayXCount: stats.yesterdayXCount,
-      thisWeekRedditCount: stats.thisWeekRedditCount,
-      thisWeekXCount: stats.thisWeekXCount,
-      thisMonthRedditCount: stats.thisMonthRedditCount,
-      thisMonthXCount: stats.thisMonthXCount,
-      last7DaysRedditCount: stats.last7DaysRedditCount,
-      last7DaysXCount: stats.last7DaysXCount,
-      last15DaysRedditCount: stats.last15DaysRedditCount,
-      last15DaysXCount: stats.last15DaysXCount,
-      last30DaysRedditCount: stats.last30DaysRedditCount,
-      last30DaysXCount: stats.last30DaysXCount,
-      last60DaysRedditCount: stats.last60DaysRedditCount,
-      last60DaysXCount: stats.last60DaysXCount,
+      productId: productSocialStats.productId,
+      todayRedditCount: productSocialStats.todayRedditCount,
+      todayXCount: productSocialStats.todayXCount,
+      yesterdayRedditCount: productSocialStats.yesterdayRedditCount,
+      yesterdayXCount: productSocialStats.yesterdayXCount,
+      thisWeekRedditCount: productSocialStats.thisWeekRedditCount,
+      thisWeekXCount: productSocialStats.thisWeekXCount,
+      thisMonthRedditCount: productSocialStats.thisMonthRedditCount,
+      thisMonthXCount: productSocialStats.thisMonthXCount,
+      last7DaysRedditCount: productSocialStats.last7DaysRedditCount,
+      last7DaysXCount: productSocialStats.last7DaysXCount,
+      last15DaysRedditCount: productSocialStats.last15DaysRedditCount,
+      last15DaysXCount: productSocialStats.last15DaysXCount,
+      last30DaysRedditCount: productSocialStats.last30DaysRedditCount,
+      last30DaysXCount: productSocialStats.last30DaysXCount,
+      last60DaysRedditCount: productSocialStats.last60DaysRedditCount,
+      last60DaysXCount: productSocialStats.last60DaysXCount,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .from(productSocialStats as any)
-    .where(eq(stats.statDate, statDate));
+    .from(productSocialStats)
+    .where(eq(productSocialStats.statDate, statDate));
 
   logger.debug(`Fetched ${result.length} social stats records`);
 
@@ -149,25 +144,15 @@ export async function getProductCreateTimeMap(productIds: string[]): Promise<Map
     return new Map();
   }
 
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const products = dbMod.products;
-
-  const { inArray } = await import("drizzle-orm");
-
   const result = await db
     .select({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      id: (products as Record<string, any>).id,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      createdAt: (products as Record<string, any>).createdAt,
+      id: products.id,
+      createdAt: products.createdAt,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .from(products as any)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .where(inArray((products as Record<string, any>).id, productIds));
+    .from(products)
+    .where(inArray(products.id, productIds));
 
-  return new Map(result.map((p: { id: string; createdAt: Date }) => [p.id, p.createdAt]));
+  return new Map(result.map((p) => [p.id, p.createdAt]));
 }
 
 /**
@@ -194,36 +179,25 @@ export async function getProductAppearanceStats(
     return new Map();
   }
 
-  const dbMod = await importDatabase();
-  const db = dbMod.db;
-  const productAppearanceStats = dbMod.productAppearanceStats;
-
-  if (!productAppearanceStats) {
-    logger.warn("productAppearanceStats table not available");
-    return new Map();
-  }
-
-  const { inArray } = await import("drizzle-orm");
+  logger.debug(`Fetching appearance stats for ${productIds.length} products`);
 
   try {
-    const stats = productAppearanceStats as Record<string, any>;
-
     const result = await db
       .select({
-        productId: stats.productId,
-        last7DaysBitmap: stats.last7DaysBitmap,
-        last15DaysBitmap: stats.last15DaysBitmap,
-        last30DaysBitmap: stats.last30DaysBitmap,
-        last60DaysBitmap: stats.last60DaysBitmap,
-        lastUpdateDate: stats.lastUpdateDate,
+        productId: productAppearanceStats.productId,
+        last7DaysBitmap: productAppearanceStats.last7DaysBitmap,
+        last15DaysBitmap: productAppearanceStats.last15DaysBitmap,
+        last30DaysBitmap: productAppearanceStats.last30DaysBitmap,
+        last60DaysBitmap: productAppearanceStats.last60DaysBitmap,
+        lastUpdateDate: productAppearanceStats.lastUpdateDate,
       })
-      .from(productAppearanceStats as any)
-      .where(inArray(stats.productId, productIds));
+      .from(productAppearanceStats)
+      .where(inArray(productAppearanceStats.productId, productIds));
 
     logger.debug(`Fetched ${result.length} appearance stats records`);
 
     return new Map(
-      (result as any[]).map((r) => [
+      result.map((r) => [
         r.productId,
         {
           productId: r.productId,

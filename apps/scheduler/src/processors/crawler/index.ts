@@ -7,11 +7,13 @@ import { CrawlerJobData, CrawlerJobResult, QUEUE_NAMES } from "../../queue/index
 import { redisConnectionOptions } from "../../queue/redis.js";
 import { createSchedulerLogger } from "../../utils/logger.js";
 import { CRAWLER_CONFIG } from "../../constants/index.js";
-import { processCategoryHeatJob } from "./category-heat.js";
-import { processProductDiscoveryJob } from "./product-discovery.js";
-import { processProductMentionsJob } from "./product-mentions.js";
-import { processYesterdayStatsJob } from "./yesterday-stats.js";
+
+// 从新架构导入任务处理器
 import { processAIProductDiscoveryJob } from "../../jobs/ai-product-discovery/processor.js";
+import { processCategoryHeatJob } from "../../jobs/category-heat/processor.js";
+import { processProductDiscoveryJob } from "../../jobs/product-discovery/processor.js";
+import { processYesterdayStatsJob } from "../../jobs/yesterday-stats/processor.js";
+import { processProductMentionsJob } from "../../jobs/product-mentions/processor.js";
 
 const logger = createSchedulerLogger("crawler-processor");
 
@@ -23,17 +25,13 @@ let crawlerWorker: Worker<CrawlerJobData, CrawlerJobResult> | null = null;
 /**
  * 处理器映射表
  * 策略模式：根据任务类型路由到对应的处理器
- *
- * 注意：新架构的任务需要在这里注册
  */
 const jobHandlers: Record<string, (job: Job<CrawlerJobData>) => Promise<CrawlerJobResult>> = {
-  // 旧架构任务
+  "ai-product-discovery": processAIProductDiscoveryJob,
   "category-heat": processCategoryHeatJob,
   "product-discovery": processProductDiscoveryJob,
-  "product-mentions": processProductMentionsJob,
   "yesterday-stats": processYesterdayStatsJob,
-  // 新架构任务
-  "ai-product-discovery": processAIProductDiscoveryJob,
+  "product-mentions": processProductMentionsJob,
 };
 
 /**

@@ -10,9 +10,10 @@ import {
   getRecentProducts,
   getProductAppearanceStats,
   calculateAppearanceScore,
-  type AppearanceStats,
 } from "../../utils/database-queries.js";
-import { importDatabase } from "../../utils/dynamic-imports.js";
+import { db, trendRanks, getRedisClient } from "@good-trending/database";
+import { and, eq } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
 import { TRENDING_CONFIG, PERIOD_TYPES } from "../../constants/index.js";
 import type { PeriodType } from "../../types/index.js";
 
@@ -107,7 +108,7 @@ export function calculateTrendingScore(
   appearanceScore: number = 0
 ): number {
   // 基础分数：Reddit 提及数 + X 提及数 * 权重
-  let baseScore = redditCount + xCount * TRENDING_CONFIG.X_MENTION_WEIGHT;
+  const baseScore = redditCount + xCount * TRENDING_CONFIG.X_MENTION_WEIGHT;
 
   // 出现频率加成：出现越频繁，基础分数越高（最高 50% 加成）
   const appearanceBonus = 1 + appearanceScore * 0.5;
@@ -193,9 +194,7 @@ export async function saveTrendRanks(
     return 0;
   }
 
-  const { db, trendRanks } = await importDatabase();
-  const { and, eq } = await import("drizzle-orm");
-  const { createId } = await import("@paralleldrive/cuid2");
+  // db, trendRanks, and, eq, createId already imported at top level
 
   // 先删除该周期旧数据
   await db
@@ -231,7 +230,6 @@ export async function saveTrendRanks(
  */
 export async function clearTrendingCache(): Promise<void> {
   try {
-    const { getRedisClient } = await importDatabase();
     const redis = getRedisClient();
     const keys = await redis.keys("trending:*");
 

@@ -153,8 +153,7 @@ export interface CrawlerLogData {
   metadata?: Record<string, unknown>;
 }
 
-// Note: CrawlerExecutionResult 接口已移动到 ../crawlers/GoogleSearchCrawler.ts
-// 使用时请导入: import { CrawlerExecutionResult } from "../crawlers/GoogleSearchCrawler";
+// CrawlerExecutionResult 已在新架构中定义在各任务模块
 
 /**
  * 类目爬取配置

@@ -43,6 +43,7 @@ describe('ProductService', () => {
     delete: jest.fn(),
     exists: jest.fn(),
     getProductCategories: jest.fn(),
+    getProductCategoriesWithDetails: jest.fn(),
     findLatestSocialStats: jest.fn(),
     findSocialStatsHistory: jest.fn(),
     findAppearanceStats: jest.fn(),
@@ -230,6 +231,7 @@ describe('ProductService', () => {
       // Arrange
       cacheService.get.mockResolvedValue(null); // Cache miss
       repository.findById.mockResolvedValue(mockProduct);
+      repository.getProductCategoriesWithDetails.mockResolvedValue([]);
 
       // Act
       const result = await service.getProductById('test-id-123');

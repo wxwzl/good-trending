@@ -90,7 +90,7 @@ export class ProductService {
     });
 
     const response: PaginatedProductResponseDto = {
-      items: result.items.map(this.mapToResponseDto),
+      items: result.items.map((item) => this.mapToResponseDto(item)),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -132,7 +132,11 @@ export class ProductService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const response = this.mapToResponseDto(product);
+    // 获取商品分类
+    const categories =
+      await this.productRepository.getProductCategoriesWithDetails(trimmedId);
+
+    const response = this.mapToResponseDto(product, categories);
 
     // 缓存结果（1小时）
     await this.cacheService.set(cacheKey, response, CacheTTLConfig.LONG);
@@ -168,7 +172,11 @@ export class ProductService {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
 
-    const response = this.mapToResponseDto(product);
+    // 获取商品分类
+    const categories =
+      await this.productRepository.getProductCategoriesWithDetails(trimmedSlug);
+
+    const response = this.mapToResponseDto(product, categories);
 
     // 缓存结果（1小时）
     await this.cacheService.set(cacheKey, response, CacheTTLConfig.LONG);
@@ -495,21 +503,24 @@ export class ProductService {
   /**
    * 将数据库实体映射为响应 DTO
    */
-  private mapToResponseDto(product: {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    image: string | null;
-    price: string | null;
-    currency: string;
-    sourceUrl: string;
-    amazonId: string;
-    discoveredFrom: 'X_PLATFORM' | 'AMAZON' | 'REDDIT';
-    firstSeenAt: Date | string;
-    createdAt: Date | string;
-    updatedAt: Date | string;
-  }): ProductResponseDto {
+  private mapToResponseDto(
+    product: {
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      image: string | null;
+      price: string | null;
+      currency: string;
+      sourceUrl: string;
+      amazonId: string;
+      discoveredFrom: 'X_PLATFORM' | 'AMAZON' | 'REDDIT';
+      firstSeenAt: Date | string;
+      createdAt: Date | string;
+      updatedAt: Date | string;
+    },
+    categories?: { id: string; name: string; slug: string }[],
+  ): ProductResponseDto {
     return {
       id: product.id,
       name: product.name,
@@ -533,6 +544,7 @@ export class ProductService {
         product.updatedAt instanceof Date
           ? product.updatedAt.toISOString()
           : product.updatedAt,
+      categories: categories ?? undefined,
     };
   }
 

@@ -3,6 +3,7 @@ import {
   SourceType,
   type ProductResponse,
   type PaginatedProductsResponse,
+  type CategoryBrief,
 } from '@good-trending/dto';
 
 /**
@@ -89,6 +90,20 @@ export class ProductResponseDto implements ProductResponse {
     example: '2026-03-05T12:00:00.000Z',
   })
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    description: '所属分类列表',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', example: 'clh1234567890abcdef' },
+        name: { type: 'string', example: 'Electronics' },
+        slug: { type: 'string', example: 'electronics' },
+      },
+    },
+  })
+  categories?: CategoryBrief[];
 }
 
 /**

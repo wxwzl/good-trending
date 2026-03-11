@@ -14,6 +14,7 @@ import {
   productSocialStats,
   productAppearanceStats,
   trendRanks,
+  categories,
 } from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
@@ -240,6 +241,21 @@ export class ProductRepository {
     return db
       .select({ categoryId: productCategories.categoryId })
       .from(productCategories)
+      .where(eq(productCategories.productId, productId));
+  }
+
+  /**
+   * 获取商品的分类详情（包含名称和slug）
+   */
+  async getProductCategoriesWithDetails(productId: string) {
+    return db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+      })
+      .from(productCategories)
+      .innerJoin(categories, eq(productCategories.categoryId, categories.id))
       .where(eq(productCategories.productId, productId));
   }
 

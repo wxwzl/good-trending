@@ -52,9 +52,9 @@ test.describe("Product Detail Page", () => {
       await page.waitForLoadState("networkidle");
 
       // Assert - Stats section might be conditionally rendered
-      const statsSection = page.locator("[data-testid='stats-section']").or(
-        page.locator("section").filter({ hasText: /social|trend|appearance/i })
-      );
+      const statsSection = page
+        .locator("[data-testid='stats-section']")
+        .or(page.locator("section").filter({ hasText: /social|trend|appearance/i }));
 
       // Stats section is optional depending on product data
       const hasStats = await statsSection.isVisible().catch(() => false);
@@ -69,9 +69,9 @@ test.describe("Product Detail Page", () => {
       await page.waitForLoadState("networkidle");
 
       // Look for tabs
-      const tabs = page.locator("[role='tab']").or(
-        page.locator("button").filter({ hasText: /social|trend|appearance|stats/i })
-      );
+      const tabs = page
+        .locator("[role='tab']")
+        .or(page.locator("button").filter({ hasText: /social|trend|appearance|stats/i }));
 
       const tabCount = await tabs.count();
       if (tabCount > 1) {
@@ -111,7 +111,9 @@ test.describe("Product Detail Page", () => {
       await page.goto("/en/product/test-product");
 
       // Act
-      const trendingLink = page.locator("nav[aria-label='Breadcrumb'] a").filter({ hasText: /trending|热门/i });
+      const trendingLink = page
+        .locator("nav[aria-label='Breadcrumb'] a")
+        .filter({ hasText: /trending|热门/i });
       if (await trendingLink.isVisible().catch(() => false)) {
         await trendingLink.click();
         await expect(page).toHaveURL(/trending/);

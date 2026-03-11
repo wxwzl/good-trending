@@ -23,18 +23,19 @@
 
 ### 涉及的数据库表
 
-| 表名 | 当前使用情况 | 计划利用方式 |
-|------|-------------|-------------|
-| `productSocialStats` | ❌ 未使用 | 商品社交提及趋势图表 |
-| `productAppearanceStats` | ❌ 未使用 | 商品出现活跃度热力图 |
-| `categoryHeatStats` | ❌ 未使用 | 类目热度数据可视化 |
-| `trendRanks` | ⚠️ 部分使用 | 趋势变化历史图表 |
+| 表名                     | 当前使用情况 | 计划利用方式         |
+| ------------------------ | ------------ | -------------------- |
+| `productSocialStats`     | ❌ 未使用    | 商品社交提及趋势图表 |
+| `productAppearanceStats` | ❌ 未使用    | 商品出现活跃度热力图 |
+| `categoryHeatStats`      | ❌ 未使用    | 类目热度数据可视化   |
+| `trendRanks`             | ⚠️ 部分使用  | 趋势变化历史图表     |
 
 ---
 
 ## 2. 功能清单
 
 ### 功能1: 商品详情页增强
+
 **优先级**: P0 (核心功能)
 **涉及页面**: `/product/[slug]`
 
@@ -49,36 +50,41 @@
 ---
 
 ### 功能2: 商品社交提及趋势
+
 **优先级**: P1 (高价值)
 **涉及页面**: `/product/[slug]`
 
 **数据来源**: `productSocialStats`
 
 **展示内容**:
+
 - 今日/昨日/本周/本月 Reddit 提及数对比
 - 今日/昨日/本周/本月 X 平台提及数对比
 - 近30天每日提及数折线图
 - 总提及数统计
 
 **数据字段**:
+
 ```typescript
-- todayRedditCount / todayXCount
-- yesterdayRedditCount / yesterdayXCount
-- thisWeekRedditCount / thisWeekXCount
-- thisMonthRedditCount / thisMonthXCount
-- last7DaysRedditCount / last7DaysXCount
-- last30DaysRedditCount / last30DaysXCount
+-todayRedditCount / todayXCount -
+  yesterdayRedditCount / yesterdayXCount -
+  thisWeekRedditCount / thisWeekXCount -
+  thisMonthRedditCount / thisMonthXCount -
+  last7DaysRedditCount / last7DaysXCount -
+  last30DaysRedditCount / last30DaysXCount;
 ```
 
 ---
 
 ### 功能3: 类目热度可视化
+
 **优先级**: P1 (平台价值展示)
 **涉及页面**: `/topics/[slug]`
 
 **数据来源**: `categoryHeatStats`
 
 **展示内容**:
+
 - 类目今日 Reddit/X 搜索结果总数
 - 较昨日增长/下降百分比
 - 近7天搜索结果趋势图
@@ -86,14 +92,16 @@
 - 类目热度排行榜（与其他类目对比）
 
 **数据字段**:
+
 ```typescript
-- redditResultCount / xResultCount
-- yesterdayRedditCount / yesterdayXCount
-- last7DaysRedditCount / last7DaysXCount
-- crawledProductCount
+-redditResultCount / xResultCount -
+  yesterdayRedditCount / yesterdayXCount -
+  last7DaysRedditCount / last7DaysXCount -
+  crawledProductCount;
 ```
 
 **UI设计建议**:
+
 ```
 ┌─────────────────────────────────────────┐
 │  Category Name                          │
@@ -114,22 +122,26 @@
 ---
 
 ### 功能4: 商品出现活跃度图表
+
 **优先级**: P2 (辅助决策)
 **涉及页面**: `/product/[slug]`
 
 **数据来源**: `productAppearanceStats`
 
 **展示内容**:
+
 - 近7/15/30/60天出现热力图
 - 活跃度评分（基于出现频率计算）
 - 持续热门天数统计
 
 **技术说明**:
+
 - 使用 `last7DaysBitmap`, `last30DaysBitmap`, `last60DaysBitmap` 字段
 - Bitmap 每一位代表一天，1=出现，0=未出现
 - 需要前端解析 Bitmap 并渲染热力图
 
 **UI设计建议**:
+
 ```
 活跃度: 🔥🔥🔥🔥⚪ (4/5)
 
@@ -146,18 +158,21 @@
 ---
 
 ### 功能5: 趋势变化可视化
+
 **优先级**: P2 (增强趋势页)
 **涉及页面**: `/trending` 和 `/product/[slug]`
 
 **数据来源**: `trendRanks`
 
 **展示内容**:
+
 - 商品历史排名曲线（进入榜单的天数）
 - 分数变化趋势
 - 提及数增长趋势
 - 排名变化指示器（上升/下降/持平）
 
 **筛选维度**:
+
 - 今日榜 (TODAY)
 - 昨日榜 (YESTERDAY)
 - 本周榜 (THIS_WEEK)
@@ -170,6 +185,7 @@
 ### 3.1 商品详情页改版设计
 
 #### 页面结构
+
 ```
 Product Detail Page
 ├── Header (面包屑)
@@ -184,6 +200,7 @@ Product Detail Page
 ```
 
 #### 新增组件需求
+
 1. `ProductSocialStats` - 社交提及统计卡片
 2. `ProductAppearanceHeatmap` - 出现热力图组件
 3. `ProductTrendChart` - 趋势折线图组件
@@ -194,6 +211,7 @@ Product Detail Page
 ### 3.2 分类详情页改版设计
 
 #### 新增内容
+
 在现有分类详情页顶部增加"热度统计"区域：
 
 ```tsx
@@ -212,16 +230,17 @@ Product Detail Page
 
 ### 4.1 前端技术栈
 
-| 功能 | 推荐方案 | 说明 |
-|------|---------|------|
-| 折线图/趋势图 | Recharts | React 生态最常用的图表库 |
-| 热力图 | 自定义组件 | 基于 Tailwind CSS 实现 |
-| 数据获取 | Server Component | 利用 Next.js 15+ 服务端渲染 |
-| 缓存策略 | ISR + fetch cache | 5分钟重新验证 |
+| 功能          | 推荐方案          | 说明                        |
+| ------------- | ----------------- | --------------------------- |
+| 折线图/趋势图 | Recharts          | React 生态最常用的图表库    |
+| 热力图        | 自定义组件        | 基于 Tailwind CSS 实现      |
+| 数据获取      | Server Component  | 利用 Next.js 15+ 服务端渲染 |
+| 缓存策略      | ISR + fetch cache | 5分钟重新验证               |
 
 ### 4.2 组件设计
 
 #### 社交提及图表组件
+
 ```tsx
 interface ProductSocialChartProps {
   productId: string;
@@ -234,6 +253,7 @@ interface ProductSocialChartProps {
 ```
 
 #### 热力图组件
+
 ```tsx
 interface AppearanceHeatmapProps {
   bitmap7Days: bigint;
@@ -249,6 +269,7 @@ interface AppearanceHeatmapProps {
 ### 5.1 新增API端点
 
 #### 5.1.1 获取商品社交统计
+
 ```http
 GET /api/v1/products/:id/social-stats
 
@@ -268,6 +289,7 @@ Response:
 ```
 
 #### 5.1.2 获取商品出现统计
+
 ```http
 GET /api/v1/products/:id/appearance-stats
 
@@ -285,6 +307,7 @@ Response:
 ```
 
 #### 5.1.3 获取分类热度统计
+
 ```http
 GET /api/v1/topics/:slug/heat-stats
 
@@ -304,6 +327,7 @@ Response:
 ```
 
 #### 5.1.4 获取商品历史排名
+
 ```http
 GET /api/v1/products/:id/trend-history
 
@@ -328,7 +352,9 @@ Response:
 ### 5.2 现有API增强
 
 #### 5.2.1 商品详情API增强
+
 在现有 `GET /api/v1/products/:id` 响应中增加：
+
 ```typescript
 {
   "data": {
@@ -346,6 +372,7 @@ Response:
 ### 5.3 Service层改动
 
 #### 5.3.1 ProductService 新增方法
+
 ```typescript
 // apps/api/src/modules/product/product.service.ts
 
@@ -356,6 +383,7 @@ async getProductCategories(productId: string): Promise<Category[]>;
 ```
 
 #### 5.3.2 新增 TopicHeatService
+
 ```typescript
 // apps/api/src/modules/topic/topic-heat.service.ts
 
@@ -396,6 +424,7 @@ async findProductTrendHistory(productId: string): Promise<TrendRank[]>;
 ## 6. 实施计划
 
 ### 阶段1: 后端API开发 (预计2-3天)
+
 - [ ] 创建 DTO 类型定义
 - [ ] 实现 Repository 查询方法
 - [ ] 实现 Service 业务逻辑
@@ -404,6 +433,7 @@ async findProductTrendHistory(productId: string): Promise<TrendRank[]>;
 - [ ] 单元测试
 
 ### 阶段2: 前端组件开发 (预计2-3天)
+
 - [ ] 安装图表库 (Recharts)
 - [ ] 实现基础数据展示组件
 - [ ] 实现图表组件
@@ -411,12 +441,14 @@ async findProductTrendHistory(productId: string): Promise<TrendRank[]>;
 - [ ] 单元测试
 
 ### 阶段3: 页面集成 (预计1-2天)
+
 - [ ] 改版商品详情页
 - [ ] 改版分类详情页
 - [ ] 响应式适配
 - [ ] 性能优化
 
 ### 阶段4: 测试与优化 (预计1天)
+
 - [ ] 集成测试
 - [ ] 性能测试
 - [ ] Bug修复
@@ -439,13 +471,14 @@ async findProductTrendHistory(productId: string): Promise<TrendRank[]>;
 
 ## 变更记录
 
-| 日期 | 版本 | 变更内容 | 作者 |
-|------|------|---------|------|
+| 日期       | 版本 | 变更内容 | 作者   |
+| ---------- | ---- | -------- | ------ |
 | 2026-03-11 | v1.0 | 初始版本 | Claude |
 
 ---
 
-*待确认事项*:
+_待确认事项_:
+
 1. 是否需要实现所有列出的功能？
 2. 功能优先级是否需要调整？
 3. 是否有特定的UI/UX设计要求？

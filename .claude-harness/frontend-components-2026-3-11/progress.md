@@ -11,6 +11,7 @@
 ### 2026-03-11
 
 #### 已完成
+
 - [x] 环境准备
 - [x] 安装 Recharts
 - [x] SocialMentionChart 组件
@@ -30,19 +31,18 @@
 
 ## 功能清单状态
 
-| ID | 功能 | 状态 |
-|----|------|------|
-| fe-01 | 安装 Recharts | ⏳ 待开始 |
+| ID    | 功能               | 状态      |
+| ----- | ------------------ | --------- |
+| fe-01 | 安装 Recharts      | ⏳ 待开始 |
 | fe-02 | SocialMentionChart | ⏳ 待开始 |
-| fe-03 | CategoryHeatChart | ⏳ 待开始 |
-| fe-04 | TrendHistoryChart | ⏳ 待开始 |
-| fe-05 | AppearanceHeatmap | ⏳ 待开始 |
-| fe-06 | SocialStatsCard | ⏳ 待开始 |
-| fe-07 | CategoryHeatStats | ⏳ 待开始 |
-| fe-08 | CategoryTags | ⏳ 待开始 |
-| fe-09 | 单元测试 | ⏳ 待开始 |
+| fe-03 | CategoryHeatChart  | ⏳ 待开始 |
+| fe-04 | TrendHistoryChart  | ⏳ 待开始 |
+| fe-05 | AppearanceHeatmap  | ⏳ 待开始 |
+| fe-06 | SocialStatsCard    | ⏳ 待开始 |
+| fe-07 | CategoryHeatStats  | ⏳ 待开始 |
+| fe-08 | CategoryTags       | ⏳ 待开始 |
+| fe-09 | 单元测试           | ⏳ 待开始 |
 
 ---
 
 ## 关键决策记录
-

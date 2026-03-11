@@ -19,6 +19,7 @@
 ### 2026-03-11
 
 #### 已完成
+
 - [x] 环境检查 - 测试框架已就绪
 - [x] API测试 - social-stats (5 tests)
 - [x] API测试 - appearance-stats (5 tests)
@@ -34,37 +35,39 @@
 
 #### 测试文件清单
 
-| 文件 | 类型 | 测试数量 | 状态 |
-|------|------|----------|------|
-| `src/api/product-stats.test.ts` | API | 20 | ✅ 通过 |
-| `src/api/topic-heat-stats.test.ts` | API | 13 | ✅ 通过 |
-| `src/e2e/web/product-detail.spec.ts` | E2E | 15 | ✅ 已创建 |
-| `src/e2e/web/topic-detail.spec.ts` | E2E | 15 | ✅ 已创建 |
+| 文件                                 | 类型 | 测试数量 | 状态      |
+| ------------------------------------ | ---- | -------- | --------- |
+| `src/api/product-stats.test.ts`      | API  | 20       | ✅ 通过   |
+| `src/api/topic-heat-stats.test.ts`   | API  | 13       | ✅ 通过   |
+| `src/e2e/web/product-detail.spec.ts` | E2E  | 15       | ✅ 已创建 |
+| `src/e2e/web/topic-detail.spec.ts`   | E2E  | 15       | ✅ 已创建 |
 
 #### 遇到的问题
+
 无
 
 #### 解决方案
+
 无
 
 ---
 
 ## 功能清单状态
 
-| ID | 功能 | 状态 |
-|----|------|------|
-| test-01 | API测试 - social-stats | ✅ 已完成 |
-| test-02 | API测试 - appearance-stats | ✅ 已完成 |
-| test-03 | API测试 - trend-history | ✅ 已完成 |
-| test-04 | API测试 - heat-stats | ✅ 已完成 |
-| test-05 | API测试 - 边界情况 | ✅ 已完成 |
-| test-06 | API测试 - 错误处理 | ✅ 已完成 |
+| ID      | 功能                         | 状态      |
+| ------- | ---------------------------- | --------- |
+| test-01 | API测试 - social-stats       | ✅ 已完成 |
+| test-02 | API测试 - appearance-stats   | ✅ 已完成 |
+| test-03 | API测试 - trend-history      | ✅ 已完成 |
+| test-04 | API测试 - heat-stats         | ✅ 已完成 |
+| test-05 | API测试 - 边界情况           | ✅ 已完成 |
+| test-06 | API测试 - 错误处理           | ✅ 已完成 |
 | test-07 | E2E测试 - 商品详情页社交统计 | ✅ 已完成 |
-| test-08 | E2E测试 - 商品详情页热力图 | ✅ 已完成 |
-| test-09 | E2E测试 - 商品详情页趋势图 | ✅ 已完成 |
+| test-08 | E2E测试 - 商品详情页热力图   | ✅ 已完成 |
+| test-09 | E2E测试 - 商品详情页趋势图   | ✅ 已完成 |
 | test-10 | E2E测试 - 分类详情页热度统计 | ✅ 已完成 |
-| test-11 | E2E测试 - Tab切换交互 | ✅ 已完成 |
-| test-12 | E2E测试 - 响应式适配 | ✅ 已完成 |
+| test-11 | E2E测试 - Tab切换交互        | ✅ 已完成 |
+| test-12 | E2E测试 - 响应式适配         | ✅ 已完成 |
 
 ---
 
@@ -72,19 +75,19 @@
 
 ### API测试覆盖
 
-| API端点 | 正常场景 | 边界情况 | 错误处理 | 性能测试 |
-|---------|----------|----------|----------|----------|
-| GET /products/:id/social-stats | ✅ | ✅ | ✅ | ✅ |
-| GET /products/:id/appearance-stats | ✅ | ✅ | ✅ | ✅ |
-| GET /products/:id/trend-history | ✅ | ✅ | ✅ | ✅ |
-| GET /topics/:slug/heat-stats | ✅ | ✅ | ✅ | ✅ |
+| API端点                            | 正常场景 | 边界情况 | 错误处理 | 性能测试 |
+| ---------------------------------- | -------- | -------- | -------- | -------- |
+| GET /products/:id/social-stats     | ✅       | ✅       | ✅       | ✅       |
+| GET /products/:id/appearance-stats | ✅       | ✅       | ✅       | ✅       |
+| GET /products/:id/trend-history    | ✅       | ✅       | ✅       | ✅       |
+| GET /topics/:slug/heat-stats       | ✅       | ✅       | ✅       | ✅       |
 
 ### E2E测试覆盖
 
-| 页面 | 页面加载 | 功能测试 | 交互测试 | 响应式 | SEO | 无障碍 |
-|------|----------|----------|----------|--------|-----|--------|
-| 商品详情页 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 分类详情页 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 页面       | 页面加载 | 功能测试 | 交互测试 | 响应式 | SEO | 无障碍 |
+| ---------- | -------- | -------- | -------- | ------ | --- | ------ |
+| 商品详情页 | ✅       | ✅       | ✅       | ✅     | ✅  | ✅     |
+| 分类详情页 | ✅       | ✅       | ✅       | ✅     | ✅  | ✅     |
 
 ---
 

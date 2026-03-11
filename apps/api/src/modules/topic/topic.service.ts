@@ -22,6 +22,7 @@ import {
   TopicWithProductCountDto,
 } from './dto/topic.dto';
 import { TopicHeatStatsResponseDto } from './dto/topic-heat-stats.dto';
+import { CacheService, CacheKeys, CacheTTLConfig } from '../../common/cache';
 
 /**
  * 分类服务层
@@ -30,6 +31,8 @@ import { TopicHeatStatsResponseDto } from './dto/topic-heat-stats.dto';
 @Injectable()
 export class TopicService {
   private readonly logger = new Logger(TopicService.name);
+
+  constructor(private readonly cacheService: CacheService) {}
 
   /**
    * 获取分类列表
@@ -302,6 +305,7 @@ export class TopicService {
 
   /**
    * 获取分类热度统计
+   * 使用缓存优化频繁查询
    */
   async getTopicHeatStats(slug: string): Promise<TopicHeatStatsResponseDto> {
     // 参数验证
@@ -310,6 +314,17 @@ export class TopicService {
     }
 
     const trimmedSlug = slug.trim();
+    const cacheKey = CacheKeys.TOPIC_HEAT_STATS(trimmedSlug);
+
+    // 尝试从缓存获取
+    const cached =
+      await this.cacheService.get<TopicHeatStatsResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for topic heat stats: ${cacheKey}`);
+      return cached;
+    }
+
+    this.logger.debug(`Fetching topic heat stats: ${trimmedSlug}`);
 
     // 查找分类
     const category = await db
@@ -352,7 +367,7 @@ export class TopicService {
       .orderBy(desc(categoryHeatStats.statDate))
       .limit(7);
 
-    return {
+    const response: TopicHeatStatsResponseDto = {
       today: {
         reddit: stats?.redditResultCount ?? 0,
         x: stats?.xResultCount ?? 0,
@@ -374,6 +389,11 @@ export class TopicService {
         }))
         .reverse(),
     };
+
+    // 缓存结果（10分钟）
+    await this.cacheService.set(cacheKey, response, CacheTTLConfig.MEDIUM);
+
+    return response;
   }
 
   /**

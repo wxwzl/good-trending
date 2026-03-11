@@ -27,6 +27,8 @@ export const CacheKeys = {
   TOPIC_DETAIL: (slug: string) => `${CACHE_PREFIX}:topics:detail:${slug}`,
   TOPIC_PRODUCTS: (slug: string, page: number, limit: number) =>
     `${CACHE_PREFIX}:topics:${slug}:products:${page}:${limit}`,
+  TOPIC_HEAT_STATS: (slug: string) =>
+    `${CACHE_PREFIX}:topics:${slug}:heat-stats`,
 
   // 搜索相关
   SEARCH_RESULTS: (query: string, page: number, limit: number) =>
@@ -95,12 +97,33 @@ export class CacheManager {
 
       if (slug) {
         await this.cacheService.del(CacheKeys.TOPIC_DETAIL(slug));
+        await this.cacheService.del(CacheKeys.TOPIC_HEAT_STATS(slug));
         await this.cacheService.delPattern(`${CACHE_PREFIX}:topics:${slug}:*`);
       }
 
       this.logger.log('Topic cache cleared');
     } catch (error) {
       this.logger.error(`Failed to clear topic cache: ${error}`);
+    }
+  }
+
+  /**
+   * 清除分类热度统计缓存
+   */
+  async clearTopicHeatStatsCache(slug?: string): Promise<void> {
+    try {
+      if (slug) {
+        await this.cacheService.del(CacheKeys.TOPIC_HEAT_STATS(slug));
+      } else {
+        await this.cacheService.delPattern(
+          `${CACHE_PREFIX}:topics:*:heat-stats`,
+        );
+      }
+      this.logger.log(
+        `Topic heat stats cache cleared${slug ? ` for ${slug}` : ''}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to clear topic heat stats cache: ${error}`);
     }
   }
 

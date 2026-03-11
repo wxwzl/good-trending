@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { TrendingFilters } from "./trending-filters";
 import { TrendingList } from "./trending-list";
-import { listTrending, listTrendingClient } from "@/api/trending";
+import { listTrendingClient } from "@/api/trending";
 import type { TrendingItem } from "@/api/types";
 
 type TimeFilter = "all" | "today" | "week" | "month";

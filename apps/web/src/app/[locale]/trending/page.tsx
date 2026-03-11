@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
-import { TrendingContainer } from "@/components/features/trending-container";
+import { TrendingContainer } from "./_components";
 import { ItemListJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generatePageMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
@@ -51,11 +51,6 @@ function TrendingListSkeleton() {
       </div>
     </div>
   );
-}
-
-interface TrendingPageProps {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ period?: string; page?: string }>;
 }
 
 interface TrendingPageProps {

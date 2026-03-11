@@ -1,12 +1,17 @@
 /**
  * 昨天数据统计任务 - 爬虫实现
- * 合并类目热度和商品发现，一次遍历同时处理
+ * 合并类目热度和商品发现，支持AI分析和传统链接提取
  */
 
 import type { Page, Browser } from "playwright";
 import { chromium } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
-import { GoogleSearchService, createAmazonSearchService } from "@good-trending/crawler";
+import {
+  GoogleSearchService,
+  createAmazonSearchService,
+  createAIAnalyzer,
+  createRedditService,
+} from "@good-trending/crawler";
 import type {
   YesterdayStatsConfig,
   CategoryData,
@@ -19,7 +24,9 @@ const logger = createLoggerInstance("yesterday-stats-crawler");
 
 /**
  * 昨天数据统计爬虫
- * 一次遍历同时获取热度数据和商品数据
+ * 支持两种商品发现方式：
+ * 1. 传统：从Reddit搜索结果中提取亚马逊链接
+ * 2. AI：访问帖子内容，AI分析提取关键词，亚马逊搜索商品
  */
 export class YesterdayStatsCrawler {
   private config: Required<YesterdayStatsConfig>;
@@ -27,20 +34,46 @@ export class YesterdayStatsCrawler {
   private page: Page | null = null;
   private googleSearch: GoogleSearchService;
   private amazonService: ReturnType<typeof createAmazonSearchService>;
+  private redditService: ReturnType<typeof createRedditService>;
+  private aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
 
   constructor(config: Partial<YesterdayStatsConfig> = {}) {
+    // 从环境变量读取AI配置
+    const enableAI = process.env.ENABLE_AI_ANALYSIS === "true";
+
     this.config = {
       headless: true,
       maxResultsPerCategory: 30,
       maxProductsPerCategory: 10,
       searchDelayRange: [5000, 10000],
       saveToDb: true,
+      enableAIAnalysis: enableAI,
+      productsPerKeyword: 6,
       ...config,
     };
+
     this.googleSearch = new GoogleSearchService({
       forceBrowser: true,
     });
     this.amazonService = createAmazonSearchService();
+    this.redditService = createRedditService();
+
+    // AI分析器延迟初始化
+    if (this.config.enableAIAnalysis) {
+      logger.info("AI分析功能已启用");
+    } else {
+      logger.info("AI分析功能未启用，仅使用链接提取");
+    }
+  }
+
+  /**
+   * 获取AI分析器（延迟初始化）
+   */
+  private getAIAnalyzer() {
+    if (!this.aiAnalyzer && this.config.enableAIAnalysis) {
+      this.aiAnalyzer = createAIAnalyzer();
+    }
+    return this.aiAnalyzer;
   }
 
   /**
@@ -111,8 +144,13 @@ export class YesterdayStatsCrawler {
     const products: DiscoveredProduct[] = [];
     const errors: string[] = [];
     const seenAsins = new Set<string>();
+    let linkDiscovered = 0;
+    let aiDiscovered = 0;
 
-    logger.info(`开始合并爬取 ${categories.length} 个类目的热度数据和商品`);
+    logger.info(
+      `开始合并爬取 ${categories.length} 个类目的热度数据和商品` +
+        (this.config.enableAIAnalysis ? "（启用AI分析）" : "（仅链接提取）")
+    );
 
     // 初始化浏览器
     await this.initBrowser();
@@ -129,11 +167,18 @@ export class YesterdayStatsCrawler {
           heatResults.push(result.heatResult);
         }
 
-        // 添加商品（去重）
+        // 添加商品（去重并按发现方式统计）
         for (const product of result.products) {
           if (!seenAsins.has(product.amazonId)) {
             seenAsins.add(product.amazonId);
             products.push(product);
+
+            // 统计发现方式
+            if (product.discoveryMethod === "AI") {
+              aiDiscovered++;
+            } else {
+              linkDiscovered++;
+            }
           }
         }
       } catch (error) {
@@ -146,7 +191,9 @@ export class YesterdayStatsCrawler {
     const duration = Date.now() - startTime;
 
     logger.info(
-      `昨天数据统计完成: ${heatResults.length} 个类目热度, ${products.length} 个商品, ${errors.length} 个错误`
+      `昨天数据统计完成: ${heatResults.length} 个类目热度, ` +
+        `${products.length} 个商品（链接:${linkDiscovered}, AI:${aiDiscovered}）, ` +
+        `${errors.length} 个错误`
     );
 
     return {
@@ -155,11 +202,16 @@ export class YesterdayStatsCrawler {
       products,
       errors,
       duration,
+      stats: {
+        linkDiscovered,
+        aiDiscovered,
+      },
     };
   }
 
   /**
    * 处理单个类目（热度 + 商品）
+   * 支持两种方式发现商品：链接提取 + AI分析
    */
   private async processCategory(
     category: CategoryData,
@@ -193,35 +245,48 @@ export class YesterdayStatsCrawler {
       `类目 "${category.name}" 热度: Reddit=${heatResult.redditResultCount}, X=${heatResult.xResultCount}`
     );
 
-    // 从 Reddit 结果中提取商品
+    // 收集商品（两种方式）
     const products: DiscoveredProduct[] = [];
-    if (redditResult.success) {
-      const maxResults = this.config.maxResultsPerCategory;
-      const extractedProducts = await this.extractAmazonProductsFromLinks(
-        redditResult.links.slice(0, maxResults)
-      );
 
-      for (const product of extractedProducts) {
-        products.push({
-          ...product,
-          discoveredFromCategory: category.id,
-          firstSeenAt: date,
-        });
-      }
-
-      logger.info(`类目 "${category.name}" 提取 ${extractedProducts.length} 个新商品`);
+    if (!redditResult.success || redditResult.links.length === 0) {
+      return { heatResult, products };
     }
+
+    // 1. 传统方式：从搜索结果中提取亚马逊链接
+    const linkProducts = await this.extractProductsFromLinks(
+      redditResult.links.slice(0, this.config.maxResultsPerCategory),
+      category.id,
+      date
+    );
+    products.push(...linkProducts);
+
+    // 2. AI方式：访问帖子内容，AI分析提取关键词，搜索商品
+    if (this.config.enableAIAnalysis && this.page) {
+      const aiProducts = await this.extractProductsWithAI(
+        redditResult.links.slice(0, 5), // AI分析前5个帖子
+        category.id,
+        date
+      );
+      products.push(...aiProducts);
+    }
+
+    logger.info(
+      `类目 "${category.name}" 发现 ${linkProducts.length} 个链接商品` +
+        (this.config.enableAIAnalysis ? `, ${products.length - linkProducts.length} 个AI商品` : "")
+    );
 
     return { heatResult, products };
   }
 
   /**
-   * 从链接列表中提取亚马逊商品
+   * 从链接列表中提取亚马逊商品（传统方式）
    */
-  private async extractAmazonProductsFromLinks(
-    links: Array<{ url: string; title: string }>
-  ): Promise<Array<Omit<DiscoveredProduct, "discoveredFromCategory" | "firstSeenAt">>> {
-    const products: Array<Omit<DiscoveredProduct, "discoveredFromCategory" | "firstSeenAt">> = [];
+  private async extractProductsFromLinks(
+    links: Array<{ url: string; title: string }>,
+    categoryId: string,
+    date: Date
+  ): Promise<DiscoveredProduct[]> {
+    const products: DiscoveredProduct[] = [];
     const seenAsins = new Set<string>();
 
     for (const link of links) {
@@ -248,6 +313,9 @@ export class YesterdayStatsCrawler {
           price: productInfo.price,
           currency: productInfo.currency,
           url: link.url,
+          discoveredFromCategory: categoryId,
+          firstSeenAt: date,
+          discoveryMethod: "LINK",
         });
 
         // 限制每个类目的商品数
@@ -256,6 +324,102 @@ export class YesterdayStatsCrawler {
         }
       } catch (error) {
         logger.debug(`提取商品失败 ${link.url}: ${error}`);
+      }
+    }
+
+    return products;
+  }
+
+  /**
+   * 使用AI分析帖子内容发现商品
+   */
+  private async extractProductsWithAI(
+    links: Array<{ url: string; title: string }>,
+    categoryId: string,
+    date: Date
+  ): Promise<DiscoveredProduct[]> {
+    const products: DiscoveredProduct[] = [];
+    const seenAsins = new Set<string>();
+
+    for (const link of links) {
+      try {
+        // 检查是否已存在（避免重复处理）
+        const existingAsin = this.extractAsinFromUrl(link.url);
+        if (existingAsin) {
+          seenAsins.add(existingAsin);
+        }
+
+        // 访问帖子获取内容
+        if (!this.page) {
+          continue;
+        }
+
+        const post = await this.redditService.fetchPost(this.page, link.url);
+
+        // AI分析提取关键词
+        const aiAnalyzer = this.getAIAnalyzer();
+        if (!aiAnalyzer) {
+          continue;
+        }
+
+        const analysis = await aiAnalyzer.analyze({
+          title: post.title,
+          content: post.content || "",
+          comments: post.comments,
+        });
+
+        if (!analysis || analysis.keywords.length === 0) {
+          logger.debug(`AI未提取到关键词: ${link.url}`);
+          continue;
+        }
+
+        logger.info(
+          `AI提取到 ${analysis.keywords.length} 个关键词: ${analysis.keywords.join(", ")}`
+        );
+
+        // 对每个关键词搜索亚马逊商品
+        for (const keyword of analysis.keywords.slice(0, 3)) {
+          try {
+            const amazonProducts = await this.amazonService.searchByKeyword(
+              keyword,
+              this.config.productsPerKeyword
+            );
+
+            for (const product of amazonProducts) {
+              // 去重
+              if (seenAsins.has(product.asin)) {
+                continue;
+              }
+              seenAsins.add(product.asin);
+
+              products.push({
+                amazonId: product.asin,
+                name: product.name,
+                description: undefined,
+                image: product.image,
+                price: product.price,
+                currency: product.currency,
+                url: product.url,
+                discoveredFromCategory: categoryId,
+                firstSeenAt: date,
+                discoveryMethod: "AI",
+              });
+
+              // 限制每个类目的商品数
+              if (products.length >= this.config.maxProductsPerCategory) {
+                break;
+              }
+            }
+
+            if (products.length >= this.config.maxProductsPerCategory) {
+              break;
+            }
+          } catch (error) {
+            logger.error(`亚马逊搜索失败 "${keyword}": ${error}`);
+          }
+        }
+      } catch (error) {
+        logger.error(`AI分析帖子失败 ${link.url}: ${error}`);
       }
     }
 

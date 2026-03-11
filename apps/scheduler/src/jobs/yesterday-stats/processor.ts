@@ -92,6 +92,8 @@ export async function processYesterdayStatsJob(
       totalCategories: crawlResult.heatResults.length,
       totalProducts: result.totalProducts,
       savedCount: result.savedProducts,
+      linkDiscovered: crawlResult.stats?.linkDiscovered || 0,
+      aiDiscovered: crawlResult.stats?.aiDiscovered || 0,
       duration: result.duration,
     });
 
@@ -208,7 +210,8 @@ async function saveDiscoveredProducts(products: DiscoveredProduct[]): Promise<nu
       });
 
       savedCount++;
-      logger.info(`保存商品: ${product.name.substring(0, 50)}...`);
+      const method = product.discoveryMethod === "AI" ? "[AI]" : "[LINK]";
+      logger.info(`${method} 保存商品: ${product.name.substring(0, 50)}...`);
     } catch (error) {
       logger.error(`保存商品失败 ${product.amazonId}: ${error}`);
     }

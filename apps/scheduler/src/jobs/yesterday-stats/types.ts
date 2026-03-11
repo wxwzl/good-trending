@@ -1,6 +1,7 @@
 /**
  * 昨天数据统计任务 - 类型定义
  * 合并类目热度和商品发现，一次遍历同时处理
+ * 支持AI分析和传统链接提取两种方式
  */
 
 /**
@@ -17,6 +18,10 @@ export interface YesterdayStatsConfig {
   searchDelayRange?: [number, number];
   /** 是否保存到数据库 */
   saveToDb?: boolean;
+  /** 是否启用AI分析（从环境变量读取，默认false） */
+  enableAIAnalysis?: boolean;
+  /** AI分析每个帖子的最大商品数 */
+  productsPerKeyword?: number;
 }
 
 /**
@@ -52,6 +57,8 @@ export interface DiscoveredProduct {
   url: string;
   discoveredFromCategory: string;
   firstSeenAt: Date;
+  /** 发现方式: LINK=链接提取, AI=AI分析 */
+  discoveryMethod?: "LINK" | "AI";
 }
 
 /**
@@ -63,4 +70,9 @@ export interface YesterdayStatsResult {
   products: DiscoveredProduct[];
   errors: string[];
   duration: number;
+  /** 统计信息 */
+  stats?: {
+    linkDiscovered: number;
+    aiDiscovered: number;
+  };
 }

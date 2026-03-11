@@ -4,7 +4,28 @@
  * 用于开发环境填充测试数据
  *
  * 用法:
- *   pnpm tsx scripts/backfill-historical-data.ts [--days=30] [--headless=false]
+ *   pnpm backfill                              # 默认回填30天，无头模式，保存到数据库
+ *   pnpm backfill --days=7                     # 回填最近7天
+ *   pnpm backfill --headless=false             # 显示浏览器窗口（调试用）
+ *   pnpm backfill --dry-run                    # 模拟运行，不实际保存到数据库
+ *
+ * 命令行参数:
+ *   --days=<number>       回填天数，默认30天
+ *   --headless=<boolean>  是否无头模式，默认true
+ *   --dry-run             模拟运行模式，只打印不保存
+ *
+ * 示例:
+ *   # 回填7天数据，显示浏览器
+ *   pnpm backfill --days=7 --headless=false
+ *
+ *   # 模拟回填3天，查看会爬取什么数据
+ *   pnpm backfill --days=3 --dry-run
+ *
+ * 注意:
+ *   - 需要确保数据库中有类目数据（运行 pnpm db:seed:categories:dev）
+ *   - 如果启用AI分析，需要设置 ENABLE_AI_ANALYSIS=true 和相关API密钥
+ *   - 每天处理5个类目，每类目最多20个商品
+ *   - 每天之间有5秒延迟避免请求过快
  */
 
 import { chromium } from "playwright";

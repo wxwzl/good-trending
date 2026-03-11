@@ -4,7 +4,7 @@
  */
 import { fetchApi, FetchOptions } from "@/lib/fetch";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import type { Topic, Product, PaginatedResponse } from "./types";
+import type { Topic, Product, PaginatedResponse, TopicHeatStatsResponse } from "./types";
 
 interface ListTopicsParams {
   page?: number;
@@ -73,6 +73,26 @@ export async function getTopicProducts(
     next: {
       revalidate: 300, // 5分钟
       tags: [CACHE_TAGS.TOPIC_PRODUCTS(slug), CACHE_TAGS.PRODUCTS],
+    },
+  });
+}
+
+/**
+ * 获取分类热度统计
+ * GET /api/v1/topics/:slug/heat-stats
+ *
+ * 缓存策略：
+ * - revalidate: 30分钟
+ */
+export async function getTopicHeatStats(
+  slug: string,
+  option?: FetchOptions
+): Promise<TopicHeatStatsResponse> {
+  return fetchApi<TopicHeatStatsResponse>(`/topics/${slug}/heat-stats`, {
+    ...option,
+    next: {
+      revalidate: 1800, // 30分钟
+      tags: [CACHE_TAGS.TOPICS, CACHE_TAGS.TOPIC(slug)],
     },
   });
 }

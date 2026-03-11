@@ -1,0 +1,91 @@
+{
+  "taskName": "集成测试",
+  "description": "API集成测试和E2E集成测试",
+  "startDate": "2026-03-11",
+  "features": [
+    {
+      "id": "test-01",
+      "name": "API测试 - GET /products/:id/social-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "20 tests passed, 文件: src/api/product-stats.test.ts"
+    },
+    {
+      "id": "test-02",
+      "name": "API测试 - GET /products/:id/appearance-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在product-stats.test.ts中"
+    },
+    {
+      "id": "test-03",
+      "name": "API测试 - GET /products/:id/trend-history",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在product-stats.test.ts中"
+    },
+    {
+      "id": "test-04",
+      "name": "API测试 - GET /topics/:slug/heat-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "13 tests passed, 文件: src/api/topic-heat-stats.test.ts"
+    },
+    {
+      "id": "test-05",
+      "name": "API测试 - 边界情况测试",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在所有API测试文件中"
+    },
+    {
+      "id": "test-06",
+      "name": "API测试 - 错误处理测试",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在所有API测试文件中"
+    },
+    {
+      "id": "test-07",
+      "name": "E2E测试 - 商品详情页社交统计",
+      "priority": "high",
+      "passes": true,
+      "notes": "文件: src/e2e/web/product-detail.spec.ts"
+    },
+    {
+      "id": "test-08",
+      "name": "E2E测试 - 商品详情页热力图",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在product-detail.spec.ts中"
+    },
+    {
+      "id": "test-09",
+      "name": "E2E测试 - 商品详情页趋势图",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含在product-detail.spec.ts中"
+    },
+    {
+      "id": "test-10",
+      "name": "E2E测试 - 分类详情页热度统计",
+      "priority": "high",
+      "passes": true,
+      "notes": "文件: src/e2e/web/topic-detail.spec.ts"
+    },
+    {
+      "id": "test-11",
+      "name": "E2E测试 - Tab切换交互",
+      "priority": "medium",
+      "passes": true,
+      "notes": "包含在product-detail.spec.ts中"
+    },
+    {
+      "id": "test-12",
+      "name": "E2E测试 - 响应式适配",
+      "priority": "medium",
+      "passes": true,
+      "notes": "包含在两个E2E测试文件中"
+    }
+  ]
+}

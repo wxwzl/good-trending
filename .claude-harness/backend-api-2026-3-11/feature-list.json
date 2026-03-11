@@ -1,0 +1,77 @@
+{
+  "taskName": "后端API开发",
+  "description": "实现社交统计、热度统计等后端API",
+  "startDate": "2026-03-11",
+  "features": [
+    {
+      "id": "api-01",
+      "name": "商品社交统计API - GET /products/:id/social-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "已实现，包含缓存"
+    },
+    {
+      "id": "api-02",
+      "name": "商品出现统计API - GET /products/:id/appearance-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "已实现，包含位图转换"
+    },
+    {
+      "id": "api-03",
+      "name": "商品趋势历史API - GET /products/:id/trend-history",
+      "priority": "high",
+      "passes": true,
+      "notes": "已实现"
+    },
+    {
+      "id": "api-04",
+      "name": "分类热度统计API - GET /topics/:slug/heat-stats",
+      "priority": "high",
+      "passes": true,
+      "notes": "已实现"
+    },
+    {
+      "id": "api-05",
+      "name": "DTO类型定义",
+      "priority": "high",
+      "passes": true,
+      "notes": "@good-trending/dto包和API DTO类"
+    },
+    {
+      "id": "api-06",
+      "name": "Repository查询方法",
+      "priority": "high",
+      "passes": true,
+      "notes": "ProductRepository新增4个查询方法"
+    },
+    {
+      "id": "api-07",
+      "name": "Service业务逻辑",
+      "priority": "high",
+      "passes": true,
+      "notes": "ProductService和TopicService新增方法"
+    },
+    {
+      "id": "api-08",
+      "name": "单元测试 - Service层",
+      "priority": "medium",
+      "passes": true,
+      "notes": "34个测试用例全部通过"
+    },
+    {
+      "id": "api-09",
+      "name": "单元测试 - Controller层",
+      "priority": "medium",
+      "passes": true,
+      "notes": "12个测试用例全部通过"
+    },
+    {
+      "id": "api-10",
+      "name": "商品详情API增强 - 添加categories字段",
+      "priority": "high",
+      "passes": true,
+      "notes": "GET /products/:id 和 GET /products/slug/:slug 现在返回categories"
+    }
+  ]
+}

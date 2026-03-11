@@ -613,4 +613,143 @@ export const handlers = [
 
     return HttpResponse.json({ data: suggestions });
   }),
+
+  // ============================================
+  // Product Stats API
+  // ============================================
+
+  // GET /api/v1/products/:id/social-stats - Get product social stats
+  http.get("*/api/v1/products/:id/social-stats", async ({ params }) => {
+    await delay(100);
+    const product = mockProducts.find((p) => p.id === params.id);
+
+    if (!product) {
+      return new HttpResponse(
+        JSON.stringify({
+          statusCode: 404,
+          message: "Product not found",
+          error: "Not Found",
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return HttpResponse.json({
+      data: {
+        today: { reddit: 10, x: 5 },
+        yesterday: { reddit: 8, x: 3 },
+        thisWeek: { reddit: 45, x: 20 },
+        thisMonth: { reddit: 180, x: 85 },
+        history: Array.from({ length: 30 }, (_, i) => ({
+          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          reddit: Math.floor(Math.random() * 20),
+          x: Math.floor(Math.random() * 10),
+        })),
+      },
+    });
+  }),
+
+  // GET /api/v1/products/:id/appearance-stats - Get product appearance stats
+  http.get("*/api/v1/products/:id/appearance-stats", async ({ params }) => {
+    await delay(100);
+    const product = mockProducts.find((p) => p.id === params.id);
+
+    if (!product) {
+      return new HttpResponse(
+        JSON.stringify({
+          statusCode: 404,
+          message: "Product not found",
+          error: "Not Found",
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Generate random bitmaps (1 = appeared, 0 = not appeared)
+    const last7DaysBitmap = Array.from({ length: 7 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
+    const last30DaysBitmap = Array.from({ length: 30 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
+    const last60DaysBitmap = Array.from({ length: 60 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
+
+    const activeDays7 = last7DaysBitmap.split("1").length - 1;
+    const activeDays30 = last30DaysBitmap.split("1").length - 1;
+    const activityScore = Math.min(5, (activeDays7 / 7) * 5);
+
+    return HttpResponse.json({
+      data: {
+        last7DaysBitmap,
+        last30DaysBitmap,
+        last60DaysBitmap,
+        activeDays7,
+        activeDays30,
+        activityScore: parseFloat(activityScore.toFixed(1)),
+      },
+    });
+  }),
+
+  // GET /api/v1/products/:id/trend-history - Get product trend history
+  http.get("*/api/v1/products/:id/trend-history", async ({ params }) => {
+    await delay(100);
+    const product = mockProducts.find((p) => p.id === params.id);
+
+    if (!product) {
+      return new HttpResponse(
+        JSON.stringify({
+          statusCode: 404,
+          message: "Product not found",
+          error: "Not Found",
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const periodTypes = ["TODAY", "YESTERDAY", "THIS_WEEK", "THIS_MONTH", "LAST_7_DAYS", "LAST_15_DAYS", "LAST_30_DAYS"];
+
+    return HttpResponse.json({
+      data: {
+        history: Array.from({ length: 14 }, (_, i) => ({
+          date: new Date(Date.now() - (13 - i) * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          periodType: periodTypes[Math.floor(Math.random() * periodTypes.length)],
+          rank: Math.floor(Math.random() * 100) + 1,
+          score: parseFloat((Math.random() * 100).toFixed(1)),
+          redditMentions: Math.floor(Math.random() * 50),
+          xMentions: Math.floor(Math.random() * 30),
+        })),
+      },
+    });
+  }),
+
+  // ============================================
+  // Topic Heat Stats API
+  // ============================================
+
+  // GET /api/v1/topics/:slug/heat-stats - Get topic heat stats
+  http.get("*/api/v1/topics/:slug/heat-stats", async ({ params }) => {
+    await delay(100);
+    const topic = mockTopics.find((t) => t.slug === params.slug);
+
+    if (!topic) {
+      return new HttpResponse(
+        JSON.stringify({
+          statusCode: 404,
+          message: "Topic not found",
+          error: "Not Found",
+        }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return HttpResponse.json({
+      data: {
+        today: { reddit: 1234, x: 567 },
+        yesterday: { reddit: 1100, x: 500 },
+        last7Days: { reddit: 8500, x: 3800 },
+        crawledProducts: 23,
+        trend: Array.from({ length: 7 }, (_, i) => ({
+          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          reddit: Math.floor(Math.random() * 2000) + 500,
+          x: Math.floor(Math.random() * 1000) + 200,
+        })),
+      },
+    });
+  }),
 ];

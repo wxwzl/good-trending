@@ -4,7 +4,13 @@
  */
 import { fetchApi, FetchOptions } from "@/lib/fetch";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import type { Product, PaginatedResponse } from "./types";
+import type {
+  Product,
+  PaginatedResponse,
+  ProductSocialStatsResponse,
+  ProductAppearanceStatsResponse,
+  ProductTrendHistoryResponse,
+} from "./types";
 
 interface ListProductsParams {
   page?: number;
@@ -64,6 +70,66 @@ export async function getProductBySlug(slug: string, option?: FetchOptions): Pro
     next: {
       revalidate: 3600, // 1小时
       tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(slug)],
+    },
+  });
+}
+
+/**
+ * 获取商品社交统计
+ * GET /api/v1/products/:id/social-stats
+ *
+ * 缓存策略：
+ * - revalidate: 30分钟
+ */
+export async function getProductSocialStats(
+  productId: string,
+  option?: FetchOptions
+): Promise<ProductSocialStatsResponse> {
+  return fetchApi<ProductSocialStatsResponse>(`/products/${productId}/social-stats`, {
+    ...option,
+    next: {
+      revalidate: 1800, // 30分钟
+      tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(productId)],
+    },
+  });
+}
+
+/**
+ * 获取商品出现统计
+ * GET /api/v1/products/:id/appearance-stats
+ *
+ * 缓存策略：
+ * - revalidate: 30分钟
+ */
+export async function getProductAppearanceStats(
+  productId: string,
+  option?: FetchOptions
+): Promise<ProductAppearanceStatsResponse> {
+  return fetchApi<ProductAppearanceStatsResponse>(`/products/${productId}/appearance-stats`, {
+    ...option,
+    next: {
+      revalidate: 1800, // 30分钟
+      tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(productId)],
+    },
+  });
+}
+
+/**
+ * 获取商品趋势历史
+ * GET /api/v1/products/:id/trend-history
+ *
+ * 缓存策略：
+ * - revalidate: 1小时
+ */
+export async function getProductTrendHistory(
+  productId: string,
+  option?: FetchOptions
+): Promise<ProductTrendHistoryResponse> {
+  return fetchApi<ProductTrendHistoryResponse>(`/products/${productId}/trend-history`, {
+    ...option,
+    next: {
+      revalidate: 3600, // 1小时
+      tags: [CACHE_TAGS.PRODUCTS, CACHE_TAGS.PRODUCT(productId)],
     },
   });
 }

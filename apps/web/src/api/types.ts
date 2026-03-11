@@ -51,3 +51,14 @@ export type {
 // 为了保持向后兼容，重导出常用类型
 export type { ProductResponse as Product } from "@good-trending/dto/response";
 export type { TopicResponse as Topic } from "@good-trending/dto/response";
+
+// 统计数据相关类型
+export type {
+  ProductSocialStatsResponse,
+  ProductAppearanceStatsResponse,
+  ProductTrendHistoryResponse,
+  TopicHeatStatsResponse,
+  SocialPlatformStats,
+  ProductTrendHistoryItem,
+  CategoryHeatTrendItem,
+} from "@good-trending/dto/response";

@@ -1,0 +1,70 @@
+{
+  "taskName": "前端组件开发",
+  "description": "实现图表组件、热力图和统计卡片组件",
+  "startDate": "2026-03-11",
+  "features": [
+    {
+      "id": "fe-01",
+      "name": "安装 Recharts 图表库",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-02",
+      "name": "SocialMentionChart 组件 - 社交提及趋势图",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-03",
+      "name": "CategoryHeatChart 组件 - 类目热度趋势图",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-04",
+      "name": "TrendHistoryChart 组件 - 排名趋势图",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-05",
+      "name": "AppearanceHeatmap 组件 - 出现活跃度热力图",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-06",
+      "name": "SocialStatsCard 组件 - 统计卡片",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-07",
+      "name": "CategoryHeatStats 组件 - 类目热度统计",
+      "priority": "high",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-08",
+      "name": "CategoryTags 组件 - 分类标签",
+      "priority": "medium",
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "fe-09",
+      "name": "组件单元测试",
+      "priority": "medium",
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

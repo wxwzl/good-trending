@@ -6,8 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { getTopic, getTopicProducts, listTopics } from "@/api/topic";
-import { TopicProductsList } from "./_components/topic-products-list";
+import { getTopic, getTopicProducts, getTopicHeatStats } from "@/api/topic";
+import { TopicProductsList } from "@/components/topics/topic-products-list";
+import { CategoryHeatStats } from "@/components/stats/category-heat-stats";
 import type { Topic, Product } from "@/api/types";
 
 interface TopicWithProducts extends Topic {
@@ -86,11 +87,21 @@ export default async function TopicPage({ params }: TopicPageProps) {
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const topic = await getTopicBySlug(slug);
+  const [topic, heatStats] = await Promise.all([
+    getTopicBySlug(slug),
+    getTopicHeatStats(slug).catch(() => undefined),
+  ]);
 
   if (!topic) {
     notFound();
   }
+
+  // 转换趋势数据格式
+  const trendData = heatStats?.trend.map((item) => ({
+    date: item.date,
+    redditCount: item.reddit,
+    xCount: item.x,
+  }));
 
   return (
     <div className="py-8">
@@ -127,9 +138,24 @@ export default async function TopicPage({ params }: TopicPageProps) {
           )}
         </header>
 
+        {/* Heat Stats Section */}
+        {heatStats && (
+          <section className="mb-8" aria-label={t("topics.heatStats")}>
+            <CategoryHeatStats
+              redditCount={heatStats.today.reddit}
+              xCount={heatStats.today.x}
+              yesterdayRedditCount={heatStats.yesterday.reddit}
+              yesterdayXCount={heatStats.yesterday.x}
+              crawledProductCount={heatStats.crawledProducts}
+              trendData={trendData}
+            />
+          </section>
+        )}
+
         {/* Products Grid */}
         {topic.products.length > 0 ? (
           <section aria-label="Products in this topic">
+            <h2 className="text-xl font-bold mb-4">{t("topics.products")}</h2>
             <TopicProductsList
               initialItems={topic.products}
               initialPage={1}

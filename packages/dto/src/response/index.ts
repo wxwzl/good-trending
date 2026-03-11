@@ -44,10 +44,25 @@ export interface ProductBase {
 }
 
 /**
+ * 分类简要信息（用于商品中的分类引用）
+ */
+export interface CategoryBrief {
+  /** 分类 ID */
+  id: string;
+  /** 分类名称 */
+  name: string;
+  /** 分类 slug */
+  slug: string;
+}
+
+/**
  * 商品响应数据
  * 单个商品的完整信息
  */
-export interface ProductResponse extends ProductBase {}
+export interface ProductResponse extends ProductBase {
+  /** 所属分类列表 */
+  categories?: CategoryBrief[];
+}
 
 /**
  * 分页商品列表响应

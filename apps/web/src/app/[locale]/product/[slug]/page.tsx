@@ -9,8 +9,16 @@ import { Link } from "@/i18n/routing";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { generateProductMetadata, baseUrl } from "@/lib/seo";
 import { type Locale } from "@/i18n/config";
-import { getProductBySlug } from "@/api/product";
+import {
+  getProductBySlug,
+  getProductSocialStats,
+  getProductAppearanceStats,
+  getProductTrendHistory,
+} from "@/api/product";
 import type { Product } from "@/api/types";
+import { CategoryTags } from "@/components/stats/category-tags";
+import { ProductStatsSection } from "./_components/product-stats-section";
+import { Calendar } from "lucide-react";
 import Image from "next/image";
 
 async function getProduct(slug: string): Promise<Product | null> {
@@ -49,7 +57,6 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   });
 }
 
-// 使用增量静态生成（ISR），每1小时重新验证
 export const revalidate = 3600;
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -64,13 +71,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const [socialStats, appearanceStats, trendHistory] = await Promise.all([
+    getProductSocialStats(product.id).catch(() => undefined),
+    getProductAppearanceStats(product.id).catch(() => undefined),
+    getProductTrendHistory(product.id).catch(() => undefined),
+  ]);
+
   const getSourceLabel = (discoveredFrom: string) => {
     return discoveredFrom === "X_PLATFORM"
       ? t("product.sourceLabels.x_platform")
       : t("product.sourceLabels.amazon");
   };
 
-  // Breadcrumb items for structured data
+  const formatFirstSeen = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   const breadcrumbItems = [
     { name: t("navigation.home"), url: `${baseUrl}/${locale}` },
     { name: t("navigation.trending"), url: `${baseUrl}/${locale}/trending` },
@@ -79,7 +100,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="py-8">
-      {/* Structured Data */}
       <ProductJsonLd
         id={slug}
         name={product.name}
@@ -94,7 +114,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <BreadcrumbJsonLd items={breadcrumbItems} />
 
       <Container>
-        {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <ol className="flex items-center flex-wrap gap-1">
             <li>
@@ -115,9 +134,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </ol>
         </nav>
 
-        {/* Product Detail */}
-        <article className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image */}
+        <article className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-12">
           <div className="relative aspect-square rounded-lg bg-muted overflow-hidden">
             {product.image ? (
               <Image
@@ -127,7 +144,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
-                unoptimized // External images may not be optimized
+                unoptimized
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
@@ -152,17 +169,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
             )}
           </div>
 
-          {/* Product Info */}
           <div className="flex flex-col">
-            {/* Source */}
             <Badge variant="secondary" className="w-fit mb-3">
               {getSourceLabel(product.discoveredFrom)}
             </Badge>
 
-            {/* Name */}
             <h1 className="text-2xl sm:text-3xl font-bold mb-4">{product.name}</h1>
 
-            {/* Price */}
             {product.price && (
               <div className="text-3xl font-bold text-primary mb-6" itemProp="price">
                 {product.currency || "$"}
@@ -170,7 +183,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             )}
 
-            {/* Description */}
+            {product.firstSeenAt && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {t("product.firstSeen")}: {formatFirstSeen(product.firstSeenAt)}
+                </span>
+              </div>
+            )}
+
+            {product.categories && product.categories.length > 0 && (
+              <CategoryTags categories={product.categories} className="mb-4" />
+            )}
+
             {product.description && (
               <Card className="mb-6">
                 <h2 className="text-lg font-semibold mb-2">{t("product.description")}</h2>
@@ -178,7 +203,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </Card>
             )}
 
-            {/* Actions */}
             <div className="flex flex-wrap gap-3 mt-auto">
               <a
                 href={product.sourceUrl}
@@ -194,6 +218,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           </div>
         </article>
+
+        <section className="mb-12" aria-label={t("product.statsSection")}>
+          <h2 className="text-xl font-bold mb-4">{t("product.statistics")}</h2>
+          <ProductStatsSection
+            socialStats={socialStats}
+            appearanceStats={appearanceStats}
+            trendHistory={trendHistory}
+          />
+        </section>
       </Container>
     </div>
   );

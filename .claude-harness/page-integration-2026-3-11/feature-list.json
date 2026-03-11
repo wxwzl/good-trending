@@ -1,0 +1,70 @@
+{
+  "taskName": "页面集成",
+  "description": "商品详情页和分类详情页改版",
+  "startDate": "2026-03-11",
+  "features": [
+    {
+      "id": "pi-01",
+      "name": "商品详情页 - 增加首次发现时间",
+      "priority": "high",
+      "passes": true,
+      "notes": "使用Calendar图标展示"
+    },
+    {
+      "id": "pi-02",
+      "name": "商品详情页 - 增加所属分类标签",
+      "priority": "high",
+      "passes": true,
+      "notes": "使用CategoryTags组件"
+    },
+    {
+      "id": "pi-03",
+      "name": "商品详情页 - ProductStatsSection组件",
+      "priority": "high",
+      "passes": true,
+      "notes": "包含Tab切换功能"
+    },
+    {
+      "id": "pi-04",
+      "name": "商品详情页 - ProductSocialTab组件",
+      "priority": "high",
+      "passes": true,
+      "notes": "社交提及Tab，集成SocialStatsCard和SocialMentionChart"
+    },
+    {
+      "id": "pi-05",
+      "name": "商品详情页 - ProductAppearanceTab组件",
+      "priority": "high",
+      "passes": true,
+      "notes": "出现活跃度Tab，集成AppearanceHeatmap"
+    },
+    {
+      "id": "pi-06",
+      "name": "商品详情页 - ProductTrendTab组件",
+      "priority": "high",
+      "passes": true,
+      "notes": "排名趋势Tab，集成TrendHistoryChart"
+    },
+    {
+      "id": "pi-07",
+      "name": "分类详情页 - 热度统计区域",
+      "priority": "high",
+      "passes": true,
+      "notes": "集成CategoryHeatStats组件"
+    },
+    {
+      "id": "pi-08",
+      "name": "分类详情页 - 趋势图展示",
+      "priority": "high",
+      "passes": true,
+      "notes": "集成CategoryHeatChart"
+    },
+    {
+      "id": "pi-09",
+      "name": "响应式适配 - 移动端优化",
+      "priority": "medium",
+      "passes": true,
+      "notes": "所有组件支持响应式"
+    }
+  ]
+}

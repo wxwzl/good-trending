@@ -210,3 +210,116 @@ export interface HealthResponse {
   /** 时间戳 */
   timestamp: string;
 }
+
+// ============================================
+// Stats 统计数据相关响应
+// ============================================
+
+/**
+ * 社交平台统计数据（Reddit/X）
+ */
+export interface SocialPlatformStats {
+  /** Reddit 提及数 */
+  reddit: number;
+  /** X 平台提及数 */
+  x: number;
+}
+
+/**
+ * 商品社交统计响应
+ * GET /api/v1/products/:id/social-stats
+ */
+export interface ProductSocialStatsResponse {
+  /** 今日统计 */
+  today: SocialPlatformStats;
+  /** 昨日统计 */
+  yesterday: SocialPlatformStats;
+  /** 本周统计 */
+  thisWeek: SocialPlatformStats;
+  /** 本月统计 */
+  thisMonth: SocialPlatformStats;
+  /** 历史数据（近30天每日数据） */
+  history: {
+    /** 日期 */
+    date: string;
+    /** Reddit 提及数 */
+    reddit: number;
+    /** X 平台提及数 */
+    x: number;
+  }[];
+}
+
+/**
+ * 商品出现统计响应
+ * GET /api/v1/products/:id/appearance-stats
+ */
+export interface ProductAppearanceStatsResponse {
+  /** 近7天位图（二进制字符串，1=出现，0=未出现） */
+  last7DaysBitmap: string;
+  /** 近30天位图 */
+  last30DaysBitmap: string;
+  /** 近60天位图 */
+  last60DaysBitmap: string;
+  /** 近7天活跃天数 */
+  activeDays7: number;
+  /** 近30天活跃天数 */
+  activeDays30: number;
+  /** 活跃度评分（0-5） */
+  activityScore: number;
+}
+
+/**
+ * 商品趋势历史记录项
+ */
+export interface ProductTrendHistoryItem {
+  /** 日期 */
+  date: string;
+  /** 榜单类型: TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, LAST_7_DAYS, LAST_15_DAYS, LAST_30_DAYS */
+  periodType: string;
+  /** 排名 */
+  rank: number;
+  /** 趋势分数 */
+  score: number;
+  /** Reddit 提及数 */
+  redditMentions: number;
+  /** X 平台提及数 */
+  xMentions: number;
+}
+
+/**
+ * 商品趋势历史响应
+ * GET /api/v1/products/:id/trend-history
+ */
+export interface ProductTrendHistoryResponse {
+  /** 历史记录列表 */
+  history: ProductTrendHistoryItem[];
+}
+
+/**
+ * 分类热度趋势数据项
+ */
+export interface CategoryHeatTrendItem {
+  /** 日期 */
+  date: string;
+  /** Reddit 搜索结果数 */
+  reddit: number;
+  /** X 平台搜索结果数 */
+  x: number;
+}
+
+/**
+ * 分类热度统计响应
+ * GET /api/v1/topics/:slug/heat-stats
+ */
+export interface TopicHeatStatsResponse {
+  /** 今日统计 */
+  today: SocialPlatformStats;
+  /** 昨日统计 */
+  yesterday: SocialPlatformStats;
+  /** 近7天统计 */
+  last7Days: SocialPlatformStats;
+  /** 今日爬取到的商品数量 */
+  crawledProducts: number;
+  /** 近7天趋势数据 */
+  trend: CategoryHeatTrendItem[];
+}

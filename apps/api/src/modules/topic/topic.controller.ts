@@ -19,6 +19,7 @@ import {
   PaginatedTopicResponseDto,
   PaginatedTopicProductsResponseDto,
 } from './dto/topic.dto';
+import { TopicHeatStatsResponseDto } from './dto/topic-heat-stats.dto';
 
 @ApiTags('topics')
 @Controller('topics')
@@ -158,5 +159,34 @@ export class TopicController {
     @Body() dto: UpdateTopicDto,
   ): Promise<TopicResponseDto> {
     return this.topicService.updateTopic(slug, dto);
+  }
+
+  /**
+   * 获取分类热度统计
+   * GET /api/v1/topics/:slug/heat-stats
+   */
+  @Get(':slug/heat-stats')
+  @ApiOperation({
+    summary: '获取分类热度统计',
+    description: '获取分类的 Reddit/X 平台热度统计数据',
+  })
+  @ApiParam({
+    name: 'slug',
+    description: '分类 slug',
+    example: 'electronics',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功返回热度统计数据',
+    type: TopicHeatStatsResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '分类不存在',
+  })
+  async getTopicHeatStats(
+    @Param('slug') slug: string,
+  ): Promise<TopicHeatStatsResponseDto> {
+    return this.topicService.getTopicHeatStats(slug);
   }
 }

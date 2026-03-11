@@ -9,8 +9,10 @@ import {
   categories,
   products,
   productCategories,
+  categoryHeatStats,
 } from '@good-trending/database';
-import { eq, desc, count, inArray } from 'drizzle-orm';
+import { eq, desc, count, inArray, gte, and } from 'drizzle-orm';
+import { subDays, format } from 'date-fns';
 import { SourceType } from '@good-trending/dto';
 import {
   CreateTopicDto,
@@ -19,6 +21,7 @@ import {
   TopicResponseDto,
   TopicWithProductCountDto,
 } from './dto/topic.dto';
+import { TopicHeatStatsResponseDto } from './dto/topic-heat-stats.dto';
 
 /**
  * 分类服务层
@@ -295,5 +298,91 @@ export class TopicService {
       createdAt: result[0].createdAt.toISOString(),
       updatedAt: result[0].updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * 获取分类热度统计
+   */
+  async getTopicHeatStats(slug: string): Promise<TopicHeatStatsResponseDto> {
+    // 参数验证
+    if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
+      throw new NotFoundException('Invalid topic slug');
+    }
+
+    const trimmedSlug = slug.trim();
+
+    // 查找分类
+    const category = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, trimmedSlug))
+      .limit(1);
+
+    if (!category[0]) {
+      throw new NotFoundException(`Topic with slug ${slug} not found`);
+    }
+
+    const categoryId = category[0].id;
+
+    // 获取最新热度统计
+    const latestStats = await db
+      .select()
+      .from(categoryHeatStats)
+      .where(eq(categoryHeatStats.categoryId, categoryId))
+      .orderBy(desc(categoryHeatStats.statDate))
+      .limit(1);
+
+    const stats = latestStats[0];
+
+    // 获取近7天趋势数据
+    const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+    const trendData = await db
+      .select({
+        statDate: categoryHeatStats.statDate,
+        redditResultCount: categoryHeatStats.redditResultCount,
+        xResultCount: categoryHeatStats.xResultCount,
+      })
+      .from(categoryHeatStats)
+      .where(
+        and(
+          eq(categoryHeatStats.categoryId, categoryId),
+          gte(categoryHeatStats.statDate, sevenDaysAgo),
+        ),
+      )
+      .orderBy(desc(categoryHeatStats.statDate))
+      .limit(7);
+
+    return {
+      today: {
+        reddit: stats?.redditResultCount ?? 0,
+        x: stats?.xResultCount ?? 0,
+      },
+      yesterday: {
+        reddit: stats?.yesterdayRedditCount ?? 0,
+        x: stats?.yesterdayXCount ?? 0,
+      },
+      last7Days: {
+        reddit: stats?.last7DaysRedditCount ?? 0,
+        x: stats?.last7DaysXCount ?? 0,
+      },
+      crawledProducts: stats?.crawledProductCount ?? 0,
+      trend: trendData
+        .map((item) => ({
+          date: this.formatDate(item.statDate),
+          reddit: item.redditResultCount,
+          x: item.xResultCount,
+        }))
+        .reverse(),
+    };
+  }
+
+  /**
+   * 格式化日期为字符串
+   */
+  private formatDate(date: unknown): string {
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+    return String(date);
   }
 }

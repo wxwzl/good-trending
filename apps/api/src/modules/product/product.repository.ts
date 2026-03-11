@@ -8,7 +8,13 @@ import {
   createProduct,
   type SourceType as DbSourceType,
 } from '@good-trending/database';
-import { products, productCategories } from '@good-trending/database';
+import {
+  products,
+  productCategories,
+  productSocialStats,
+  productAppearanceStats,
+  trendRanks,
+} from '@good-trending/database';
 import { eq, desc, asc, ilike, and, count } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { SourceType } from './dto/get-products.dto';
@@ -235,5 +241,57 @@ export class ProductRepository {
       .select({ categoryId: productCategories.categoryId })
       .from(productCategories)
       .where(eq(productCategories.productId, productId));
+  }
+
+  /**
+   * 获取商品最新的社交统计
+   */
+  async findLatestSocialStats(productId: string) {
+    const result = await db
+      .select()
+      .from(productSocialStats)
+      .where(eq(productSocialStats.productId, productId))
+      .orderBy(desc(productSocialStats.statDate))
+      .limit(1);
+
+    return result[0] ?? null;
+  }
+
+  /**
+   * 获取商品最近的社交统计历史
+   */
+  async findSocialStatsHistory(productId: string, days: number) {
+    const result = await db
+      .select()
+      .from(productSocialStats)
+      .where(eq(productSocialStats.productId, productId))
+      .orderBy(desc(productSocialStats.statDate))
+      .limit(days);
+
+    return result;
+  }
+
+  /**
+   * 获取商品出现统计
+   */
+  async findAppearanceStats(productId: string) {
+    const result = await db
+      .select()
+      .from(productAppearanceStats)
+      .where(eq(productAppearanceStats.productId, productId))
+      .limit(1);
+
+    return result[0] ?? null;
+  }
+
+  /**
+   * 获取商品历史排名
+   */
+  async findProductTrendHistory(productId: string) {
+    return db
+      .select()
+      .from(trendRanks)
+      .where(eq(trendRanks.productId, productId))
+      .orderBy(desc(trendRanks.statDate), asc(trendRanks.rank));
   }
 }

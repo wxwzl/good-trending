@@ -19,6 +19,9 @@ import {
   ProductResponseDto,
   PaginatedProductResponseDto,
 } from './dto/product-response.dto';
+import { ProductSocialStatsResponseDto } from './dto/product-social-stats.dto';
+import { ProductAppearanceStatsResponseDto } from './dto/product-appearance-stats.dto';
+import { ProductTrendHistoryResponseDto } from './dto/product-trend-history.dto';
 
 @ApiTags('products')
 @Controller('products')
@@ -192,5 +195,92 @@ export class ProductController {
   })
   async deleteProduct(@Param('id') id: string): Promise<void> {
     return this.productService.deleteProduct(id);
+  }
+
+  /**
+   * 获取商品社交统计
+   * GET /api/v1/products/:id/social-stats
+   */
+  @Get(':id/social-stats')
+  @ApiOperation({
+    summary: '获取商品社交统计',
+    description: '获取商品在各时间段的 Reddit/X 平台提及数统计',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '商品 ID',
+    example: 'clh1234567890abcdef',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '成功返回社交统计数据',
+    type: ProductSocialStatsResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: '商品不存在',
+  })
+  async getProductSocialStats(
+    @Param('id') id: string,
+  ): Promise<ProductSocialStatsResponseDto> {
+    return this.productService.getProductSocialStats(id);
+  }
+
+  /**
+   * 获取商品出现统计
+   * GET /api/v1/products/:id/appearance-stats
+   */
+  @Get(':id/appearance-stats')
+  @ApiOperation({
+    summary: '获取商品出现统计',
+    description: '获取商品在近7/30/60天的出现活跃度统计（位图格式）',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '商品 ID',
+    example: 'clh1234567890abcdef',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '成功返回出现统计数据',
+    type: ProductAppearanceStatsResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: '商品不存在',
+  })
+  async getProductAppearanceStats(
+    @Param('id') id: string,
+  ): Promise<ProductAppearanceStatsResponseDto> {
+    return this.productService.getProductAppearanceStats(id);
+  }
+
+  /**
+   * 获取商品趋势历史
+   * GET /api/v1/products/:id/trend-history
+   */
+  @Get(':id/trend-history')
+  @ApiOperation({
+    summary: '获取商品趋势历史',
+    description: '获取商品的历史排名趋势数据',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '商品 ID',
+    example: 'clh1234567890abcdef',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '成功返回趋势历史数据',
+    type: ProductTrendHistoryResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: '商品不存在',
+  })
+  async getProductTrendHistory(
+    @Param('id') id: string,
+  ): Promise<ProductTrendHistoryResponseDto> {
+    return this.productService.getProductTrendHistory(id);
   }
 }

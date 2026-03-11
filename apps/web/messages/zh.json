@@ -182,8 +182,11 @@
     "copyright": "© {year} 好物趋势. 保留所有权利."
   },
   "errors": {
+    "title": "错误",
     "notFound": "页面未找到",
     "serverError": "出了点问题",
-    "backHome": "返回首页"
+    "backHome": "返回首页",
+    "tooManyRequests": "请求过于频繁，请稍后再试。",
+    "fetchFailed": "数据加载失败，请重试。"
   }
 }

@@ -182,8 +182,11 @@
     "copyright": "© {year} Good Trending. All rights reserved."
   },
   "errors": {
+    "title": "Error",
     "notFound": "Page not found",
     "serverError": "Something went wrong",
-    "backHome": "Back to Home"
+    "backHome": "Back to Home",
+    "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "fetchFailed": "Failed to load data. Please try again."
   }
 }

@@ -2,6 +2,7 @@
  * 基础 HTTP 客户端
  * 封装 fetch API，统一处理错误
  */
+import { showError } from "./toast";
 
 /**
  * 获取 API 基础 URL
@@ -68,6 +69,12 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+
+    // 处理 429 限流错误 - 全局提示
+    if (response.status === 429 && typeof window !== "undefined") {
+      showError("请求过于频繁，请稍后再试");
+    }
+
     throw new ApiError(errorData.message || `HTTP ${response.status}`, response.status, response);
   }
 

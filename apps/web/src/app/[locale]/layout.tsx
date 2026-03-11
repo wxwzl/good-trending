@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale, getTranslations } from "next-intl/server";
 import NextTopLoader from "nextjs-toploader";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ToastProvider } from "@/components/providers/toast-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
@@ -184,6 +185,7 @@ export default async function LocaleLayout({
               {children}
               <Footer />
             </main>
+            <ToastProvider />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

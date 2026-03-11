@@ -12,8 +12,7 @@ apps/web/src/
 │   │   ├── _components/             # 模块私有组件
 │   │   │   ├── trending-container.tsx
 │   │   │   ├── trending-list.tsx
-│   │   │   ├── trending-filters.tsx
-│   │   │   └── index.ts             # 统一导出
+│   │   │   └── trending-filters.tsx
 │   │   └── _hooks/                  # 模块私有 hooks（可选）
 │   │
 │   ├── topics/                      # 分类模块
@@ -119,21 +118,17 @@ app/[locale]/trending/
 | 跨模块共享 | `components/features/`    | ProductCard, TopicCard        |
 | 模块私有   | `app/[page]/_components/` | TrendingList, TrendingFilters |
 
-### 4. 统一导出
+### 4. 直接导入
 
-每个 `_components` 目录应有一个 `index.ts` 统一导出：
-
-```typescript
-// app/[locale]/trending/_components/index.ts
-export { TrendingContainer } from "./trending-container";
-export { TrendingFilters } from "./trending-filters";
-export { TrendingList } from "./trending-list";
-```
-
-页面导入时使用：
+组件直接按文件导入，不创建统一的 `index.ts`：
 
 ```typescript
-import { TrendingContainer } from "./_components";
+// 页面导入
+import { TrendingContainer } from "./_components/trending-container";
+
+// 模块内组件相互导入
+import { TrendingFilters } from "./trending-filters";
+import { TrendingList } from "./trending-list";
 ```
 
 ## 迁移指南
@@ -169,26 +164,17 @@ import { ProductCard } from "./product-card";
 import { ProductCard } from "@/components/features/product-card";
 ```
 
-#### 步骤 3：创建统一导出
-
-```typescript
-// app/[locale]/trending/_components/index.ts
-export { TrendingContainer } from "./trending-container";
-export { TrendingFilters } from "./trending-filters";
-export { TrendingList } from "./trending-list";
-```
-
-#### 步骤 4：更新页面导入
+#### 步骤 3：更新页面导入
 
 ```typescript
 // 旧导入
 import { TrendingContainer } from "@/components/features/trending-container";
 
-// 新导入
-import { TrendingContainer } from "./_components";
+// 新导入（直接指定文件）
+import { TrendingContainer } from "./_components/trending-container";
 ```
 
-#### 步骤 5：清理旧文件
+#### 步骤 4：清理旧文件
 
 删除 `components/features/` 中已迁移的文件，并更新 `index.ts`。
 

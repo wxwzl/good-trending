@@ -107,8 +107,8 @@
     "filters": {
       "all": "全部",
       "today": "今天",
-      "thisWeek": "本周",
-      "thisMonth": "本月"
+      "week": "本周",
+      "month": "本月"
     }
   },
   "topics": {

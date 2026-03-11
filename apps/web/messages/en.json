@@ -107,8 +107,8 @@
     "filters": {
       "all": "All",
       "today": "Today",
-      "thisWeek": "This Week",
-      "thisMonth": "This Month"
+      "week": "This Week",
+      "month": "This Month"
     }
   },
   "topics": {

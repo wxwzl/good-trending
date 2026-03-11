@@ -3,6 +3,13 @@
  * 从30天前开始，逐天模拟 yesterday-stats 任务爬取数据
  * 用于开发环境填充测试数据
  *
+ * 环境变量加载:
+ *   脚本自动加载环境变量（复用 loadEnv.js 逻辑，与 run.js 一致）:
+ *   - .env
+ *   - .env.local
+ *   - .env.development (或 .env.production)
+ *   - .env.development.local (或 .env.production.local)
+ *
  * 用法:
  *   pnpm backfill                              # 默认回填30天，无头模式，保存到数据库
  *   pnpm backfill --days=7                     # 回填最近7天
@@ -45,6 +52,16 @@ import {
 } from "@good-trending/database";
 import { eq, and } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+
+// 加载环境变量（复用 run.js 的环境加载逻辑）
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { loadEnv } = require("./loadEnv.js");
+const { appEnv } = loadEnv({ command: "backfill", silent: false });
+
+// 调试：确认环境变量已加载
+console.log(`[backfill] 环境: ${appEnv}`);
+console.log(`[backfill] ENABLE_AI_ANALYSIS=${process.env.ENABLE_AI_ANALYSIS}`);
+console.log(`[backfill] AI_PROVIDER=${process.env.AI_PROVIDER || "kimi (default)"}`);
 
 const logger = createLoggerInstance("backfill-historical");
 
@@ -233,7 +250,18 @@ async function crawlForDate(
   const googleSearch = new GoogleSearchService({ forceBrowser: true });
   const amazonService = createAmazonSearchService();
   const redditService = createRedditService();
-  const aiAnalyzer = process.env.ENABLE_AI_ANALYSIS === "true" ? createAIAnalyzer() : null;
+  // AI 分析器延迟初始化，避免在禁用时抛出错误
+  let aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
+  if (process.env.ENABLE_AI_ANALYSIS === "true") {
+    try {
+      aiAnalyzer = createAIAnalyzer();
+      logger.info("AI 分析器已启用");
+    } catch (error) {
+      logger.warn(`AI 分析器初始化失败: ${error}`);
+    }
+  } else {
+    logger.info("AI 分析已禁用，跳过 AI 分析器初始化");
+  }
 
   const browser = await chromium.launch({ headless: config.headless });
   const page = await browser.newPage();

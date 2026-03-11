@@ -37,10 +37,14 @@ describe('ProductController', () => {
   const mockService = {
     getProducts: jest.fn(),
     getProductById: jest.fn(),
+    getProductBySlug: jest.fn(),
     createProduct: jest.fn(),
     updateProduct: jest.fn(),
     deleteProduct: jest.fn(),
     productExists: jest.fn(),
+    getProductSocialStats: jest.fn(),
+    getProductAppearanceStats: jest.fn(),
+    getProductTrendHistory: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -167,6 +171,131 @@ describe('ProductController', () => {
 
       // Assert
       expect(service.deleteProduct).toHaveBeenCalledWith('test-id-123');
+    });
+  });
+
+  describe('getProductSocialStats', () => {
+    const mockSocialStats = {
+      today: { reddit: 10, x: 5 },
+      yesterday: { reddit: 8, x: 3 },
+      thisWeek: { reddit: 50, x: 25 },
+      thisMonth: { reddit: 200, x: 100 },
+      history: [
+        { date: '2024-01-15', reddit: 10, x: 5 },
+        { date: '2024-01-14', reddit: 8, x: 3 },
+      ],
+    };
+
+    it('should_return_social_stats', async () => {
+      // Arrange
+      service.getProductSocialStats.mockResolvedValue(mockSocialStats);
+
+      // Act
+      const result = await controller.getProductSocialStats('test-id-123');
+
+      // Assert
+      expect(service.getProductSocialStats).toHaveBeenCalledWith('test-id-123');
+      expect(result).toEqual(mockSocialStats);
+    });
+
+    it('should_pass_product_id_to_service', async () => {
+      // Arrange
+      service.getProductSocialStats.mockResolvedValue(mockSocialStats);
+
+      // Act
+      await controller.getProductSocialStats('product-456');
+
+      // Assert
+      expect(service.getProductSocialStats).toHaveBeenCalledWith('product-456');
+    });
+  });
+
+  describe('getProductAppearanceStats', () => {
+    const mockAppearanceStats = {
+      last7DaysBitmap: '1110101',
+      last30DaysBitmap: '111111111111111111111111111111',
+      last60DaysBitmap:
+        '111111111111111111111111111111111111111111111111111111111111',
+      activeDays7: 5,
+      activeDays30: 25,
+      activityScore: 4.2,
+    };
+
+    it('should_return_appearance_stats', async () => {
+      // Arrange
+      service.getProductAppearanceStats.mockResolvedValue(mockAppearanceStats);
+
+      // Act
+      const result = await controller.getProductAppearanceStats('test-id-123');
+
+      // Assert
+      expect(service.getProductAppearanceStats).toHaveBeenCalledWith(
+        'test-id-123',
+      );
+      expect(result).toEqual(mockAppearanceStats);
+    });
+
+    it('should_pass_product_id_to_service', async () => {
+      // Arrange
+      service.getProductAppearanceStats.mockResolvedValue(mockAppearanceStats);
+
+      // Act
+      await controller.getProductAppearanceStats('product-456');
+
+      // Assert
+      expect(service.getProductAppearanceStats).toHaveBeenCalledWith(
+        'product-456',
+      );
+    });
+  });
+
+  describe('getProductTrendHistory', () => {
+    const mockTrendHistory = {
+      history: [
+        {
+          date: '2024-01-15',
+          periodType: 'TODAY',
+          rank: 5,
+          score: 85.5,
+          redditMentions: 100,
+          xMentions: 50,
+        },
+        {
+          date: '2024-01-14',
+          periodType: 'YESTERDAY',
+          rank: 3,
+          score: 92.0,
+          redditMentions: 150,
+          xMentions: 75,
+        },
+      ],
+    };
+
+    it('should_return_trend_history', async () => {
+      // Arrange
+      service.getProductTrendHistory.mockResolvedValue(mockTrendHistory);
+
+      // Act
+      const result = await controller.getProductTrendHistory('test-id-123');
+
+      // Assert
+      expect(service.getProductTrendHistory).toHaveBeenCalledWith(
+        'test-id-123',
+      );
+      expect(result).toEqual(mockTrendHistory);
+    });
+
+    it('should_pass_product_id_to_service', async () => {
+      // Arrange
+      service.getProductTrendHistory.mockResolvedValue(mockTrendHistory);
+
+      // Act
+      await controller.getProductTrendHistory('product-456');
+
+      // Assert
+      expect(service.getProductTrendHistory).toHaveBeenCalledWith(
+        'product-456',
+      );
     });
   });
 });

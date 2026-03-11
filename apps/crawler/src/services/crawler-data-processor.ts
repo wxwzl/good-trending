@@ -153,14 +153,15 @@ export async function saveCrawledProducts(
       });
 
       // 初始化 Bitmap 统计
+      // Drizzle bigint 模式直接使用 BigInt
       await db.insert(productAppearanceStats).values({
         productId: productId,
-        last7DaysBitmap: 1n as unknown as number,
-        last15DaysBitmap: 1n as unknown as number,
-        last30DaysBitmap: 1n as unknown as number,
-        last60DaysBitmap: 1n as unknown as number,
+        last7DaysBitmap: 1n,
+        last15DaysBitmap: 1n,
+        last30DaysBitmap: 1n,
+        last60DaysBitmap: 1n,
         lastUpdateDate: formatDate(productData.firstSeenAt),
-      } as any);
+      });
 
       savedCount++;
       newProductIds.push(productId);
@@ -259,17 +260,17 @@ export async function updateAllProductsBitmap(date: Date = new Date()): Promise<
         newBitmap60 = newBitmap60 | 1n;
       }
 
-      // 更新数据库 - 使用类型断言
+      // 更新数据库 - Drizzle bigint 模式直接使用 BigInt
       await db
         .update(productAppearanceStats)
         .set({
-          last7DaysBitmap: newBitmap7 as unknown as number,
-          last15DaysBitmap: newBitmap15 as unknown as number,
-          last30DaysBitmap: newBitmap30 as unknown as number,
-          last60DaysBitmap: newBitmap60 as unknown as number,
+          last7DaysBitmap: newBitmap7,
+          last15DaysBitmap: newBitmap15,
+          last30DaysBitmap: newBitmap30,
+          last60DaysBitmap: newBitmap60,
           lastUpdateDate: today,
           updatedAt: new Date(),
-        } as any)
+        })
         .where(eq(productAppearanceStats.id, stat.id));
 
       updatedCount++;

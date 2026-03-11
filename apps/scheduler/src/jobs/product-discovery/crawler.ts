@@ -161,18 +161,16 @@ export class ProductDiscoveryCrawler {
   ): Promise<DiscoveredProduct[]> {
     const keyword = category.searchKeywords || category.name;
 
-    // 计算30天前的日期
-    const thirtyDaysAgo = new Date(date);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const afterDate = this.formatDate(thirtyDaysAgo);
+    // 搜索当天内容
+    const today = this.formatDate(date);
 
-    logger.info(`搜索类目 "${keyword}" 近30天的Reddit帖子 (after:${afterDate})`);
+    logger.info(`搜索类目 "${keyword}" 当天的Reddit帖子 (after:${today})`);
 
     const products: DiscoveredProduct[] = [];
 
     try {
-      // 搜索 Reddit（近30天）
-      const redditQuery = `site:reddit.com "${keyword}" after:${afterDate}`;
+      // 搜索 Reddit（当天）
+      const redditQuery = `site:reddit.com "${keyword}" after:${today}`;
       logger.info(`搜索查询: ${redditQuery}`);
 
       const redditResult = await this.googleSearch.search(redditQuery, this.page || undefined);

@@ -161,12 +161,10 @@ export class AIProductDiscoveryCrawler {
   private async searchRedditPosts(keyword: string): Promise<string[]> {
     logger.info(`搜索 Reddit 帖子: ${keyword}`);
 
-    // 计算30天前的日期
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const afterDate = thirtyDaysAgo.toISOString().split("T")[0];
+    // 搜索当天内容
+    const today = new Date().toISOString().split("T")[0];
 
-    const query = `site:reddit.com ${keyword} after:${afterDate}`;
+    const query = `site:reddit.com ${keyword} after:${today}`;
 
     const result = await this.googleSearch.search(query, this.page || undefined);
 

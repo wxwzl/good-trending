@@ -35,14 +35,25 @@
  *   - 每天之间有5秒延迟避免请求过快
  */
 
+// ============================================
+// 第一步：先加载环境变量（必须在导入 crawler 模块之前）
+// ============================================
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { loadEnv } = require("./loadEnv.js");
+const { appEnv } = loadEnv({ command: "backfill", silent: false });
+
+// 调试：确认环境变量已加载
+console.log(`[backfill] 环境: ${appEnv}`);
+console.log(`[backfill] ENABLE_AI_ANALYSIS=${process.env.ENABLE_AI_ANALYSIS}`);
+console.log(`[backfill] AI_PROVIDER=${process.env.AI_PROVIDER || "kimi (default)"}`);
+console.log(`[backfill] AI_API_KEY=${process.env.AI_API_KEY ? "已设置" : "未设置"}`);
+
+// ============================================
+// 第二步：再导入依赖模块（此时环境变量已生效）
+// ============================================
 import { chromium } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
-import {
-  GoogleSearchService,
-  createAmazonSearchService,
-  createAIAnalyzer,
-  createRedditService,
-} from "@good-trending/crawler";
+import type { AIAnalyzer } from "@good-trending/crawler";
 import {
   db,
   products,
@@ -52,16 +63,6 @@ import {
 } from "@good-trending/database";
 import { eq, and } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
-
-// 加载环境变量（复用 run.js 的环境加载逻辑）
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { loadEnv } = require("./loadEnv.js");
-const { appEnv } = loadEnv({ command: "backfill", silent: false });
-
-// 调试：确认环境变量已加载
-console.log(`[backfill] 环境: ${appEnv}`);
-console.log(`[backfill] ENABLE_AI_ANALYSIS=${process.env.ENABLE_AI_ANALYSIS}`);
-console.log(`[backfill] AI_PROVIDER=${process.env.AI_PROVIDER || "kimi (default)"}`);
 
 const logger = createLoggerInstance("backfill-historical");
 
@@ -74,6 +75,34 @@ interface BackfillConfig {
   maxProductsPerDay: number;
   /** 是否保存到数据库 */
   saveToDb: boolean;
+}
+
+/**
+ * 动态导入 crawler 服务（确保环境变量已加载）
+ */
+async function createServices() {
+  const { GoogleSearchService, createAmazonSearchService, createRedditService } =
+    await import("@good-trending/crawler");
+
+  const googleSearch = new GoogleSearchService({ forceBrowser: true });
+  const amazonService = createAmazonSearchService();
+  const redditService = createRedditService();
+
+  // AI 分析器延迟初始化
+  let aiAnalyzer: AIAnalyzer | null = null;
+  if (process.env.ENABLE_AI_ANALYSIS === "true") {
+    try {
+      const { createAIAnalyzer } = await import("@good-trending/crawler");
+      aiAnalyzer = createAIAnalyzer();
+      logger.info("AI 分析器已启用");
+    } catch (error) {
+      logger.warn(`AI 分析器初始化失败: ${error}`);
+    }
+  } else {
+    logger.info("AI 分析已禁用，跳过 AI 分析器初始化");
+  }
+
+  return { googleSearch, amazonService, redditService, aiAnalyzer };
 }
 
 /**
@@ -247,21 +276,8 @@ async function crawlForDate(
   logger.info(`开始爬取日期: ${formatDate(date)}`);
   logger.info(`========================================`);
 
-  const googleSearch = new GoogleSearchService({ forceBrowser: true });
-  const amazonService = createAmazonSearchService();
-  const redditService = createRedditService();
-  // AI 分析器延迟初始化，避免在禁用时抛出错误
-  let aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
-  if (process.env.ENABLE_AI_ANALYSIS === "true") {
-    try {
-      aiAnalyzer = createAIAnalyzer();
-      logger.info("AI 分析器已启用");
-    } catch (error) {
-      logger.warn(`AI 分析器初始化失败: ${error}`);
-    }
-  } else {
-    logger.info("AI 分析已禁用，跳过 AI 分析器初始化");
-  }
+  // 动态创建服务（确保环境变量已加载）
+  const { googleSearch, amazonService, redditService, aiAnalyzer } = await createServices();
 
   const browser = await chromium.launch({ headless: config.headless });
   const page = await browser.newPage();

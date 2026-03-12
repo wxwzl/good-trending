@@ -207,6 +207,7 @@ export class GoogleSearchService {
       browser: {
         headless: true,
         timeout: 30000,
+        proxy: process.env.BROWSER_PROXY,
       },
       forceBrowser: false,
       ...config,
@@ -217,7 +218,7 @@ export class GoogleSearchService {
    * 获取随机延迟时间（毫秒）
    * 用于模拟人类行为
    */
-  private getRandomDelay(min = 10000, max = 20000): number {
+  private getRandomDelay(min = 1000, max = 3000): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
@@ -237,9 +238,9 @@ export class GoogleSearchService {
         const x = Math.floor(Math.random() * viewport.width);
         const y = Math.floor(Math.random() * viewport.height);
         await page.mouse.move(x, y, { steps: 10 });
-        await page.waitForTimeout(Math.floor(Math.random() * 200) + 1000);
+        await page.waitForTimeout(Math.floor(Math.random() * 200) + 500);
       }
-    } catch (_error) {
+    } catch {
       // 忽略鼠标移动错误
     }
   }
@@ -251,10 +252,10 @@ export class GoogleSearchService {
     try {
       const scrolls = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < scrolls; i++) {
-        await page.mouse.wheel(0, Math.floor(Math.random() * 1000) + 1000);
-        await page.waitForTimeout(Math.floor(Math.random() * 500) + 3000);
+        await page.mouse.wheel(0, Math.floor(Math.random() * 1000) + 500);
+        await page.waitForTimeout(Math.floor(Math.random() * 500) + 1000);
       }
-    } catch (_error) {
+    } catch {
       // 忽略滚动错误
     }
   }
@@ -320,7 +321,7 @@ export class GoogleSearchService {
         links,
         source: "serpapi",
       };
-    } catch (_error) {
+    } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(`SerpAPI 搜索失败: ${errorMsg}`);
 
@@ -372,26 +373,13 @@ export class GoogleSearchService {
 
       // 1. 先访问 Google 首页
       logger.info("访问 Google 首页");
-
-      // 先尝试导航到 about:blank 确保页面干净
-      await page.goto("about:blank", { timeout: 5000 });
-
-      // 再导航到 Google，使用 domcontentloaded 更快完成
       const homeResponse = await page.goto("https://www.google.com", {
-        waitUntil: "domcontentloaded",
+        waitUntil: "networkidle",
         timeout: this.config.browser?.timeout || 30000,
       });
 
-      // 检查当前URL
-      const currentUrl = page.url();
-      logger.info(`导航后页面URL: ${currentUrl}`);
-
       if (!homeResponse || homeResponse.status() !== 200) {
-        throw new Error(`无法访问 Google 首页，状态码: ${homeResponse?.status()}`);
-      }
-
-      if (currentUrl === "about:blank") {
-        throw new Error("页面导航失败，仍停留在 about:blank");
+        throw new Error("无法访问 Google 首页");
       }
 
       // 随机延迟 (5-10秒)
@@ -424,9 +412,8 @@ export class GoogleSearchService {
       await page.waitForTimeout(this.getRandomDelay(1000, 3000));
 
       // 3. 按回车搜索（模拟用户行为）
-      // 使用 page.keyboard 而不是 elementHandle.press，避免元素句柄失效
       logger.info("执行搜索...");
-      await page.keyboard.press("Enter");
+      await searchInput.press("Enter");
 
       // 4. 等待搜索结果页面加载
       await page.waitForLoadState("networkidle", { timeout: 30000 });
@@ -437,16 +424,16 @@ export class GoogleSearchService {
       // 模拟查看搜索结果的行为
       await this.simulateHumanScroll(page);
 
-      // 检查搜索结果页面URL
-      const searchUrl = page.url();
-      logger.info(`搜索结果页面URL: ${searchUrl}`);
+      // 检查当前URL
+      const currentUrl = page.url();
+      logger.info(`当前页面URL: ${currentUrl}`);
 
-      if (searchUrl.includes("google.com/search")) {
+      if (currentUrl.includes("google.com/search")) {
         logger.info("成功导航到 Google 搜索结果页面");
-      } else if (searchUrl.includes("/sorry") || searchUrl.includes("captcha")) {
+      } else if (currentUrl.includes("/sorry") || currentUrl.includes("captcha")) {
         throw new Error("触发 Google 反爬虫验证，请稍后重试或使用代理");
       } else {
-        logger.warn(`警告: 当前页面不是搜索结果页 (${searchUrl})`);
+        logger.warn(`警告: 当前页面不是搜索结果页 (${currentUrl})`);
       }
 
       // 提取搜索结果
@@ -529,7 +516,7 @@ export class GoogleSearchService {
         links: result.links,
         source: "browser",
       };
-    } catch (_error) {
+    } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(`浏览器搜索失败: ${errorMsg}`);
 

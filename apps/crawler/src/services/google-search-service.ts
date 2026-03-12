@@ -219,11 +219,27 @@ export class GoogleSearchService {
    * 用于模拟人类行为
    */
   private getRandomDelay(min = 1000, max = 3000): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    // 使用正态分布让延迟更自然
+    const mean = (min + max) / 2;
+    const stdDev = (max - min) / 4;
+    const value = Math.floor(this.normalDistribution(mean, stdDev));
+    // 确保在范围内
+    return Math.max(min, Math.min(max, value));
   }
 
   /**
-   * 模拟人类鼠标移动
+   * 正态分布随机数生成
+   * 使用 Box-Muller 变换
+   */
+  private normalDistribution(mean: number, stdDev: number): number {
+    const u1 = Math.random();
+    const u2 = Math.random();
+    const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    return z0 * stdDev + mean;
+  }
+
+  /**
+   * 模拟人类鼠标移动 - 增强随机性
    */
   private async simulateHumanMouseMovements(page: Page): Promise<void> {
     try {
@@ -232,31 +248,181 @@ export class GoogleSearchService {
         return;
       }
 
-      // 随机移动几次鼠标
-      const moves = Math.floor(Math.random() * 3) + 2;
+      // 随机移动次数 (3-8次)
+      const moves = Math.floor(Math.random() * 6) + 3;
+
       for (let i = 0; i < moves; i++) {
-        const x = Math.floor(Math.random() * viewport.width);
-        const y = Math.floor(Math.random() * viewport.height);
-        await page.mouse.move(x, y, { steps: 10 });
-        await page.waitForTimeout(Math.floor(Math.random() * 200) + 500);
+        // 随机位置，避开边缘
+        const x = Math.floor(Math.random() * (viewport.width - 300)) + 150;
+        const y = Math.floor(Math.random() * (viewport.height - 300)) + 150;
+
+        // 随机移动速度 (steps 5-25)
+        const steps = Math.floor(Math.random() * 20) + 5;
+        await page.mouse.move(x, y, { steps });
+
+        // 随机停留时间 (200-1500ms)
+        const pauseTime = Math.floor(Math.random() * 1300) + 200;
+        await page.waitForTimeout(pauseTime);
+      }
+
+      // 偶尔点击一下页面空白处
+      if (Math.random() > 0.7) {
+        const clickX = Math.floor(Math.random() * (viewport.width - 400)) + 200;
+        const clickY = Math.floor(Math.random() * (viewport.height - 400)) + 200;
+        await page.mouse.click(clickX, clickY);
+        await page.waitForTimeout(Math.floor(Math.random() * 500) + 300);
       }
     } catch {
-      // 忽略鼠标移动错误
+      // 忽略错误
     }
   }
 
   /**
-   * 模拟人类滚动
+   * 模拟人类滚动 - 增强随机性
    */
   private async simulateHumanScroll(page: Page): Promise<void> {
     try {
-      const scrolls = Math.floor(Math.random() * 3) + 1;
+      // 随机滚动次数 (2-6次)
+      const scrolls = Math.floor(Math.random() * 5) + 2;
+
       for (let i = 0; i < scrolls; i++) {
-        await page.mouse.wheel(0, Math.floor(Math.random() * 1000) + 500);
-        await page.waitForTimeout(Math.floor(Math.random() * 500) + 1000);
+        // 随机滚动方向和距离
+        const direction = Math.random() > 0.3 ? 1 : -1; // 70% 向下，30% 向上
+        const scrollDistance = Math.floor(Math.random() * 1200) + 300;
+
+        await page.mouse.wheel(0, direction * scrollDistance);
+
+        // 滚动后随机停留 (500-2500ms)
+        const pauseTime = Math.floor(Math.random() * 2000) + 500;
+        await page.waitForTimeout(pauseTime);
+      }
+
+      // 偶尔回滚一点（阅读模式）
+      if (Math.random() > 0.6) {
+        await page.mouse.wheel(0, -Math.floor(Math.random() * 400) - 100);
+        await page.waitForTimeout(Math.floor(Math.random() * 1000) + 500);
       }
     } catch {
-      // 忽略滚动错误
+      // 忽略错误
+    }
+  }
+
+  /**
+   * 模拟随机浏览行为
+   * 在搜索前做一些随机的事情
+   */
+  private async simulateRandomBrowsing(page: Page): Promise<void> {
+    try {
+      const actions = [
+        async () => {
+          // 随机滚动
+          await this.simulateHumanScroll(page);
+        },
+        async () => {
+          // 随机鼠标移动
+          await this.simulateHumanMouseMovements(page);
+        },
+        async () => {
+          // 点击页面空白处
+          const viewport = page.viewportSize();
+          if (viewport) {
+            const x = Math.floor(Math.random() * (viewport.width - 400)) + 200;
+            const y = Math.floor(Math.random() * (viewport.height - 400)) + 200;
+            await page.mouse.click(x, y);
+          }
+        },
+        async () => {
+          // 什么都不做，只是等待
+          await page.waitForTimeout(Math.floor(Math.random() * 2000) + 1000);
+        },
+      ];
+
+      // 随机选择 1-3 个动作执行
+      const numActions = Math.floor(Math.random() * 3) + 1;
+      const shuffled = actions.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < numActions; i++) {
+        await shuffled[i]();
+        await page.waitForTimeout(Math.floor(Math.random() * 1500) + 500);
+      }
+    } catch {
+      // 忽略错误
+    }
+  }
+
+  /**
+   * 模拟人类输入行为 - 高度随机化
+   */
+  private async simulateHumanTyping(page: Page, selector: string, text: string): Promise<void> {
+    try {
+      // 随机滚动到元素
+      await page.evaluate((sel) => {
+        const element = document.querySelector(sel);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, selector);
+      await page.waitForTimeout(Math.floor(Math.random() * 800) + 400);
+
+      const element = await page.$(selector);
+      if (!element) {
+        return;
+      }
+
+      // 随机移动到元素（带偏移）
+      const box = await element.boundingBox();
+      if (box) {
+        const offsetX = Math.floor(Math.random() * 30) - 15;
+        const offsetY = Math.floor(Math.random() * 20) - 10;
+        const steps = Math.floor(Math.random() * 10) + 5;
+        await page.mouse.move(box.x + box.width / 2 + offsetX, box.y + box.height / 2 + offsetY, {
+          steps,
+        });
+        await page.waitForTimeout(Math.floor(Math.random() * 400) + 200);
+        await page.mouse.click(box.x + box.width / 2 + offsetX, box.y + box.height / 2 + offsetY);
+        await page.waitForTimeout(Math.floor(Math.random() * 500) + 300);
+      }
+
+      // 随机决定是否全选删除（50%概率）
+      if (Math.random() > 0.5) {
+        await page.keyboard.press("Control+a");
+        await page.waitForTimeout(Math.floor(Math.random() * 300) + 100);
+        await page.keyboard.press("Delete");
+        await page.waitForTimeout(Math.floor(Math.random() * 400) + 200);
+      }
+
+      // 逐字输入，带高度随机延迟
+      for (let i = 0; i < text.length; i++) {
+        // 基础延迟 50-400ms
+        const baseDelay = Math.floor(Math.random() * 350) + 50;
+
+        // 偶尔停顿（10%概率，模拟思考）
+        if (Math.random() > 0.9) {
+          await page.waitForTimeout(Math.floor(Math.random() * 800) + 400);
+        }
+
+        // 偶尔打错字并删除（5%概率，更真实）
+        if (Math.random() > 0.95 && i > 0) {
+          const wrongChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+          await page.keyboard.type(wrongChar, { delay: baseDelay });
+          await page.waitForTimeout(Math.floor(Math.random() * 300) + 200);
+          await page.keyboard.press("Backspace");
+          await page.waitForTimeout(Math.floor(Math.random() * 300) + 200);
+        }
+
+        await page.keyboard.type(text[i], { delay: baseDelay });
+      }
+
+      // 输入后随机停顿 (300-1500ms)
+      await page.waitForTimeout(Math.floor(Math.random() * 1200) + 300);
+
+      // 偶尔在输入后移动鼠标
+      if (Math.random() > 0.7) {
+        await this.simulateHumanMouseMovements(page);
+      }
+    } catch {
+      // 失败时使用普通输入
+      await page.fill(selector, text);
     }
   }
 
@@ -360,13 +526,19 @@ export class GoogleSearchService {
         page = this.page;
       }
 
-      // 随机延迟，模拟人类思考时间 (10-20秒)
-      const initialDelay = this.getRandomDelay(10000, 20000);
+      // 随机延迟，模拟人类思考时间 (8-25秒) - 使用正态分布更自然
+      const initialDelay = this.getRandomDelay(8000, 25000);
       logger.info(`初始延迟 ${initialDelay}ms 模拟人类行为`);
       await page.waitForTimeout(initialDelay);
 
-      // 模拟鼠标移动
+      // 模拟鼠标移动（多次，更随机）
       await this.simulateHumanMouseMovements(page);
+
+      // 偶尔第二次鼠标移动（30%概率）
+      if (Math.random() > 0.7) {
+        await page.waitForTimeout(this.getRandomDelay(500, 2000));
+        await this.simulateHumanMouseMovements(page);
+      }
 
       // 模拟真实用户行为：先访问 Google 首页，再输入搜索
       logger.info("模拟用户搜索行为...");
@@ -382,47 +554,69 @@ export class GoogleSearchService {
         throw new Error("无法访问 Google 首页");
       }
 
-      // 随机延迟 (5-10秒)
-      await page.waitForTimeout(this.getRandomDelay(5000, 10000));
+      // 随机延迟 (5-15秒) - 更宽的随机范围
+      await page.waitForTimeout(this.getRandomDelay(5000, 15000));
 
-      // 模拟滚动
-      await this.simulateHumanScroll(page);
+      // 模拟随机浏览行为（浏览页面后再搜索）
+      await this.simulateRandomBrowsing(page);
+
+      // 再次随机移动鼠标
+      await this.simulateHumanMouseMovements(page);
 
       // 2. 找到搜索框并输入查询
       logger.info(`在搜索框输入: ${query}`);
-      const searchInput = await page.$('textarea[name="q"], input[name="q"]');
-      if (!searchInput) {
-        throw new Error("找不到 Google 搜索框");
+
+      // 使用增强的人类输入模拟
+      await this.simulateHumanTyping(page, 'textarea[name="q"], input[name="q"]', query);
+
+      // 随机决定是否停顿后再搜索 (70%概率)
+      if (Math.random() > 0.3) {
+        await page.waitForTimeout(this.getRandomDelay(800, 3000));
       }
-
-      // 模拟点击前先移动鼠标
-      const box = await searchInput.boundingBox();
-      if (box) {
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.waitForTimeout(200);
-      }
-
-      await searchInput.click();
-
-      // 模拟人类输入（逐字输入，带随机延迟 100-300ms）
-      for (const char of query) {
-        await searchInput.type(char, { delay: Math.floor(Math.random() * 800) + 500 });
-      }
-
-      await page.waitForTimeout(this.getRandomDelay(1000, 3000));
 
       // 3. 按回车搜索（模拟用户行为）
       logger.info("执行搜索...");
-      await searchInput.press("Enter");
+
+      // 偶尔点击搜索按钮而不是按回车 (20%概率)
+      if (Math.random() > 0.8) {
+        const searchButton = await page.$('input[name="btnK"], button[type="submit"]');
+        if (searchButton) {
+          const box = await searchButton.boundingBox();
+          if (box) {
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+            await page.waitForTimeout(Math.floor(Math.random() * 400) + 200);
+            await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+          } else {
+            await page.keyboard.press("Enter");
+          }
+        } else {
+          await page.keyboard.press("Enter");
+        }
+      } else {
+        await page.keyboard.press("Enter");
+      }
 
       // 4. 等待搜索结果页面加载
       await page.waitForLoadState("networkidle", { timeout: 30000 });
 
-      // 随机延迟等待结果渲染 (10-20秒)
-      await page.waitForTimeout(this.getRandomDelay(10000, 20000));
+      // 随机延迟等待结果渲染 (8-25秒)
+      await page.waitForTimeout(this.getRandomDelay(8000, 25000));
 
-      // 模拟查看搜索结果的行为
-      await this.simulateHumanScroll(page);
+      // 模拟查看搜索结果的行为（随机化）
+      if (Math.random() > 0.2) {
+        await this.simulateHumanScroll(page);
+
+        // 偶尔浏览后再次滚动（40%概率）
+        if (Math.random() > 0.6) {
+          await page.waitForTimeout(this.getRandomDelay(2000, 6000));
+          await this.simulateHumanScroll(page);
+        }
+      }
+
+      // 偶尔在结果页面随机移动鼠标
+      if (Math.random() > 0.5) {
+        await this.simulateHumanMouseMovements(page);
+      }
 
       // 检查当前URL
       const currentUrl = page.url();
@@ -531,6 +725,24 @@ export class GoogleSearchService {
   }
 
   /**
+   * User-Agent 列表
+   */
+  private readonly USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+  ];
+
+  /**
+   * 获取随机 User-Agent
+   */
+  private getRandomUserAgent(): string {
+    return this.USER_AGENTS[Math.floor(Math.random() * this.USER_AGENTS.length)];
+  }
+
+  /**
    * 初始化浏览器
    * 增强反检测措施
    */
@@ -554,6 +766,7 @@ export class GoogleSearchService {
         "--disable-accelerated-2d-canvas",
         "--disable-gpu",
         "--window-size=1920,1080",
+        "--start-maximized",
         "--disable-blink-features",
         "--disable-blink-features=AutomationControlled",
         "--disable-infobars",
@@ -571,6 +784,11 @@ export class GoogleSearchService {
         "--use-mock-keychain",
         "--force-color-profile=srgb",
         "--force-webrtc-ip-handling-policy=default_public_interface_only",
+        "--disable-features=UserAgentClientHint",
+        "--disable-features=InterestFeedContentSuggestions",
+        "--disable-features=TranslateUI",
+        "--disable-features=HardwareMediaKeyHandling",
+        "--disable-features=MediaSessionService",
       ],
     };
 
@@ -581,19 +799,28 @@ export class GoogleSearchService {
     this.browser = await chromium.launch(launchOptions);
 
     // 生成随机视口大小（在常见范围内）
-    const width = 1920 + Math.floor(Math.random() * 100) - 50;
-    const height = 1080 + Math.floor(Math.random() * 100) - 50;
+    const width = 1920 + Math.floor(Math.random() * 200) - 100;
+    const height = 1080 + Math.floor(Math.random() * 200) - 100;
+
+    // 随机 User-Agent
+    const userAgent = this.getRandomUserAgent();
+    logger.info(`使用 User-Agent: ${userAgent.substring(0, 50)}...`);
+
+    // 随机时区
+    const timezones = ["America/New_York", "America/Los_Angeles", "Europe/London", "Asia/Tokyo"];
+    const timezone = timezones[Math.floor(Math.random() * timezones.length)];
 
     this.context = await this.browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      userAgent,
       viewport: { width, height },
       locale: "en-US",
-      timezoneId: "America/New_York",
+      timezoneId: timezone,
       permissions: [],
-      // 隐藏自动化特征
       bypassCSP: false,
       javaScriptEnabled: true,
+      hasTouch: false,
+      isMobile: false,
+      deviceScaleFactor: 1,
     });
 
     // 注入增强的 Stealth 脚本
@@ -609,6 +836,9 @@ export class GoogleSearchService {
       "Accept-Encoding": "gzip, deflate, br",
       DNT: "1",
       "Upgrade-Insecure-Requests": "1",
+      "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+      "Sec-Ch-Ua-Mobile": "?0",
+      "Sec-Ch-Ua-Platform": '"Windows"',
     });
 
     logger.info("浏览器初始化完成（增强反检测）");

@@ -25,7 +25,10 @@
       "mcp__MCP_DOCKER__browser_navigate",
       "mcp__MCP_DOCKER__browser_console_messages",
       "mcp__playwright__browser_navigate",
-      "mcp__playwright__browser_snapshot"
+      "mcp__playwright__browser_snapshot",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_click"
     ]
   }
 }

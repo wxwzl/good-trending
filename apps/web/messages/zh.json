@@ -116,7 +116,28 @@
     "subtitle": "按分类探索商品",
     "productCount": "{count} 个商品",
     "noResults": "暂无分类",
-    "noProducts": "该分类暂无商品"
+    "noProducts": "该分类暂无商品",
+    "heatStats": "热度统计"
+  },
+  "stats": {
+    "heatStats": "热度统计",
+    "newProductsToday": "今日新发现",
+    "vsYesterday": "较昨日",
+    "socialMentions": "社交提及",
+    "appearanceActivity": "出现活跃度",
+    "trendHistory": "趋势历史",
+    "today": "今日",
+    "yesterday": "昨日",
+    "thisWeek": "本周",
+    "thisMonth": "本月",
+    "reddit": "Reddit",
+    "x": "X",
+    "total": "总计",
+    "activityScore": "活跃度评分",
+    "activeDays": "活跃天数",
+    "rank": "排名",
+    "score": "分数",
+    "mentions": "提及数"
   },
   "product": {
     "price": "价格",

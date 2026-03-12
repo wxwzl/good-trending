@@ -116,7 +116,28 @@
     "subtitle": "Explore products by category",
     "productCount": "{count} products",
     "noResults": "No topics found",
-    "noProducts": "No products in this topic"
+    "noProducts": "No products in this topic",
+    "heatStats": "Heat Statistics"
+  },
+  "stats": {
+    "heatStats": "Heat Statistics",
+    "newProductsToday": "New Today",
+    "vsYesterday": "vs Yesterday",
+    "socialMentions": "Social Mentions",
+    "appearanceActivity": "Appearance Activity",
+    "trendHistory": "Trend History",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "reddit": "Reddit",
+    "x": "X",
+    "total": "Total",
+    "activityScore": "Activity Score",
+    "activeDays": "Active Days",
+    "rank": "Rank",
+    "score": "Score",
+    "mentions": "Mentions"
   },
   "product": {
     "price": "Price",

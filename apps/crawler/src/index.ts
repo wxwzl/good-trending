@@ -69,24 +69,33 @@ export { formatDate } from "./utils/date.js";
 
 /**
  * ============================================
- * 【新增】领域层导出 - 接口与类型
+ * 【新增】领域层导出 - 接口、类型与错误
  * ============================================
  */
 
-export type { IGoogleSearch, IReddit, IAmazonSearch } from "./domain/interfaces/index.js";
-
 export {
+  // 接口
+  type IGoogleSearch,
+  type IReddit,
+  type IAmazonSearch,
   GOOGLE_SEARCH_TOKEN,
   REDDIT_TOKEN,
   AMAZON_SEARCH_TOKEN,
-} from "./domain/interfaces/index.js";
-
-export type {
-  RedditPost,
-  AIAnalysisResult,
-  SearchResult,
-  SearchResponse,
-} from "./domain/types/index.js";
+  // 类型
+  type RedditPost,
+  type AIAnalysisResult,
+  type SearchResult,
+  type SearchResponse,
+  type AmazonProduct,
+  // 错误
+  CrawlerError,
+  NetworkError,
+  TimeoutError,
+  AntiDetectionError,
+  CaptchaError,
+  ExtractionError,
+  ConfigurationError,
+} from "./domain/index.js";
 
 /**
  * ============================================
@@ -151,6 +160,8 @@ export {
   createReddit,
   createRedditWithPage,
   type RedditInstance,
+  createAmazonSearch,
+  type AmazonSearchInstance,
 } from "./factories/index.js";
 
 /**

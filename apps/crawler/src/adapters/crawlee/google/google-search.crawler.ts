@@ -1,133 +1,109 @@
 /**
  * Google 搜索 Crawlee 实现
+ * 基于 BaseCrawleeCrawler
  */
 
-import { PlaywrightCrawler } from "crawlee";
+import { BaseCrawleeCrawler, type CrawleeRequestContext } from "../base/index.js";
 import type { IGoogleSearch } from "../../../domain/interfaces/index.js";
 import type { SearchResponse, SearchResult } from "../../../domain/types/index.js";
 import { createLoggerInstance } from "@good-trending/shared";
-import { getStealthInitFunction } from "../../../infrastructure/index.js";
 
 const logger = createLoggerInstance("google-search-crawler");
 
 /**
  * Google 搜索 Crawlee 实现
- * 实现 IGoogleSearch 接口
+ * 继承 BaseCrawleeCrawler，实现 IGoogleSearch 接口
  */
-export class GoogleSearchCrawler implements IGoogleSearch {
-  private crawler: PlaywrightCrawler;
+export class GoogleSearchCrawler extends BaseCrawleeCrawler implements IGoogleSearch {
   private searchResults: SearchResult[] = [];
 
   constructor() {
-    this.crawler = new PlaywrightCrawler({
+    super({
       maxConcurrency: 2,
       maxRequestRetries: 3,
       requestHandlerTimeoutSecs: 60,
       maxRequestsPerCrawl: 50,
+    });
+  }
 
-      launchContext: {
-        launchOptions: {
-          headless: true,
-          args: [
-            "--disable-blink-features=AutomationControlled",
-            "--disable-web-security",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--window-size=1920,1080",
-          ],
-        },
-      },
+  /**
+   * 请求处理器
+   */
+  protected async handleRequest(context: CrawleeRequestContext): Promise<void> {
+    const { request, page } = context;
+    logger.info(`搜索: ${request.label || request.url}`);
 
-      preNavigationHooks: [
-        async ({ page }) => {
-          await page.addInitScript(getStealthInitFunction());
-        },
-      ],
+    try {
+      // 等待搜索结果加载
+      await this.waitForSelector(page, "#search, #rso, #main", 15000);
 
-      requestHandler: async ({ request, page }) => {
-        logger.info(`搜索: ${request.label || request.url}`);
+      // 随机延迟（反检测）
+      await this.randomDelay(2000, 5000);
 
-        try {
-          // 等待搜索结果加载
-          await page.waitForSelector("#search, #rso, #main", { timeout: 15000 });
+      // 提取搜索结果
+      const results = await page.evaluate(() => {
+        const links: Array<{ title: string; url: string; snippet: string }> = [];
 
-          // 随机延迟（反检测）
-          await page.waitForTimeout(2000 + Math.random() * 3000);
+        // 多选择器策略适配不同页面结构
+        const selectors = [
+          'div[data-ved] a[jsname="UWckNb"]',
+          'div.g a[href^="http"]',
+          "div.yuRUbf > a",
+          'div[data-sokoban-container] a[href^="http"]',
+        ];
 
-          // 提取搜索结果
-          const results = await page.evaluate(() => {
-            const links: Array<{ title: string; url: string; snippet: string }> = [];
+        for (const selector of selectors) {
+          const elements = document.querySelectorAll(selector);
 
-            // 多选择器策略适配不同页面结构
-            const selectors = [
-              'div[data-ved] a[jsname="UWckNb"]',
-              'div.g a[href^="http"]',
-              "div.yuRUbf > a",
-              'div[data-sokoban-container] a[href^="http"]',
-            ];
+          for (const el of elements) {
+            const url = el.getAttribute("href");
+            const titleEl =
+              el.querySelector("h3") ||
+              el.closest("div[data-ved], div.g, div[data-sokoban-container]")?.querySelector("h3");
+            const title = titleEl?.textContent || "";
 
-            for (const selector of selectors) {
-              const elements = document.querySelectorAll(selector);
-
-              for (const el of elements) {
-                const url = el.getAttribute("href");
-                const titleEl =
-                  el.querySelector("h3") ||
-                  el
-                    .closest("div[data-ved], div.g, div[data-sokoban-container]")
-                    ?.querySelector("h3");
-                const title = titleEl?.textContent || "";
-
-                // 提取摘要
-                let snippet = "";
-                const container = el.closest("div[data-ved], div.g, div[data-sokoban-container]");
-                if (container) {
-                  const snippetEl = container.querySelector(
-                    'div[data-sncf="1"], div.VwiC3b, span.aCOpRe'
-                  );
-                  snippet = snippetEl?.textContent || "";
-                }
-
-                if (url && title && !url.includes("google.com")) {
-                  links.push({
-                    title: title.trim(),
-                    url: url,
-                    snippet: snippet.trim(),
-                  });
-                }
-              }
-
-              if (links.length > 0) {
-                break;
-              }
+            // 提取摘要
+            let snippet = "";
+            const container = el.closest("div[data-ved], div.g, div[data-sokoban-container]");
+            if (container) {
+              const snippetEl = container.querySelector(
+                'div[data-sncf="1"], div.VwiC3b, span.aCOpRe'
+              );
+              snippet = snippetEl?.textContent || "";
             }
 
-            return links;
-          });
+            if (url && title && !url.includes("google.com")) {
+              links.push({
+                title: title.trim(),
+                url: url,
+                snippet: snippet.trim(),
+              });
+            }
+          }
 
-          logger.info(`提取到 ${results.length} 条搜索结果`);
-
-          // 存储结果到实例变量
-          this.searchResults = results.slice(0, 10).map((r, index) => ({
-            ...r,
-            position: index + 1,
-          }));
-
-          // 模拟人类滚动
-          await page.mouse.wheel(0, 500);
-          await page.waitForTimeout(1000 + Math.random() * 1000);
-        } catch (error) {
-          logger.error(`搜索失败: ${request.url}`, { error: String(error) });
-          throw error;
+          if (links.length > 0) {
+            break;
+          }
         }
-      },
 
-      // 失败处理器
-      failedRequestHandler: async ({ request }) => {
-        logger.error(`请求失败: ${request.url}`);
-      },
-    });
+        return links;
+      });
+
+      logger.info(`提取到 ${results.length} 条搜索结果`);
+
+      // 存储结果到实例变量
+      this.searchResults = results.slice(0, 10).map((r, index) => ({
+        ...r,
+        position: index + 1,
+      }));
+
+      // 模拟人类滚动
+      await page.mouse.wheel(0, 500);
+      await this.randomDelay(1000, 2000);
+    } catch (error) {
+      logger.error(`搜索失败: ${request.url}`, { error: String(error) });
+      throw error;
+    }
   }
 
   /**
@@ -143,7 +119,7 @@ export class GoogleSearchCrawler implements IGoogleSearch {
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
     // 运行爬虫
-    await this.crawler.run([{ url: searchUrl, label: query }]);
+    await this.runCrawler([{ url: searchUrl, label: query }]);
 
     return {
       success: this.searchResults.length > 0,
@@ -154,6 +130,7 @@ export class GoogleSearchCrawler implements IGoogleSearch {
   }
 
   async close(): Promise<void> {
+    await super.close();
     logger.info("Google 搜索爬虫已关闭");
   }
 }

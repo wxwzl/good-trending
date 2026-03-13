@@ -6,3 +6,5 @@
 export { createGoogleSearch, type GoogleSearchInstance } from "./google-search.factory.js";
 
 export { createReddit, createRedditWithPage, type RedditInstance } from "./reddit.factory.js";
+
+export { createAmazonSearch, type AmazonSearchInstance } from "./amazon-search.factory.js";

@@ -5,7 +5,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./index": "./src/index.ts",
-    "./manager": "./src/manager.ts",
     "./services": "./src/services/index.ts",
     "./crawlers/*": "./src/crawlers/*.ts"
   },

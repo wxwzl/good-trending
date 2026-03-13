@@ -18,7 +18,6 @@ export {
 export {
   AmazonSearchService,
   createAmazonSearchService,
-  type AmazonProduct,
   type AmazonSearchConfig,
 } from "./services/amazon-search-service.js";
 

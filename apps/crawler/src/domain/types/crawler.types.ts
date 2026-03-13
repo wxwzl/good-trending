@@ -5,7 +5,29 @@
  * 注意：RedditPost 类型必须与 AI 分析服务兼容
  * AI 分析器只读取 title, content, comments 字段
  */
-
+/**
+ * 亚马逊商品信息
+ */
+export interface AmazonProduct {
+  /** 商品名称 */
+  name: string;
+  /** 商品描述 */
+  description?: string;
+  /** 商品价格 */
+  price?: number;
+  /** 货币 */
+  currency: string;
+  /** 亚马逊商品ID (ASIN) */
+  asin: string;
+  /** 商品链接 */
+  url: string;
+  /** 商品主图 */
+  image?: string;
+  /** 评分 */
+  rating?: number;
+  /** 评价数量 */
+  reviewCount?: number;
+}
 /**
  * Reddit 帖子数据
  * 与 services/ai/ai-analyzer.interface.ts 中的定义兼容

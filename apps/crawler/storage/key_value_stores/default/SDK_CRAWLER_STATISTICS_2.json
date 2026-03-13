@@ -1,0 +1,52 @@
+{
+  "requestsFinished": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 0,
+  "requestsFinishedPerMinute": 0,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 20672,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2026-03-13T11:51:45.092Z",
+  "crawlerFinishedAt": "2026-03-13T11:53:03.165Z",
+  "statsPersistedAt": "2026-03-13T11:53:03.165Z",
+  "crawlerRuntimeMillis": 78251,
+  "crawlerLastStartTimestamp": 1773402704914,
+  "requestRetryHistogram": [
+    null,
+    null,
+    null,
+    1
+  ],
+  "statsId": 2,
+  "requestAvgFailedDurationMillis": 20672,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 20672,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {
+    "200": 4
+  },
+  "errors": {
+    "D:\\repository\\ai-projects\\claude\\good-trending-cache\\apps\\crawler\\src\\adapters\\crawlee\\google\\google-search.crawler.ts:56:22": {
+      "missing error code": {
+        "TimeoutError": {
+          "page.waitForSelector: Timeout 15000ms exceeded.": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "D:\\repository\\ai-projects\\claude\\good-trending-cache\\apps\\crawler\\src\\adapters\\crawlee\\google\\google-search.crawler.ts:56:22": {
+      "missing error code": {
+        "TimeoutError": {
+          "page.waitForSelector: Timeout 15000ms exceeded.": {
+            "count": 3
+          }
+        }
+      }
+    }
+  }
+}

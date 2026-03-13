@@ -2,13 +2,6 @@
  * Crawlee 适配器层统一导出
  */
 
-// 基础类
-export {
-  BaseCrawleeCrawler,
-  type BaseCrawleeConfig,
-  type CrawleeRequestContext,
-} from "./base/base-crawler.js";
-
 // Google 搜索
 export {
   GoogleSearchCrawler,

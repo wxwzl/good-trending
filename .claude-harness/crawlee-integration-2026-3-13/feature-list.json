@@ -1,0 +1,125 @@
+{
+  "taskName": "Crawlee 爬虫框架集成",
+  "description": "集成 Crawlee 框架，保留现有 services/ 代码不变，通过适配器模式实现可切换的爬虫实现",
+  "startedAt": "2026-03-13",
+  "completedAt": "2026-03-13",
+  "totalPhases": 8,
+  "completedPhases": 8,
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "基础设施层",
+      "description": "创建 infrastructure/ 目录，提取公共工具",
+      "priority": "high",
+      "status": "completed",
+      "files": [
+        "apps/crawler/src/infrastructure/browser/stealth-scripts.ts",
+        "apps/crawler/src/infrastructure/browser/user-agents.ts",
+        "apps/crawler/src/infrastructure/utils/delay.ts",
+        "apps/crawler/src/infrastructure/index.ts"
+      ],
+      "estimatedTime": "1-2 hours",
+      "actualTime": "30 minutes"
+    },
+    {
+      "id": "phase-2",
+      "name": "领域层 - 接口定义",
+      "description": "创建 domain/ 目录，定义爬虫接口",
+      "priority": "high",
+      "status": "completed",
+      "files": [
+        "apps/crawler/src/domain/interfaces/google-search.interface.ts",
+        "apps/crawler/src/domain/interfaces/reddit.interface.ts",
+        "apps/crawler/src/domain/interfaces/index.ts",
+        "apps/crawler/src/domain/types/crawler.types.ts",
+        "apps/crawler/src/domain/types/index.ts"
+      ],
+      "estimatedTime": "30 minutes",
+      "actualTime": "30 minutes"
+    },
+    {
+      "id": "phase-3",
+      "name": "Crawlee 适配器实现",
+      "description": "创建 adapters/crawlee/ 目录，实现 Crawlee 版本的爬虫",
+      "priority": "high",
+      "status": "completed",
+      "files": [
+        "apps/crawler/src/adapters/crawlee/base/base-crawler.ts",
+        "apps/crawler/src/adapters/crawlee/google/google-search.crawler.ts",
+        "apps/crawler/src/adapters/crawlee/google/types.ts",
+        "apps/crawler/src/adapters/crawlee/reddit/reddit.crawler.ts",
+        "apps/crawler/src/adapters/crawlee/reddit/types.ts",
+        "apps/crawler/src/adapters/crawlee/index.ts"
+      ],
+      "estimatedTime": "2-3 hours",
+      "actualTime": "2 hours"
+    },
+    {
+      "id": "phase-4",
+      "name": "AI 服务集成确认",
+      "description": "确认 AI 服务无需修改，验证 RedditPost 类型兼容",
+      "priority": "high",
+      "status": "completed",
+      "files": [],
+      "estimatedTime": "15 minutes",
+      "actualTime": "15 minutes"
+    },
+    {
+      "id": "phase-5",
+      "name": "配置与工厂层",
+      "description": "创建 config/ 和 factories/ 目录，实现配置切换",
+      "priority": "high",
+      "status": "completed",
+      "files": [
+        "apps/crawler/src/config/crawler.config.ts",
+        "apps/crawler/src/factories/google-search.factory.ts",
+        "apps/crawler/src/factories/reddit.factory.ts",
+        "apps/crawler/src/factories/index.ts"
+      ],
+      "estimatedTime": "1 hour",
+      "actualTime": "1 hour"
+    },
+    {
+      "id": "phase-6",
+      "name": "根入口更新",
+      "description": "更新 index.ts 导出所有新模块",
+      "priority": "medium",
+      "status": "completed",
+      "files": [
+        "apps/crawler/src/index.ts"
+      ],
+      "estimatedTime": "30 minutes",
+      "actualTime": "30 minutes"
+    },
+    {
+      "id": "phase-7",
+      "name": "调度器集成",
+      "description": "更新 scheduler 使用工厂创建爬虫实例",
+      "priority": "medium",
+      "status": "completed",
+      "files": [
+        "apps/scheduler/.env.example",
+        "apps/scheduler/src/jobs/category-heat/crawler.ts",
+        "apps/scheduler/src/jobs/ai-product-discovery/crawler.ts",
+        "apps/scheduler/src/jobs/product-discovery/crawler.ts",
+        "apps/scheduler/src/jobs/yesterday-stats/crawler.ts"
+      ],
+      "estimatedTime": "1 hour",
+      "actualTime": "1 hour"
+    },
+    {
+      "id": "phase-8",
+      "name": "AI 分析集成测试",
+      "description": "测试 Crawlee Reddit + AI 分析完整流程",
+      "priority": "high",
+      "status": "completed",
+      "files": [
+        "apps/crawler/scripts/test-crawlee-ai-integration.ts",
+        "apps/crawler/scripts/verify-types.ts"
+      ],
+      "estimatedTime": "30 minutes",
+      "actualTime": "30 minutes"
+    }
+  ],
+  "notes": "所有阶段已完成。保持现有 services/ 目录完全不变，所有新代码放在新增目录中。AI 服务 (services/ai/) 无需任何修改。"
+}

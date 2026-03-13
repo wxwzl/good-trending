@@ -1,0 +1,52 @@
+{
+  "requestsFinished": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 2,
+  "requestsFinishedPerMinute": 0,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 6745,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2026-03-13T11:53:03.360Z",
+  "crawlerFinishedAt": "2026-03-13T11:53:31.999Z",
+  "statsPersistedAt": "2026-03-13T11:53:31.999Z",
+  "crawlerRuntimeMillis": 28821,
+  "crawlerLastStartTimestamp": 1773402783178,
+  "requestRetryHistogram": [
+    null,
+    null,
+    null,
+    1
+  ],
+  "statsId": 3,
+  "requestAvgFailedDurationMillis": 6745,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 6745,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {
+    "403": 4
+  },
+  "errors": {
+    "D:\\repository\\ai-projects\\claude\\good-trending-cache\\node_modules\\.pnpm\\@crawlee+basic@3.16.0\\node_modules\\@crawlee\\src\\internals\\basic-crawler.ts:1377:19": {
+      "missing error code": {
+        "Error": {
+          "Request blocked - received 403 status code.": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "D:\\repository\\ai-projects\\claude\\good-trending-cache\\node_modules\\.pnpm\\@crawlee+basic@3.16.0\\node_modules\\@crawlee\\src\\internals\\basic-crawler.ts:1377:19": {
+      "missing error code": {
+        "Error": {
+          "Request blocked - received 403 status code.": {
+            "count": 3
+          }
+        }
+      }
+    }
+  }
+}

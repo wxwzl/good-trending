@@ -13,3 +13,7 @@ export type { GoogleSearchResult, GoogleSearchOptions } from "./google/types.js"
 // Reddit
 export { RedditCrawler, createRedditCrawler } from "./reddit/reddit.crawler.js";
 export type { RedditPostData, RedditCrawlOptions } from "./reddit/types.js";
+
+// Amazon
+export { AmazonCrawler, createAmazonCrawler } from "./amazon/index.js";
+export type { AmazonSearchResult, AmazonCrawlOptions } from "./amazon/types.js";

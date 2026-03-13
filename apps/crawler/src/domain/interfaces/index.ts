@@ -6,6 +6,8 @@ export type { IGoogleSearch } from "./google-search.interface.js";
 export { GOOGLE_SEARCH_TOKEN } from "./google-search.interface.js";
 export type { IReddit } from "./reddit.interface.js";
 export { REDDIT_TOKEN } from "./reddit.interface.js";
+export type { IAmazonSearch } from "./amazon-search.interface.js";
+export { AMAZON_SEARCH_TOKEN } from "./amazon-search.interface.js";
 
 // 重新导出类型，方便使用
 export type {
@@ -13,4 +15,5 @@ export type {
   AIAnalysisResult,
   SearchResult,
   SearchResponse,
+  AmazonProduct,
 } from "../types/crawler.types.js";

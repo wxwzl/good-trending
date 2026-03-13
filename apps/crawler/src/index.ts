@@ -73,9 +73,13 @@ export { formatDate } from "./utils/date.js";
  * ============================================
  */
 
-export type { IGoogleSearch, IReddit } from "./domain/interfaces/index.js";
+export type { IGoogleSearch, IReddit, IAmazonSearch } from "./domain/interfaces/index.js";
 
-export { GOOGLE_SEARCH_TOKEN, REDDIT_TOKEN } from "./domain/interfaces/index.js";
+export {
+  GOOGLE_SEARCH_TOKEN,
+  REDDIT_TOKEN,
+  AMAZON_SEARCH_TOKEN,
+} from "./domain/interfaces/index.js";
 
 export type {
   RedditPost,
@@ -128,6 +132,11 @@ export {
   createRedditCrawler,
   type RedditPostData,
   type RedditCrawlOptions,
+  // Amazon
+  AmazonCrawler,
+  createAmazonCrawler,
+  type AmazonSearchResult,
+  type AmazonCrawlOptions,
 } from "./adapters/crawlee/index.js";
 
 /**

@@ -15,6 +15,9 @@ build
 .eslintcache
 .cache
 
+# Crawlee storage
+storage/
+
 # Environment variables
 .env
 .env.local

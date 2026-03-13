@@ -16,7 +16,7 @@ build
 .cache
 
 # Crawlee storage
-storage/
+apps/crawler/storage/*
 
 # Environment variables
 .env

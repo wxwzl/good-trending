@@ -60,6 +60,8 @@ export interface CrawlerJobData {
   headless?: boolean;
   /** 是否保存到数据库 */
   saveToDb?: boolean;
+  /** 是否模拟运行（不实际删除数据） */
+  dryRun?: boolean;
   /** 任务触发来源 */
   triggeredBy: "scheduler" | "manual";
   /** 任务 ID (用于日志追踪) */

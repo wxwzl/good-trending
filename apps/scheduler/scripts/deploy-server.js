@@ -3,7 +3,7 @@
  * Scheduler 部署服务器启动脚本
  * 支持日志输出到文件，用于生产环境部署
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+
 const fs = require("fs");
 const path = require("path");
 

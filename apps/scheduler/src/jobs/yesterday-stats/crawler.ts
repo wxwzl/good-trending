@@ -300,7 +300,7 @@ export class YesterdayStatsCrawler {
         seenAsins.add(asin);
 
         // 使用 AmazonSearchService 获取商品详情
-        const productInfo = await this.amazonService.extractProductInfo(link.url);
+        const productInfo = await this.amazonService.extractProductInfoFromUrl(link.url);
         if (!productInfo) {
           continue;
         }

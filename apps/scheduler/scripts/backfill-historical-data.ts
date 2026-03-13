@@ -38,7 +38,7 @@
 // ============================================
 // 第一步：先加载环境变量（必须在导入 crawler 模块之前）
 // ============================================
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const { loadEnv } = require("./loadEnv.js");
 const { appEnv } = loadEnv({ command: "backfill", silent: false });
 
@@ -276,15 +276,40 @@ async function crawlForDate(
   logger.info(`开始爬取日期: ${formatDate(date)}`);
   logger.info(`========================================`);
 
-  // 动态创建服务（确保环境变量已加载）
-  const { googleSearch, amazonService, redditService, aiAnalyzer } = await createServices();
-
-  const browser = await chromium.launch({ headless: config.headless });
-  const page = await browser.newPage();
-
   const dateStr = formatDate(date);
   let totalProducts = 0;
   let totalHeatStats = 0;
+
+  // 动态创建服务（确保环境变量已加载）
+  const { googleSearch, amazonService, redditService, aiAnalyzer } = await createServices();
+
+  // 启动浏览器（使用与 GoogleSearchService 相同的反检测参数）
+  logger.info("正在启动浏览器...");
+  const browser = await chromium.launch({
+    headless: config.headless,
+    args: [
+      "--disable-blink-features=AutomationControlled",
+      "--disable-web-security",
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--disable-site-isolation-trials",
+      "--disable-dev-shm-usage",
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-accelerated-2d-canvas",
+      "--disable-gpu",
+      "--window-size=1920,1080",
+    ],
+  });
+  logger.info("浏览器启动成功");
+
+  const context = await browser.newContext({
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    viewport: { width: 1920, height: 1080 },
+  });
+
+  const page = await context.newPage();
+  logger.info("新页面创建成功");
 
   try {
     for (const category of categories.slice(0, 5)) {
@@ -296,10 +321,12 @@ async function crawlForDate(
         const redditQuery = `site:reddit.com "${category.name}" after:${dateStr} before:${dateStr}`;
         const xQuery = `site:x.com "${category.name}" after:${dateStr} before:${dateStr}`;
 
-        const [redditResult, xResult] = await Promise.all([
-          googleSearch.search(redditQuery),
-          googleSearch.search(xQuery),
-        ]);
+        // 串行执行搜索（避免同一个 page 实例冲突）
+        logger.info(`  搜索 Reddit: ${redditQuery}`);
+        const redditResult = await googleSearch.search(redditQuery, page);
+
+        logger.info(`  搜索 X: ${xQuery}`);
+        const xResult = await googleSearch.search(xQuery, page);
 
         const redditCount = redditResult.success ? redditResult.totalResults : 0;
         const xCount = xResult.success ? xResult.totalResults : 0;
@@ -323,7 +350,7 @@ async function crawlForDate(
           seenAsins.add(asin);
 
           try {
-            const productInfo = await amazonService.extractProductInfo(link.url);
+            const productInfo = await amazonService.extractProductInfoFromUrl(link.url);
             if (!productInfo) continue;
 
             if (config.saveToDb) {
@@ -404,9 +431,12 @@ async function crawlForDate(
       }
     }
   } finally {
+    logger.info("正在关闭浏览器...");
+    await context.close();
     await browser.close();
     await googleSearch.close();
     await amazonService.closeBrowser();
+    logger.info("浏览器已关闭");
   }
 
   logger.info(`日期 ${dateStr} 完成: ${totalHeatStats} 个类目热度, ${totalProducts} 个商品`);

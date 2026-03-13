@@ -7,7 +7,7 @@
  *   const { loadEnv } = require('./loadEnv');
  *   loadEnv({ command: 'dev' }); // 或 'build', 'start'
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+
 const fs = require("fs");
 const path = require("path");
 

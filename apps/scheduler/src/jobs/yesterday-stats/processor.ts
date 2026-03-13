@@ -166,10 +166,10 @@ async function saveCategoryHeatStats(stats: CategoryHeatResult[]): Promise<void>
 /**
  * 保存发现的商品
  */
-async function saveDiscoveredProducts(products: DiscoveredProduct[]): Promise<number> {
+async function saveDiscoveredProducts(discoveredProducts: DiscoveredProduct[]): Promise<number> {
   let savedCount = 0;
 
-  for (const product of products) {
+  for (const product of discoveredProducts) {
     try {
       // 检查是否已存在
       const existing = await db
@@ -217,7 +217,7 @@ async function saveDiscoveredProducts(products: DiscoveredProduct[]): Promise<nu
     }
   }
 
-  logger.info(`保存商品完成: ${savedCount}/${products.length}`);
+  logger.info(`保存商品完成: ${savedCount}/${discoveredProducts.length}`);
   return savedCount;
 }
 

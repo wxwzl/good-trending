@@ -78,7 +78,7 @@ export default tseslint.config(
     },
   },
 
-  // Scripts directory - uses separate tsconfig
+  // Scripts directory - TypeScript files
   {
     files: ["scripts/**/*.ts"],
     plugins: {
@@ -96,11 +96,42 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "no-console": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.scripts.json",
         tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
+  // Scripts directory - JavaScript files (Node.js scripts)
+  {
+    files: ["scripts/**/*.js", "scripts/**/*.cjs"],
+    plugins: {
+      prettier,
+    },
+    rules: {
+      "prettier/prettier": "error",
+      "no-console": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "no-undef": "off",
+    },
+    languageOptions: {
+      globals: {
+        require: "readonly",
+        module: "readonly",
+        exports: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        console: "readonly",
+        Buffer: "readonly",
+        setTimeout: "readonly",
+        setInterval: "readonly",
+        clearTimeout: "readonly",
+        clearInterval: "readonly",
       },
     },
   }

@@ -1,7 +1,7 @@
 /**
  * 爬虫处理器测试
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   createCrawlerProcessor,
   closeCrawlerProcessor,

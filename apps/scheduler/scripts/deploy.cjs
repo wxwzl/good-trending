@@ -5,7 +5,7 @@
  * 环境变量配置文件放置到 deploy/ 目录
  * 日志输出到 deploy/app/scheduler/logs/ 目录
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -49,12 +49,7 @@ const deployLogsDir = path.join(deployAppDir, "logs");
 const distDir = path.join(schedulerDir, "dist");
 
 // 需要复制的环境变量文件
-const envFilesToCopy = [
-  ".env",
-  ".env.production",
-  ".env.production.local",
-  ".env.local",
-];
+const envFilesToCopy = [".env", ".env.production", ".env.production.local", ".env.local"];
 
 // 确保目录存在
 function ensureDir(dir) {

@@ -3,7 +3,7 @@
  * Scheduler 统一启动脚本
  * 根据 APP_ENV 加载对应的环境文件，支持 dev/build/start 所有命令
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
+
 const { spawn } = require("child_process");
 const path = require("path");
 const { loadEnv } = require("./loadEnv");
@@ -18,7 +18,7 @@ if (!["dev", "build", "start"].includes(command)) {
 }
 
 // 加载环境变量
-const { rootDir } = loadEnv({ command });
+loadEnv({ command });
 
 // 构建命令
 let args;

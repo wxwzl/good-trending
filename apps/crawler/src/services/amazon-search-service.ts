@@ -178,13 +178,13 @@ export class AmazonSearchService {
   /**
    * 从搜索结果项中提取商品信息
    */
-  private async extractProductInfo(item: ElementHandle | null): Promise<AmazonProduct | null> {
+  async extractProductInfo(item: ElementHandle | null): Promise<AmazonProduct | null> {
     if (!this.page || !item) {
       return null;
     }
 
     try {
-      const element = item as ElementHandle<HTMLElement>;
+      const element = item;
 
       // 提取 ASIN
       const asinAttr = await element.getAttribute("data-asin");
@@ -262,6 +262,86 @@ export class AmazonSearchService {
       };
     } catch (error) {
       logger.warn(`提取商品信息失败: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * 从商品详情页 URL 提取商品信息
+   * @param url - 商品详情页 URL
+   * @returns 商品信息
+   */
+  async extractProductInfoFromUrl(url: string): Promise<AmazonProduct | null> {
+    logger.info(`从 URL 提取商品信息: ${url}`);
+
+    await this.initBrowser();
+
+    if (!this.page) {
+      throw new Error("浏览器页面未初始化");
+    }
+
+    try {
+      // 访问商品页面
+      await this.page.goto(url, { waitUntil: "networkidle" });
+
+      // 等待页面加载
+      await this.page.waitForSelector("#productTitle", { timeout: 10000 });
+
+      // 提取 ASIN
+      const asinMatch = url.match(/\/dp\/(\w{10})/i);
+      const asin = asinMatch ? asinMatch[1] : "";
+
+      if (!asin) {
+        logger.warn(`无法从 URL 提取 ASIN: ${url}`);
+        return null;
+      }
+
+      // 提取商品名称
+      const name = await this.page.$eval("#productTitle", (el) => el.textContent?.trim() || "");
+
+      // 提取价格
+      let price: number | undefined;
+      let currency = "USD";
+
+      try {
+        const priceText = await this.page.$eval(".a-price .a-offscreen", (el) =>
+          el.textContent?.trim()
+        );
+        if (priceText) {
+          const priceMatch = priceText.match(/[\d,]+\.?\d*/);
+          if (priceMatch) {
+            price = parseFloat(priceMatch[0].replace(/,/g, ""));
+            if (priceText.includes("¥") || priceText.includes("CNY")) {
+              currency = "CNY";
+            } else if (priceText.includes("€") || priceText.includes("EUR")) {
+              currency = "EUR";
+            } else if (priceText.includes("£") || priceText.includes("GBP")) {
+              currency = "GBP";
+            }
+          }
+        }
+      } catch {
+        // 价格可能不存在
+      }
+
+      // 提取图片
+      let image: string | undefined;
+      try {
+        image = await this.page.$eval("#landingImage", (el) => el.getAttribute("src") || undefined);
+      } catch {
+        // 图片可能不存在
+      }
+
+      return {
+        name: name || "Unknown Product",
+        price,
+        currency,
+        asin,
+        url,
+        image,
+      };
+    } catch (error) {
+      logger.warn(`从 URL 提取商品信息失败: ${url} - ${error}`);
       return null;
     }
   }

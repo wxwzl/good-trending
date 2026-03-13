@@ -10,8 +10,9 @@ import {
   createAIAnalyzer,
   createAmazonSearchService,
   createRedditService,
+  createGoogleSearch,
+  type IGoogleSearch,
 } from "@good-trending/crawler";
-import { GoogleSearchService } from "@good-trending/crawler";
 import type { AIProductDiscoveryConfig, DiscoveredProduct, ProcessedPost } from "./types.js";
 
 const logger = createLoggerInstance("ai-product-discovery-crawler");
@@ -28,7 +29,7 @@ export class AIProductDiscoveryCrawler {
   private aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
   private amazonSearch = createAmazonSearchService();
   private redditService = createRedditService();
-  private googleSearch = new GoogleSearchService();
+  private googleSearch: IGoogleSearch = createGoogleSearch();
 
   constructor(config: Partial<AIProductDiscoveryConfig> = {}) {
     this.config = {

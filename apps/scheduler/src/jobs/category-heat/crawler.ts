@@ -6,7 +6,7 @@
 import type { Page, Browser } from "playwright";
 import { chromium } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
-import { GoogleSearchService } from "@good-trending/crawler";
+import { createGoogleSearch, type IGoogleSearch } from "@good-trending/crawler";
 import type {
   CategoryHeatConfig,
   CategoryData,
@@ -28,7 +28,7 @@ export class CategoryHeatCrawler {
   private config: Required<CategoryHeatConfig>;
   private browser: Browser | null = null;
   private page: Page | null = null;
-  private googleSearch: GoogleSearchService;
+  private googleSearch: IGoogleSearch;
 
   constructor(config: Partial<CategoryHeatConfig> = {}) {
     this.config = {
@@ -38,9 +38,8 @@ export class CategoryHeatCrawler {
       saveToDb: true,
       ...config,
     };
-    this.googleSearch = new GoogleSearchService({
-      forceBrowser: true, // 强制使用浏览器
-    });
+    // 使用工厂创建 Google 搜索实例（支持 Legacy/Crawlee 切换）
+    this.googleSearch = createGoogleSearch();
   }
 
   /**

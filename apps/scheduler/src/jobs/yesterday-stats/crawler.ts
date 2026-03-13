@@ -7,10 +7,11 @@ import type { Page, Browser } from "playwright";
 import { chromium } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
 import {
-  GoogleSearchService,
+  createGoogleSearch,
   createAmazonSearchService,
   createAIAnalyzer,
   createRedditService,
+  type IGoogleSearch,
 } from "@good-trending/crawler";
 import type {
   YesterdayStatsConfig,
@@ -32,7 +33,7 @@ export class YesterdayStatsCrawler {
   private config: Required<YesterdayStatsConfig>;
   private browser: Browser | null = null;
   private page: Page | null = null;
-  private googleSearch: GoogleSearchService;
+  private googleSearch: IGoogleSearch;
   private amazonService: ReturnType<typeof createAmazonSearchService>;
   private redditService: ReturnType<typeof createRedditService>;
   private aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
@@ -52,9 +53,8 @@ export class YesterdayStatsCrawler {
       ...config,
     };
 
-    this.googleSearch = new GoogleSearchService({
-      forceBrowser: true,
-    });
+    // 使用工厂创建 Google 搜索实例（支持 Legacy/Crawlee 切换）
+    this.googleSearch = createGoogleSearch();
     this.amazonService = createAmazonSearchService();
     this.redditService = createRedditService();
 

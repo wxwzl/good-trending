@@ -6,10 +6,7 @@
 import { createRedditService, RedditService } from "../services/reddit-service.js";
 import { RedditCrawler } from "../adapters/crawlee/reddit/reddit.crawler.js";
 import type { IReddit } from "../domain/interfaces/index.js";
-import {
-  getCrawlerConfig,
-  type CrawlerImplementation,
-} from "../config/crawler.config.js";
+import { getCrawlerConfig, type CrawlerImplementation } from "../config/crawler.config.js";
 import type { Page } from "playwright";
 
 /**
@@ -66,10 +63,7 @@ class LegacyRedditAdapter implements IReddit {
  * @param implementation 指定实现类型
  * @returns Reddit 实例
  */
-export function createRedditWithPage(
-  page: Page,
-  implementation?: CrawlerImplementation
-): IReddit {
+export function createRedditWithPage(page: Page, implementation?: CrawlerImplementation): IReddit {
   const config = getCrawlerConfig();
   const impl = implementation || config.reddit;
 

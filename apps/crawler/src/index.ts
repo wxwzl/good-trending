@@ -73,15 +73,9 @@ export { formatDate } from "./utils/date.js";
  * ============================================
  */
 
-export type {
-  IGoogleSearch,
-  IReddit,
-} from "./domain/interfaces/index.js";
+export type { IGoogleSearch, IReddit } from "./domain/interfaces/index.js";
 
-export {
-  GOOGLE_SEARCH_TOKEN,
-  REDDIT_TOKEN,
-} from "./domain/interfaces/index.js";
+export { GOOGLE_SEARCH_TOKEN, REDDIT_TOKEN } from "./domain/interfaces/index.js";
 
 export type {
   RedditPost,

@@ -19,9 +19,6 @@ export class GoogleSearchCrawler implements IGoogleSearch {
   private searchResults: SearchResult[] = [];
 
   constructor() {
-    // 存储 this 引用，以便在 requestHandler 中使用
-    const self = this;
-
     this.crawler = new PlaywrightCrawler({
       maxConcurrency: 2,
       maxRequestRetries: 3,
@@ -84,9 +81,7 @@ export class GoogleSearchCrawler implements IGoogleSearch {
 
                 // 提取摘要
                 let snippet = "";
-                const container = el.closest(
-                  "div[data-ved], div.g, div[data-sokoban-container]"
-                );
+                const container = el.closest("div[data-ved], div.g, div[data-sokoban-container]");
                 if (container) {
                   const snippetEl = container.querySelector(
                     'div[data-sncf="1"], div.VwiC3b, span.aCOpRe'
@@ -103,7 +98,9 @@ export class GoogleSearchCrawler implements IGoogleSearch {
                 }
               }
 
-              if (links.length > 0) break;
+              if (links.length > 0) {
+                break;
+              }
             }
 
             return links;
@@ -112,7 +109,7 @@ export class GoogleSearchCrawler implements IGoogleSearch {
           logger.info(`提取到 ${results.length} 条搜索结果`);
 
           // 存储结果到实例变量
-          self.searchResults = results.slice(0, 10).map((r, index) => ({
+          this.searchResults = results.slice(0, 10).map((r, index) => ({
             ...r,
             position: index + 1,
           }));

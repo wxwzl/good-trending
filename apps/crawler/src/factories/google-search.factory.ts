@@ -6,10 +6,7 @@
 import { GoogleSearchService } from "../services/google-search-service.js";
 import { GoogleSearchCrawler } from "../adapters/crawlee/google/google-search.crawler.js";
 import type { IGoogleSearch } from "../domain/interfaces/index.js";
-import {
-  getCrawlerConfig,
-  type CrawlerImplementation,
-} from "../config/crawler.config.js";
+import { getCrawlerConfig, type CrawlerImplementation } from "../config/crawler.config.js";
 
 /**
  * Google 搜索实例类型
@@ -21,9 +18,7 @@ export type GoogleSearchInstance = IGoogleSearch;
  * @param implementation 指定实现类型，不指定则使用配置
  * @returns Google 搜索实例
  */
-export function createGoogleSearch(
-  implementation?: CrawlerImplementation
-): GoogleSearchInstance {
+export function createGoogleSearch(implementation?: CrawlerImplementation): GoogleSearchInstance {
   const config = getCrawlerConfig();
   const impl = implementation || config.googleSearch;
 

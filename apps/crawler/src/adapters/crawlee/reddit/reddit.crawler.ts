@@ -23,9 +23,6 @@ export class RedditCrawler implements IReddit {
   private lastPost: RedditPost | null = null;
 
   constructor() {
-    // 存储 this 引用，以便在 requestHandler 中使用
-    const self = this;
-
     this.crawler = new PlaywrightCrawler({
       maxConcurrency: 2,
       maxRequestRetries: 3,
@@ -57,10 +54,9 @@ export class RedditCrawler implements IReddit {
 
         try {
           // 等待内容加载
-          await page.waitForSelector(
-            'h1, [data-testid="post-container"], shreddit-post',
-            { timeout: 15000 }
-          );
+          await page.waitForSelector('h1, [data-testid="post-container"], shreddit-post', {
+            timeout: 15000,
+          });
 
           // 随机延迟（反检测）
           await page.waitForTimeout(1500 + Math.random() * 2000);
@@ -80,7 +76,9 @@ export class RedditCrawler implements IReddit {
               await button.click().catch(() => {});
               await page.waitForTimeout(300);
             }
-          } catch {}
+          } catch {
+            // 忽略展开评论的错误
+          }
 
           // 提取帖子数据
           const postData = await page.evaluate((maxComments) => {
@@ -124,7 +122,9 @@ export class RedditCrawler implements IReddit {
                 }
               });
 
-              if (comments.length >= maxComments) break;
+              if (comments.length >= maxComments) {
+                break;
+              }
             }
 
             return {
@@ -138,7 +138,7 @@ export class RedditCrawler implements IReddit {
           }, 10);
 
           // 存储结果
-          self.lastPost = {
+          this.lastPost = {
             ...postData,
             url: request.url,
           };

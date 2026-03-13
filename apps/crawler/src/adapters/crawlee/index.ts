@@ -3,23 +3,11 @@
  */
 
 // Google 搜索
-export {
-  GoogleSearchCrawler,
-  createGoogleSearchCrawler,
-} from "./google/google-search.crawler.js";
+export { GoogleSearchCrawler, createGoogleSearchCrawler } from "./google/google-search.crawler.js";
 
-export type {
-  GoogleSearchResult,
-  GoogleSearchOptions,
-} from "./google/types.js";
+export type { GoogleSearchResult, GoogleSearchOptions } from "./google/types.js";
 
 // Reddit
-export {
-  RedditCrawler,
-  createRedditCrawler,
-} from "./reddit/reddit.crawler.js";
+export { RedditCrawler, createRedditCrawler } from "./reddit/reddit.crawler.js";
 
-export type {
-  RedditPostData,
-  RedditCrawlOptions,
-} from "./reddit/types.js";
+export type { RedditPostData, RedditCrawlOptions } from "./reddit/types.js";

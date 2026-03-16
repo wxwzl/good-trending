@@ -1,6 +1,6 @@
 # Web 前端开发规范
 
-> 本文档定义了 Good-Trending 前端项目的开发规范。适用于 Next.js + React + Tailwind CSS 技术栈,采用APP Router,注意区分Page Router的api。
+> 本文档定义了 Good-Trending 前端项目的开发规范。适用于 Next.js + React + Tailwind CSS 技术栈,采用APP Router,注意区分Page Router的api，要采用最新的next16版本的api,缓存api采用cache-component 一套api。
 
 ---
 

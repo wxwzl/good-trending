@@ -300,7 +300,48 @@ async function main() {
     path.join(scriptsDir, "deploy-server.js")
   );
 
-  // 12. 创建启动说明文件
+  // 12. 复制 packages/database 到部署包（包含 migrations 目录）
+  log("INFO", "复制 packages/database 到部署包...");
+  const databasePkgDir = path.join(rootDir, "packages", "database");
+  const deployDatabaseDir = path.join(deployDir, "packages", "database");
+
+  // 复制 dist 目录
+  const databaseDistSrc = path.join(databasePkgDir, "dist");
+  const databaseDistDest = path.join(deployDatabaseDir, "dist");
+  if (fs.existsSync(databaseDistSrc)) {
+    copyRecursive(databaseDistSrc, databaseDistDest);
+    log("INFO", "复制 packages/database/dist");
+  } else {
+    log("WARN", "未找到 packages/database/dist，请先构建 database 包");
+  }
+
+  // 复制 migrations 目录
+  const databaseMigrationsSrc = path.join(databasePkgDir, "migrations");
+  const databaseMigrationsDest = path.join(deployDatabaseDir, "migrations");
+  if (fs.existsSync(databaseMigrationsSrc)) {
+    copyRecursive(databaseMigrationsSrc, databaseMigrationsDest);
+    log("INFO", "复制 packages/database/migrations");
+  } else {
+    log("WARN", "未找到 packages/database/migrations 目录");
+  }
+
+  // 复制 package.json
+  const databasePkgJsonSrc = path.join(databasePkgDir, "package.json");
+  const databasePkgJsonDest = path.join(deployDatabaseDir, "package.json");
+  if (fs.existsSync(databasePkgJsonSrc)) {
+    fs.copyFileSync(databasePkgJsonSrc, databasePkgJsonDest);
+    log("INFO", "复制 packages/database/package.json");
+  }
+
+  // 复制 drizzle.config.ts
+  const drizzleConfigSrc = path.join(databasePkgDir, "drizzle.config.ts");
+  const drizzleConfigDest = path.join(deployDatabaseDir, "drizzle.config.ts");
+  if (fs.existsSync(drizzleConfigSrc)) {
+    fs.copyFileSync(drizzleConfigSrc, drizzleConfigDest);
+    log("INFO", "复制 packages/database/drizzle.config.ts");
+  }
+
+  // 13. 创建启动说明文件
   log("INFO", "创建部署说明...");
   const readmeContent = `# Web 部署包
 
@@ -318,6 +359,11 @@ deploy/
 │   ├── scripts/           # 启动脚本
 │   ├── server.js          # Next.js standalone 服务器
 │   └── package.json       # 部署包配置
+├── packages/database/     # 数据库包（完整包含）
+│   ├── dist/              # 构建产物
+│   ├── migrations/        # 数据库迁移文件
+│   ├── package.json       # 包配置
+│   └── drizzle.config.ts  # Drizzle 配置
 \`\`\`
 
 ## 启动方式
@@ -368,6 +414,16 @@ node scripts/deploy-server.js
 - WEB_PORT: 同 PORT
 - NODE_ENV: 运行环境（默认 production）
 
+## 数据库迁移
+
+部署包中包含了完整的 \`packages/database\` 目录，可用于执行数据库迁移：
+
+\`\`\`bash
+cd deploy/packages/database
+pnpm install
+pnpm run db:migrate
+\`\`\`
+
 ## 注意事项
 
 1. 部署包不包含源码，只包含构建产物
@@ -403,6 +459,17 @@ node_modules/
     if (!fs.existsSync(filePath)) {
       log("ERROR", `部署包缺少必需文件: ${file}`);
       process.exit(1);
+    }
+  }
+
+  // 验证 packages/database 目录
+  const requiredDatabaseFiles = ["dist", "migrations", "package.json"];
+  for (const file of requiredDatabaseFiles) {
+    const filePath = path.join(deployDatabaseDir, file);
+    if (!fs.existsSync(filePath)) {
+      log("WARN", `packages/database 缺少: ${file}`);
+    } else {
+      log("SUCCESS", `packages/database/${file} 已包含`);
     }
   }
 

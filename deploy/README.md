@@ -14,6 +14,11 @@ deploy/
 │   ├── scripts/           # 启动脚本
 │   ├── server.js          # Next.js standalone 服务器
 │   └── package.json       # 部署包配置
+├── packages/database/     # 数据库包（完整包含）
+│   ├── dist/              # 构建产物
+│   ├── migrations/        # 数据库迁移文件
+│   ├── package.json       # 包配置
+│   └── drizzle.config.ts  # Drizzle 配置
 ```
 
 ## 启动方式
@@ -67,6 +72,16 @@ node scripts/deploy-server.js
 - HOSTNAME: 服务监听地址（默认 0.0.0.0）
 - WEB_PORT: 同 PORT
 - NODE_ENV: 运行环境（默认 production）
+
+## 数据库迁移
+
+部署包中包含了完整的 `packages/database` 目录，可用于执行数据库迁移：
+
+```bash
+cd deploy/packages/database
+pnpm install
+pnpm run db:migrate
+```
 
 ## 注意事项
 

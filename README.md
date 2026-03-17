@@ -627,8 +627,8 @@ WEB_PORT=3011
 
 ## 联系方式
 
-- 项目地址: [https://github.com/your-username/good-trending](https://github.com/your-username/good-trending)
-- 问题反馈: [Issues](https://github.com/your-username/good-trending/issues)
+- 项目地址: [https://github.com/wxwzl/good-trending](https://github.com/wxwzl/good-trending)
+- 问题反馈: [Issues](https://github.com/wxwzl/good-trending/issues)
 
 ---
 

@@ -2,7 +2,7 @@
   "name": "good-trending",
   "version": "1.0.0",
   "private": true,
-  "description": "商品趋势追踪平台 - 发现 X 平台和亚马逊的热门商品趋势",
+  "description": "商品趋势追踪平台 - 发现 reddit 平台和亚马逊的热门商品趋势",
   "scripts": {
     "dev:api": "pnpm --filter @good-trending/api dev",
     "dev:web": "pnpm --filter @good-trending/web dev",
@@ -50,7 +50,9 @@
     "crawl:amazon": "pnpm --filter @good-trending/crawler crawl:amazon",
     "scheduler": "pnpm --filter @good-trending/scheduler start",
     "prepare": "husky",
-    "commit": "cz"
+    "commit": "cz",
+    "deploy:pack": "node ./scripts/deploy.cjs pack",
+    "build:tar": "pnpm run deploy:build && pnpm run deploy:pack"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.3",
@@ -62,6 +64,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.3.2",
     "prettier": "^3.2.0",
+    "ssh2-sftp-client": "^11.0.0",
+    "tar": "^7.0.0",
     "tsx": "^4.21.0",
     "turbo": "^2.0.0",
     "typescript": "^5.3.0"

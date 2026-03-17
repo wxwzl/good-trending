@@ -1,6 +1,6 @@
 # Good-Trending
 
-> 商品趋势追踪平台 - 发现 Reddit 平台和亚马逊的热门商品趋势
+> 商品趋势追踪平台 - 发现 X 平台和亚马逊的热门商品趋势
 
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![pnpm Version](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-blue)](https://pnpm.io/)
@@ -11,11 +11,11 @@
 
 ## 项目简介
 
-Good-Trending 是一个商品趋势追踪平台，通过爬取 Reddit 平台和亚马逊的商品数据，分析并展示热门商品趋势。帮助用户发现最新的热门商品和市场动态。
+Good-Trending 是一个商品趋势追踪平台，通过爬取 X（Twitter）平台和亚马逊的商品数据，分析并展示热门商品趋势。帮助用户发现最新的热门商品和市场动态。
 
 ### 核心功能
 
-- **趋势追踪**: 实时追踪 Reddit平台和亚马逊的热门商品
+- **趋势追踪**: 实时追踪 X（Twitter）平台和亚马逊的热门商品
 - **分类浏览**: 按主题分类浏览商品，快速找到感兴趣的内容
 - **智能搜索**: 支持关键词搜索，快速定位目标商品
 - **多语言支持**: 支持中文和英文界面
@@ -112,6 +112,7 @@ API_URL="http://localhost:3015/api/v1"
 # --- Web 配置 ---
 WEB_PORT=3010
 NEXT_PUBLIC_API_URL="http://localhost:3015/api/v1"
+...
 ```
 
 #### 步骤 3：启动基础设施（PostgreSQL + Redis）
@@ -380,6 +381,12 @@ pnpm build                  # 构建所有应用
 pnpm lint                   # 代码检查
 pnpm typecheck              # 类型检查
 
+# 部署
+pnpm build:tar              # 构建并打包（生成部署压缩包）
+pnpm run deploy             # 等同于 build:tar
+pnpm run deploy:build       # 仅构建部署包
+pnpm run deploy:pack        # 仅打包 deploy 目录
+
 # 数据库
 pnpm db:generate            # 生成 Drizzle 迁移文件
 pnpm db:push                # 推送 Schema 到数据库
@@ -401,7 +408,7 @@ pnpm docker:down            # 停止生产环境
 
 # 爬虫
 pnpm crawl                  # 运行所有爬虫
-pnpm crawl:twitter          # 运行 Twitter 爬虫
+pnpm crawl:twitter          # 运行 X (Twitter) 爬虫
 pnpm crawl:amazon           # 运行亚马逊爬虫
 
 # Git
@@ -444,6 +451,21 @@ pnpm docker:up
 
 # 查看日志
 pnpm docker:logs
+```
+
+### 生产部署
+
+```bash
+# 构建所有应用并打包
+pnpm run build:tar
+
+# 或使用 deploy 命令（构建+打包）
+pnpm run deploy
+
+# 打包后的文件在 dist/ 目录
+# 上传到服务器后，使用自动化脚本启动
+cd deploy
+node start-all.cjs
 ```
 
 ### 环境变量配置
@@ -514,7 +536,7 @@ API_URL="http://localhost:3015/api/v1"
 
 # Web 配置
 WEB_PORT=3010
-NEXT_PUBLIC_API_URL="http://localhost:3015/api/v1"
+NEXT_PUBLIC_API_URL="/backend/api/v1"
 
 # 日志级别
 LOG_LEVEL=debug
@@ -576,30 +598,6 @@ WEB_PORT=3011
 
 ---
 
-## 项目状态
-
-### 开发进度
-
-```
-总任务数: 85+
-已完成: 45+
-进行中: 5
-
-完成度: ████████████░░░░░░░░ 53%
-```
-
-### 里程碑
-
-| 里程碑           | 状态      |
-| ---------------- | --------- |
-| M1: 基础设施就绪 | ✅ 已完成 |
-| M2: API 服务可用 | ✅ 已完成 |
-| M3: 前端页面完成 | ✅ 已完成 |
-| M4: 测试覆盖达标 | ⚪ 待开始 |
-| M5: 生产环境上线 | ⚪ 待开始 |
-
----
-
 ## 相关文档
 
 - [项目开发规范 (CLAUDE.md)](./CLAUDE.md)
@@ -608,7 +606,6 @@ WEB_PORT=3011
 - [前端开发规范](./apps/web/CLAUDE.md)
 - [API 开发规范](./apps/api/CLAUDE.md)
 - [测试规范](./apps/tests/CLAUDE.md)
-- [环境变量指南](./ENV_GUIDE.md)
 
 ---
 
@@ -635,4 +632,4 @@ WEB_PORT=3011
 
 ---
 
-_最后更新: 2026-03-06_
+_最后更新: 2026-03-17_

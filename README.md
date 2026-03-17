@@ -1,6 +1,6 @@
 # Good-Trending
 
-> 商品趋势追踪平台 - 发现 X 平台和亚马逊的热门商品趋势
+> 商品趋势追踪平台 - 发现 Reddit 平台和亚马逊的热门商品趋势
 
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![pnpm Version](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-blue)](https://pnpm.io/)
@@ -11,11 +11,11 @@
 
 ## 项目简介
 
-Good-Trending 是一个商品趋势追踪平台，通过爬取 X（Twitter）平台和亚马逊的商品数据，分析并展示热门商品趋势。帮助用户发现最新的热门商品和市场动态。
+Good-Trending 是一个商品趋势追踪平台，通过爬取 Reddit平台和亚马逊的商品数据，分析并展示热门商品趋势。帮助用户发现最新的热门商品和市场动态。
 
 ### 核心功能
 
-- **趋势追踪**: 实时追踪 X（Twitter）平台和亚马逊的热门商品
+- **趋势追踪**: 实时追踪 Reddit平台和亚马逊的热门商品
 - **分类浏览**: 按主题分类浏览商品，快速找到感兴趣的内容
 - **智能搜索**: 支持关键词搜索，快速定位目标商品
 - **多语言支持**: 支持中文和英文界面

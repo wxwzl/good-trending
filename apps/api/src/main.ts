@@ -43,10 +43,24 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
-import { TransformInterceptor, HttpExceptionFilter } from './common';
+import {
+  TransformInterceptor,
+  HttpExceptionFilter,
+  WinstonLoggerService,
+} from './common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // 创建 Winston Logger
+  const logger = new WinstonLoggerService();
+  logger.setContext('Bootstrap');
+
+  const app = await NestFactory.create(AppModule, {
+    logger,
+    bufferLogs: true,
+  });
+
+  // 启用日志刷新
+  app.flushLogs();
 
   // ============================================================
   // 响应压缩配置 (Gzip)
@@ -153,7 +167,7 @@ async function bootstrap() {
   const port = process.env.API_PORT || 3001;
   await app.listen(port);
 
-  console.log(`
+  logger.log(`
   ┌─────────────────────────────────────────────┐
   │  Good-Trending API Server                   │
   │  Port: ${port}                                │

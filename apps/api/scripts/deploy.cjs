@@ -185,8 +185,7 @@ async function main() {
     private: true,
     type: "commonjs",
     scripts: {
-      start: "cross-env NODE_ENV=production APP_ENV=production node dist/main.js",
-      "start:log": "cross-env NODE_ENV=production APP_ENV=production node scripts/deploy-server.js",
+      start: "cross-env NODE_ENV=production APP_ENV=production LOGS_DIR=./logs node dist/main.js",
     },
     dependencies: deployDependencies,
   };
@@ -195,16 +194,7 @@ async function main() {
     JSON.stringify(deployPackageJson, null, 2)
   );
 
-  // 9. 复制部署脚本
-  log("INFO", "复制部署脚本...");
-  const scriptsDir = path.join(deployAppDir, "scripts");
-  ensureDir(scriptsDir);
-  fs.copyFileSync(
-    path.join(__dirname, "deploy-server.js"),
-    path.join(scriptsDir, "deploy-server.js")
-  );
-
-  // 10. 创建启动说明文件
+  // 9. 创建启动说明文件
   log("INFO", "创建部署说明...");
   const readmeContent = `# API 部署包
 
@@ -217,8 +207,8 @@ deploy/
 ├── app/api/
 │   ├── dist/              # NestJS 构建产物
 │   ├── logs/              # 日志目录
-│   ├── scripts/           # 启动脚本
-│   └── package.json       # 部署包配置
+│   ├── package.json       # 部署包配置
+│   └── README.md          # 本文件
 \`\`\`
 
 ## 启动方式
@@ -234,20 +224,9 @@ node dist/main.js
 环境变量配置：
 - API_PORT: 服务端口（默认 3015）
 - NODE_ENV: 运行环境（默认 production）
+- LOGS_DIR: 日志目录（默认 ./logs）
 
-### 方式 2：使用带日志的启动脚本
-
-\`\`\`bash
-cd deploy/app/api
-pnpm install --production
-node scripts/deploy-server.js
-\`\`\`
-
-日志将输出到 logs/ 目录：
-- logs/app-YYYY-MM-DD.log: 应用日志
-- logs/error-YYYY-MM-DD.log: 错误日志
-
-### 方式 3：使用 PM2 管理进程（生产推荐）
+### 方式 2：使用 PM2 管理进程（生产推荐）
 
 \`\`\`bash
 cd deploy/app/api
@@ -256,6 +235,19 @@ pm2 start dist/main.js --name "api-service"
 pm2 save
 pm2 startup
 \`\`\`
+
+## 日志系统
+
+使用 Winston 日志系统，自动按天轮转日志文件。
+
+日志文件位置（默认在 logs/ 目录）：
+- logs/app-YYYY-MM-DD.log: 应用日志（所有级别）
+- logs/error-YYYY-MM-DD.log: 错误日志
+- logs/exceptions-YYYY-MM-DD.log: 未捕获异常日志
+- logs/rejections-YYYY-MM-DD.log: 未处理 Promise 拒绝日志
+
+日志配置环境变量：
+- LOGS_DIR: 日志目录路径（默认 ./logs）
 
 ## 环境变量
 
@@ -268,7 +260,7 @@ pm2 startup
 - CORS_ORIGINS: 允许的跨域来源
 - RATE_LIMIT_WINDOW_MS: 限流窗口时间（毫秒）
 - RATE_LIMIT_MAX_REQUESTS: 限流最大请求数
-- SENTRY_DSN: Sentry 监控 DSN
+- LOGS_DIR: 日志目录路径
 
 ## 注意事项
 
@@ -276,11 +268,15 @@ pm2 startup
 2. 需要 Node.js >= 20.0.0
 3. 需要 PostgreSQL 和 Redis 服务
 4. 建议使用 PM2 或 systemd 管理进程
-5. 日志文件会自动增长，建议配置 logrotate
+5. 日志文件会自动按天轮转，保留最近 14 天
+
+## 数据库迁移
+
+数据库迁移由独立的 database 部署包处理，参见 deploy/app/database/README.md
 `;
   fs.writeFileSync(path.join(deployAppDir, "README.md"), readmeContent);
 
-  // 11. 创建 .gitignore
+  // 10. 创建 .gitignore
   const gitignoreContent = `# 部署包日志文件
 logs/
 *.log
@@ -298,7 +294,7 @@ node_modules/
 `;
   fs.writeFileSync(path.join(deployAppDir, ".gitignore"), gitignoreContent);
 
-  // 12. 验证部署包
+  // 11. 验证部署包
   log("INFO", "验证部署包...");
   const requiredFiles = ["dist/main.js", "package.json"];
   for (const file of requiredFiles) {
@@ -309,7 +305,7 @@ node_modules/
     }
   }
 
-  // 13. 计算部署包大小
+  // 12. 计算部署包大小
   log("INFO", "计算部署包大小...");
   try {
     const getFolderSize = (dirPath) => {
@@ -337,8 +333,7 @@ node_modules/
   log("SUCCESS", "=====================================");
   log("SUCCESS", "API 部署构建完成！");
   log("SUCCESS", "=====================================");
-  log("INFO", `部署目录: ${deployDir}`);
-  log("INFO", `应用目录: ${deployAppDir}`);
+  log("INFO", `部署目录: ${deployAppDir}`);
   log("INFO", `日志目录: ${deployLogsDir}`);
   log("INFO", "");
   log("INFO", "启动方式:");
@@ -346,8 +341,7 @@ node_modules/
   log("INFO", "  pnpm install --production");
   log("INFO", "  node dist/main.js");
   log("INFO", "");
-  log("INFO", "或使用带日志的启动方式:");
-  log("INFO", "  node scripts/deploy-server.js");
+  log("INFO", "日志文件将自动输出到 logs/ 目录");
 }
 
 main().catch((error) => {

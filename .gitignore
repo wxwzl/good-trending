@@ -53,3 +53,4 @@ test-results
 deploy/app
 deploy/migrations
 deploy/packages
+.playwright-mcp

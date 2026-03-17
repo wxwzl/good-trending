@@ -34,24 +34,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Web Application
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: web-runner
-    container_name: good-trending-web
-    restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-good_trending}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3015}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   # API Application
   api:
     build:
@@ -61,15 +43,39 @@ services:
     container_name: good-trending-api
     restart: unless-stopped
     ports:
-      - "${API_PORT:-3001}:3001"
+      - "${API_PORT:-3015}:3015"
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - APP_ENV=production
+      - API_PORT=3015
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-good_trending}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3010}
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web-runner
+    container_name: good-trending-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3010}:3010"
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=production
+      - PORT=3010
+      - API_URL=http://api:3015/api/v1
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api/v1}
+    depends_on:
+      api:
+        condition: service_started
 
   # Scheduler
   scheduler:
@@ -81,9 +87,9 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-good_trending}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
     depends_on:
       postgres:
         condition: service_healthy

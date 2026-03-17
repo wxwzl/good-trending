@@ -49,7 +49,7 @@ const deployLogsDir = path.join(deployAppDir, "logs");
 const distDir = path.join(schedulerDir, "dist");
 
 // 需要复制的环境变量文件
-const envFilesToCopy = [".env", ".env.production", ".env.production.local", ".env.local"];
+const envFilesToCopy = [".env.production"];
 
 // 确保目录存在
 function ensureDir(dir) {

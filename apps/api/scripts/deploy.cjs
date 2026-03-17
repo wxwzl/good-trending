@@ -50,10 +50,7 @@ const distDir = path.join(apiDir, "dist");
 
 // 需要复制的环境变量文件
 const envFilesToCopy = [
-  ".env",
   ".env.production",
-  ".env.production.local",
-  ".env.local",
 ];
 
 // 确保目录存在

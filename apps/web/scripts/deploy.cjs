@@ -83,7 +83,7 @@ if (loadedEnvFiles.length > 0) {
   console.log(` 警告: 未找到环境文件，使用系统环境变量`);
 }
 // 需要复制的环境变量文件
-const envFilesToCopy = [".env", ".env.production", ".env.production.local", ".env.local"];
+const envFilesToCopy = [".env.production"];
 
 // 确保目录存在
 function ensureDir(dir) {
@@ -191,10 +191,15 @@ async function main() {
     process.exit(1);
   }
 
-  // 6. 复制 standalone 文件到部署目录
+  // 6. 复制 standalone 文件到部署目录（跳过 node_modules，生产环境安装）
   log("INFO", "复制 standalone 文件...");
   const filesToCopy = fs.readdirSync(standaloneDir);
   for (const file of filesToCopy) {
+    // 跳过 node_modules，生产环境通过 pnpm install --production 安装
+    if (file === "node_modules") {
+      log("INFO", "跳过: node_modules（生产环境安装）");
+      continue;
+    }
     const src = path.join(standaloneDir, file);
     const dest = path.join(deployAppDir, file);
     copyRecursive(src, dest);
@@ -300,48 +305,7 @@ async function main() {
     path.join(scriptsDir, "deploy-server.js")
   );
 
-  // 12. 复制 packages/database 到部署包（包含 migrations 目录）
-  log("INFO", "复制 packages/database 到部署包...");
-  const databasePkgDir = path.join(rootDir, "packages", "database");
-  const deployDatabaseDir = path.join(deployDir, "packages", "database");
-
-  // 复制 dist 目录
-  const databaseDistSrc = path.join(databasePkgDir, "dist");
-  const databaseDistDest = path.join(deployDatabaseDir, "dist");
-  if (fs.existsSync(databaseDistSrc)) {
-    copyRecursive(databaseDistSrc, databaseDistDest);
-    log("INFO", "复制 packages/database/dist");
-  } else {
-    log("WARN", "未找到 packages/database/dist，请先构建 database 包");
-  }
-
-  // 复制 migrations 目录
-  const databaseMigrationsSrc = path.join(databasePkgDir, "migrations");
-  const databaseMigrationsDest = path.join(deployDatabaseDir, "migrations");
-  if (fs.existsSync(databaseMigrationsSrc)) {
-    copyRecursive(databaseMigrationsSrc, databaseMigrationsDest);
-    log("INFO", "复制 packages/database/migrations");
-  } else {
-    log("WARN", "未找到 packages/database/migrations 目录");
-  }
-
-  // 复制 package.json
-  const databasePkgJsonSrc = path.join(databasePkgDir, "package.json");
-  const databasePkgJsonDest = path.join(deployDatabaseDir, "package.json");
-  if (fs.existsSync(databasePkgJsonSrc)) {
-    fs.copyFileSync(databasePkgJsonSrc, databasePkgJsonDest);
-    log("INFO", "复制 packages/database/package.json");
-  }
-
-  // 复制 drizzle.config.ts
-  const drizzleConfigSrc = path.join(databasePkgDir, "drizzle.config.ts");
-  const drizzleConfigDest = path.join(deployDatabaseDir, "drizzle.config.ts");
-  if (fs.existsSync(drizzleConfigSrc)) {
-    fs.copyFileSync(drizzleConfigSrc, drizzleConfigDest);
-    log("INFO", "复制 packages/database/drizzle.config.ts");
-  }
-
-  // 13. 创建启动说明文件
+  // 12. 创建启动说明文件
   log("INFO", "创建部署说明...");
   const readmeContent = `# Web 部署包
 
@@ -353,17 +317,11 @@ deploy/
 ├── .env.production         # 生产环境配置
 ├── app/web/
 │   ├── .next/             # Next.js 构建产物
-│   ├── node_modules/      # 生产依赖
 │   ├── public/            # 静态资源
 │   ├── logs/              # 日志目录
 │   ├── scripts/           # 启动脚本
 │   ├── server.js          # Next.js standalone 服务器
 │   └── package.json       # 部署包配置
-├── packages/database/     # 数据库包（完整包含）
-│   ├── dist/              # 构建产物
-│   ├── migrations/        # 数据库迁移文件
-│   ├── package.json       # 包配置
-│   └── drizzle.config.ts  # Drizzle 配置
 \`\`\`
 
 ## 启动方式
@@ -392,6 +350,16 @@ node scripts/deploy-server.js
 - logs/app-YYYY-MM-DD.log: 应用日志
 - logs/error-YYYY-MM-DD.log: 错误日志
 
+### 方式 2：使用 PM2 管理进程（生产推荐）
+
+\`\`\`bash
+cd deploy/app/web
+pnpm install --production
+pm2 start server.js --name "web"
+pm2 save
+pm2 startup
+\`\`\`
+
 ### 方式 3：使用环境变量指定配置
 
 \`\`\`bash
@@ -414,44 +382,16 @@ node scripts/deploy-server.js
 - WEB_PORT: 同 PORT
 - NODE_ENV: 运行环境（默认 production）
 
-## 数据库迁移
-
-部署包中包含了完整的 \`packages/database\` 目录，可用于执行数据库迁移：
-
-\`\`\`bash
-cd deploy/packages/database
-pnpm install
-pnpm run db:migrate
-\`\`\`
-
 ## 注意事项
 
 1. 部署包不包含源码，只包含构建产物
-2. 需要 Node.js >= 20.0.0
-3. 建议使用 PM2 或 systemd 管理进程
-4. 日志文件会自动轮转，建议配置 logrotate
+2. **首次启动前必须先执行 \`pnpm install --production\` 安装依赖**
+3. 需要 Node.js >= 20.0.0
+4. 建议使用 PM2 或 systemd 管理进程
+5. 日志文件会自动轮转，建议配置 logrotate
 `;
-  fs.writeFileSync(path.join(deployDir, "README.md"), readmeContent);
 
-  // 13. 创建 .gitignore
-  const gitignoreContent = `# 部署包日志文件
-logs/
-*.log
-
-# 本地环境文件
-.env.local
-.env.production.local
-
-# Node modules
-node_modules/
-
-# 临时文件
-*.tmp
-*.temp
-`;
-  fs.writeFileSync(path.join(deployDir, ".gitignore"), gitignoreContent);
-
-  // 14. 验证部署包
+  // 13. 验证部署包
   log("INFO", "验证部署包...");
   const requiredFiles = ["server.js", "package.json", ".next"];
   for (const file of requiredFiles) {
@@ -462,18 +402,7 @@ node_modules/
     }
   }
 
-  // 验证 packages/database 目录
-  const requiredDatabaseFiles = ["dist", "migrations", "package.json"];
-  for (const file of requiredDatabaseFiles) {
-    const filePath = path.join(deployDatabaseDir, file);
-    if (!fs.existsSync(filePath)) {
-      log("WARN", `packages/database 缺少: ${file}`);
-    } else {
-      log("SUCCESS", `packages/database/${file} 已包含`);
-    }
-  }
-
-  // 15. 计算部署包大小
+  // 14. 计算部署包大小
   log("INFO", "计算部署包大小...");
   try {
     const getFolderSize = (dirPath) => {
@@ -511,6 +440,7 @@ node_modules/
   log("INFO", "  node server.js");
   log("INFO", "");
   log("INFO", "或使用带日志的启动方式:");
+  log("INFO", "  pnpm install --production");
   log("INFO", "  node scripts/deploy-server.js");
 }
 

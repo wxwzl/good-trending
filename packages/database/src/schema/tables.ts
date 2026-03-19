@@ -145,13 +145,21 @@ export const productAppearanceStats = pgTable(
       .references(() => products.id, { onDelete: "cascade" })
       .unique(),
     // 近7天出现位图 (7位，每天左移)
-    last7DaysBitmap: bigint("last_7_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
+    last7DaysBitmap: bigint("last_7_days_bitmap", { mode: "bigint" })
+      .default(sql`0`)
+      .notNull(),
     // 近15天出现位图 (15位)
-    last15DaysBitmap: bigint("last_15_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
+    last15DaysBitmap: bigint("last_15_days_bitmap", { mode: "bigint" })
+      .default(sql`0`)
+      .notNull(),
     // 近30天出现位图 (30位)
-    last30DaysBitmap: bigint("last_30_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
+    last30DaysBitmap: bigint("last_30_days_bitmap", { mode: "bigint" })
+      .default(sql`0`)
+      .notNull(),
     // 近60天出现位图 (60位)
-    last60DaysBitmap: bigint("last_60_days_bitmap", { mode: "bigint" }).default(sql`0`).notNull(),
+    last60DaysBitmap: bigint("last_60_days_bitmap", { mode: "bigint" })
+      .default(sql`0`)
+      .notNull(),
     // 上一次更新时间（用于滑动窗口计算）
     lastUpdateDate: date("last_update_date"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -162,13 +170,18 @@ export const productAppearanceStats = pgTable(
 
 // ==================== 商品社交提及统计表 ====================
 // 记录商品在各时间段 Reddit/X 平台的搜索结果数
+// ⚠️ 重要：此表为分区表（按月范围分区），分区键为 stat_date
+// 分区表通过自定义 SQL 迁移创建（见 migrations/0001_partition_social_stats.sql）
+// Drizzle 的 `drizzle-kit generate` 不会生成分区语法，需要手动维护分区
 
 export const productSocialStats = pgTable(
   "product_social_stat",
   {
     id: text("id")
-      .primaryKey()
+      .notNull()
       .$defaultFn(() => createId()),
+    // 注意：分区表的主键必须包含分区键 stat_date
+    // 实际 SQL: PRIMARY KEY (id, stat_date)
     productId: text("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
@@ -210,6 +223,9 @@ export const productSocialStats = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
+    // 分区表主键：必须包含分区键 stat_date
+    primaryKey({ columns: [table.id, table.statDate] }),
+    // 业务唯一索引：productId + statDate（已包含分区键）
     uniqueIndex("social_stat_product_date_idx").on(table.productId, table.statDate),
     index("social_stat_date_idx").on(table.statDate),
   ]

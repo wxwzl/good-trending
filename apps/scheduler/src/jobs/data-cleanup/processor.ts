@@ -149,23 +149,36 @@ async function cleanupOldPartitions(config: DataCleanupConfig): Promise<DataClea
 }
 
 /**
- * 创建未来分区
+ * 创建未来分区（未来2个月）
  */
 async function createFuturePartitions(db: any, tableName: string): Promise<void> {
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const createdPartitions: string[] = [];
 
-  const year = nextMonth.getFullYear();
-  const month = nextMonth.getMonth() + 1; // 0-based to 1-based
+  // 创建未来2个月的分区
+  for (let i = 1; i <= 2; i++) {
+    const futureMonth = new Date();
+    futureMonth.setMonth(futureMonth.getMonth() + i);
 
-  try {
-    // 调用 PostgreSQL 函数创建分区
-    await db.execute(`
-      SELECT create_monthly_partition('${tableName}', ${year}, ${month});
-    `);
-    logger.info(`已创建未来分区: ${tableName}_${year}_${String(month).padStart(2, "0")}`);
-  } catch (error) {
-    // 分区可能已存在，忽略错误
-    logger.debug(`创建未来分区失败（可能已存在）: ${error}`);
+    const year = futureMonth.getFullYear();
+    const month = futureMonth.getMonth() + 1; // 0-based to 1-based
+
+    try {
+      // 调用 PostgreSQL 函数创建分区
+      await db.execute(`
+        SELECT create_monthly_partition('${tableName}', ${year}, ${month});
+      `);
+      const partitionName = `${tableName}_${year}_${String(month).padStart(2, "0")}`;
+      createdPartitions.push(partitionName);
+      logger.info(`已创建未来分区: ${partitionName}`);
+    } catch (error) {
+      // 分区可能已存在，忽略错误
+      logger.debug(`创建未来分区失败（可能已存在）: ${error}`);
+    }
+  }
+
+  if (createdPartitions.length > 0) {
+    logger.info(`未来分区创建完成，共 ${createdPartitions.length} 个`, {
+      partitions: createdPartitions,
+    });
   }
 }

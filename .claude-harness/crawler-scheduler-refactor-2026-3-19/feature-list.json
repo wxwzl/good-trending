@@ -1,0 +1,125 @@
+{
+  "taskName": "Crawler & Scheduler 架构重构",
+  "description": "彻底重构 apps/crawler 和 apps/scheduler，统一新架构，迁移旧爬虫实现到 adapters/legacy/，趋势任务迁移到 jobs/ 模块化结构，删除所有兼容代码",
+  "features": [
+    {
+      "id": "phase-1-1",
+      "name": "[crawler] 创建 adapters/legacy/ 目录结构",
+      "priority": "high",
+      "passes": false,
+      "notes": "创建 adapters/legacy/base/, google/, reddit/, amazon/ 目录及 index.ts 文件"
+    },
+    {
+      "id": "phase-1-2",
+      "name": "[crawler] 迁移 BaseCrawler 到 adapters/legacy/base/",
+      "priority": "high",
+      "passes": false,
+      "notes": "将 crawlers/BaseCrawler.ts 移动到 adapters/legacy/base/BaseLegacyCrawler.ts，文件名更新"
+    },
+    {
+      "id": "phase-1-3",
+      "name": "[crawler] 迁移 GoogleSearchService 到 adapters/legacy/google/",
+      "priority": "high",
+      "passes": false,
+      "notes": "将 services/google-search-service.ts 移动到 adapters/legacy/google/google-search.crawler.ts，实现 IGoogleSearch 接口"
+    },
+    {
+      "id": "phase-1-4",
+      "name": "[crawler] 迁移 RedditService 到 adapters/legacy/reddit/",
+      "priority": "high",
+      "passes": false,
+      "notes": "将 services/reddit-service.ts 移动到 adapters/legacy/reddit/reddit.crawler.ts，实现 IReddit 接口"
+    },
+    {
+      "id": "phase-1-5",
+      "name": "[crawler] 迁移 AmazonSearchService 到 adapters/legacy/amazon/",
+      "priority": "high",
+      "passes": false,
+      "notes": "将 services/amazon-search-service.ts 移动到 adapters/legacy/amazon/amazon.crawler.ts，实现 IAmazonSearch 接口"
+    },
+    {
+      "id": "phase-1-6",
+      "name": "[crawler] 更新 factories/ 导入路径",
+      "priority": "high",
+      "passes": false,
+      "notes": "三个 factory 文件从新路径 adapters/legacy/ 导入，删除 LegacyAdapter 包装类（直接用实现类）"
+    },
+    {
+      "id": "phase-1-7",
+      "name": "[crawler] 删除旧文件，更新 index.ts 导出",
+      "priority": "high",
+      "passes": false,
+      "notes": "删除 services/google-search-service.ts、services/reddit-service.ts、services/amazon-search-service.ts、crawlers/ 目录、types.ts（顶层）。更新 index.ts 导出路径"
+    },
+    {
+      "id": "phase-2-1",
+      "name": "[scheduler] 新建 jobs/trending-calculate/ 模块",
+      "priority": "high",
+      "passes": false,
+      "notes": "创建五文件结构：types.ts、scheduler.ts(cron:0 3 * * *)、calculator.ts(从 calculator.ts 提取计算逻辑)、processor.ts、index.ts"
+    },
+    {
+      "id": "phase-2-2",
+      "name": "[scheduler] 新建 jobs/trending-update/ 模块",
+      "priority": "high",
+      "passes": false,
+      "notes": "创建五文件结构：types.ts、scheduler.ts(cron:0 4 * * *)、updater.ts(从 calculator.ts 提取更新逻辑)、processor.ts、index.ts"
+    },
+    {
+      "id": "phase-2-3",
+      "name": "[scheduler] 注册趋势任务到 jobs/index.ts",
+      "priority": "high",
+      "passes": false,
+      "notes": "将 trending-calculate 和 trending-update 加入 REGISTERED_JOBS 数组"
+    },
+    {
+      "id": "phase-2-4",
+      "name": "[scheduler] 重写 processors/trending/index.ts 为策略路由模式",
+      "priority": "high",
+      "passes": false,
+      "notes": "参考 processors/crawler/index.ts，改为 jobHandlers 映射表路由到 jobs/ 处理器，删除原有内联逻辑"
+    },
+    {
+      "id": "phase-2-5",
+      "name": "[scheduler] 补充 processors/crawler/index.ts 的 data-cleanup 路由",
+      "priority": "high",
+      "passes": false,
+      "notes": "在 jobHandlers 中添加 'data-cleanup': processDataCleanupJob"
+    },
+    {
+      "id": "phase-2-6",
+      "name": "[scheduler] 清理 scheduler/index.ts 硬编码代码",
+      "priority": "high",
+      "passes": false,
+      "notes": "删除 calculate-trending/update-trending 的 scheduleJob 硬编码、删除 legacyJobActions 整块、删除 addCrawlerJob 函数、删除 addTrendingJob 函数（迁移后趋势任务走 addJobToQueue）"
+    },
+    {
+      "id": "phase-2-7",
+      "name": "[scheduler] 清理 queue/index.ts 废弃常量",
+      "priority": "medium",
+      "passes": false,
+      "notes": "删除 JOB_TYPES 中 CRAWL_AMAZON、CRAWL_TWITTER 两个已废弃常量；CrawlerJobData.source 移除 'amazon'|'twitter' 类型"
+    },
+    {
+      "id": "phase-2-8",
+      "name": "[scheduler] 更新 processors/trending/calculator.ts 删除旧文件",
+      "priority": "high",
+      "passes": false,
+      "notes": "删除 processors/trending/calculator.ts（逻辑已拆分到 jobs/ 两个模块），确认 processors/trending/index.ts 不再导入它"
+    },
+    {
+      "id": "phase-3-1",
+      "name": "[验证] TypeScript 编译通过",
+      "priority": "high",
+      "passes": false,
+      "notes": "pnpm --filter @good-trending/crawler exec tsc --noEmit 和 scheduler 都无报错"
+    },
+    {
+      "id": "phase-3-2",
+      "name": "[验证] 单元测试通过",
+      "priority": "high",
+      "passes": false,
+      "notes": "pnpm test 所有现有测试仍然通过"
+    }
+  ]
+}

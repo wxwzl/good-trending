@@ -34,6 +34,13 @@
 - 创建 Harness 任务目录和功能清单
 - 尚未开始实施
 
+### 会话 2 - 2026-03-20
+
+- 完成所有 17 个功能清单任务
+- crawler TypeScript 编译通过，5 test files，29 tests 全部通过
+- scheduler TypeScript 编译通过，7 test files，72 tests 全部通过
+- 任务全部完成，可删除此 Harness 目录
+
 ## 关键文件路径参考
 
 ### Scheduler

@@ -1,6 +1,48 @@
 /**
- * Good-Trending 爬虫包
- * 提供爬取相关的公共服务
+ * @package @good-trending/crawler
+ * Good-Trending 爬虫包 — 对外统一入口
+ *
+ * ## 架构分层
+ *
+ * ```
+ * factories/          ← 工厂层：根据配置创建正确的实现实例（使用方只需依赖此层）
+ *   ├── google-search.factory.ts
+ *   ├── reddit.factory.ts
+ *   └── amazon-search.factory.ts
+ *
+ * domain/             ← 领域层：接口契约 + 共享类型（纯 TypeScript，无运行时依赖）
+ *   ├── interfaces/   IGoogleSearch / IReddit / IAmazonSearch
+ *   └── types/        AmazonProduct / RedditPost / SearchResponse ...
+ *
+ * adapters/legacy/    ← Legacy 实现：原生 Playwright，稳定可用，默认启用
+ *   ├── base/         BaseLegacyCrawler（手动管理 Browser / Page）
+ *   ├── google/       GoogleSearchService（SerpAPI + 浏览器双模式）
+ *   ├── reddit/       RedditService（Page 注入模式）
+ *   └── amazon/       AmazonSearchService
+ *
+ * adapters/crawlee/   ← Crawlee 实现：基于 crawlee 框架，可选启用
+ *   ├── base/         BaseCrawleeCrawler（内置队列 / 重试 / 并发）
+ *   ├── google/       GoogleSearchCrawler
+ *   ├── reddit/       RedditCrawler
+ *   └── amazon/       AmazonCrawler
+ *
+ * services/           ← 应用服务：数据处理、AI 分析（无爬虫替代的核心逻辑）
+ *   ├── ai/           AIAnalyzer（Kimi / Bailian / Zhipu 三种 provider）
+ *   ├── crawler-data-processor.ts  DB 写入 + Bitmap 滑动窗口统计
+ *   └── social-mention-service.ts  Google 搜索统计 Reddit / X 提及次数
+ *
+ * infrastructure/     ← 基础设施：反检测脚本、User-Agent、延迟工具
+ *
+ * config/             ← 配置：CRAWLER_IMPLEMENTATION 环境变量控制 legacy/crawlee 切换
+ * ```
+ *
+ * ## 切换实现
+ * 默认使用 legacy，通过环境变量切换：
+ * ```env
+ * CRAWLER_IMPLEMENTATION=crawlee          # 全局切换
+ * GOOGLE_SEARCH_IMPLEMENTATION=crawlee   # 只切换 Google
+ * REDDIT_IMPLEMENTATION=legacy           # 只切换 Reddit
+ * ```
  */
 
 // AI 分析服务

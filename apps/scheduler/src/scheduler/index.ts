@@ -1,6 +1,15 @@
 /**
- * 定时任务调度器
- * 动态注册所有启用的任务，支持 crawler-queue 和 trending-queue 两条队列
+ * 定时任务调度器（Cron → BullMQ 队列投递层）
+ *
+ * 职责：按照各任务模块的 cron 表达式，**定时向 BullMQ 队列投递任务**，
+ * 而不是直接执行任务逻辑。实际处理由 processors/ 中的 Worker 消费队列完成。
+ *
+ * 这种"调度 / 执行"分离的好处：
+ * - cron 触发失败不影响正在执行的任务
+ * - 任务可以被手动触发（`triggerJob()`）而不依赖 cron 时间
+ * - Worker 可以部署在不同节点，水平扩展
+ *
+ * 所有 cron 使用 `Asia/Shanghai` 时区（UTC+8）。
  */
 import { Queue } from "bullmq";
 import cron, { type ScheduledTask } from "node-cron";

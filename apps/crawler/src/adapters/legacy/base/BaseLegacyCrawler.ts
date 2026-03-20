@@ -1,3 +1,17 @@
+/**
+ * Legacy 爬虫基类
+ *
+ * 基于原生 Playwright 实现的爬虫基类，与基于 Crawlee 框架的 BaseCrawleeCrawler 并列。
+ * 特点：直接管理 Browser / BrowserContext / Page 生命周期，适合需要细粒度控制的场景。
+ *
+ * 架构位置：adapters/legacy/base → adapters/legacy/{google,reddit,amazon}
+ *
+ * 与 BaseCrawleeCrawler 的区别：
+ * - Legacy：原生 Playwright，手动管理浏览器，适合需要复用外部 Page 的场景（如 Reddit）
+ * - Crawlee：基于 crawlee 框架，内置队列 / 重试 / 并发管理
+ *
+ * @see adapters/crawlee/base/BaseCrawleeCrawler.ts 对应的 Crawlee 基类
+ */
 import { chromium, Browser, Page, BrowserContext } from "playwright";
 import { Logger } from "winston";
 

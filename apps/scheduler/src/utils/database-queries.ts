@@ -218,9 +218,14 @@ export async function getProductAppearanceStats(
 }
 
 /**
- * 计算 Bitmap 中 1 的位数（人口计数）
+ * 计算 BigInt 位图中置 1 的位数（Hamming weight / popcount）
+ *
+ * 采用逐位右移法，适合位数有限（≤ 64 位）的场景。
+ * 与 `crawler` 包的 `countBitmap()` 实现等价，
+ * 这里独立实现以避免跨包循环依赖。
+ *
  * @param bitmap - BigInt 位图
- * @returns 1 的位数
+ * @returns 置 1 的位数
  */
 function popCount(bitmap: bigint): number {
   let count = 0;
@@ -233,10 +238,23 @@ function popCount(bitmap: bigint): number {
 }
 
 /**
- * 计算商品出现频率得分
- * @param stats - 出现统计数据
- * @param period - 周期类型
- * @returns 频率得分 (0-1)
+ * 计算商品在指定周期的出现频率得分
+ *
+ * 从商品的 Bitmap 数据中选取与 `period` 匹配的时间窗口位图，
+ * 用 popcount 统计置 1 的天数，再除以窗口长度得到 [0, 1] 的频率值。
+ *
+ * 周期 → 位图映射：
+ * - TODAY / YESTERDAY → last7DaysBitmap 的最低位（单天）
+ * - LAST_7_DAYS / THIS_WEEK → last7DaysBitmap（7 位）
+ * - LAST_15_DAYS → last15DaysBitmap（15 位）
+ * - LAST_30_DAYS / THIS_MONTH → last30DaysBitmap（30 位）
+ * - LAST_60_DAYS → last60DaysBitmap（60 位）
+ *
+ * 此得分在 `calculateTrendingScore()` 中用于出现频率加成（最高 +50%）。
+ *
+ * @param stats - 商品出现统计数据，不存在时返回 0
+ * @param period - 周期类型字符串
+ * @returns 频率得分 (0~1)
  */
 export function calculateAppearanceScore(
   stats: AppearanceStats | undefined,

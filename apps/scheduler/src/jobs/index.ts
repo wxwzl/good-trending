@@ -1,6 +1,29 @@
 /**
- * 任务模块统一导出
- * 所有调度任务在这里注册
+ * 任务注册中心
+ *
+ * 所有调度任务在此汇总，分为两个独立队列：
+ *
+ * **CRAWLER_JOBS**（走 crawler-queue）
+ * | 任务名 | 时间 | 说明 |
+ * |--------|------|------|
+ * | ai-product-discovery  | 每天 02:00 | Reddit AI 关键词提取 → Amazon 搜索 |
+ * | category-heat         | 每天 02:00 | Google 搜索各类目热度 |
+ * | product-discovery     | 每天 02:00 | 传统商品发现（与 AI 版互斥） |
+ * | yesterday-stats       | 每天 02:00 | 昨日数据汇总爬取 |
+ * | product-mentions      | 每2小时    | 统计 Reddit/X 提及次数 |
+ * | data-cleanup          | 每天 05:00 | 清理过期分区 + 创建未来分区 |
+ *
+ * **TRENDING_JOBS**（走 trending-queue）
+ * | 任务名 | 时间 | 说明 |
+ * |--------|------|------|
+ * | trending-calculate | 每天 03:00 | 计算 TODAY 趋势分数 |
+ * | trending-update    | 每天 04:00 | 生成全部 8 个周期榜单 + 清缓存 |
+ *
+ * ## 新增任务步骤
+ * 1. 在 `jobs/{task-name}/` 创建五文件结构（index / scheduler / processor / crawler-or-logic / types）
+ * 2. 在本文件导入并追加到 `CRAWLER_JOBS` 或 `TRENDING_JOBS`
+ * 3. 在对应 processor（`processors/crawler/index.ts` 或 `processors/trending/index.ts`）
+ *    的 `jobHandlers` 中注册处理函数
  */
 
 import type { Job } from "bullmq";

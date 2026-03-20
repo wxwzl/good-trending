@@ -96,9 +96,16 @@ export async function saveCategoryHeatStats(stats: CategoryHeatResult[]): Promis
 }
 
 /**
- * 保存爬取到的商品
- * 如果商品已存在（基于 amazonId），则跳过
- * 如果商品是新发现的，则创建记录并初始化 Bitmap 统计
+ * 保存爬取到的商品（幂等写入）
+ *
+ * 以 `amazonId` 作为去重 key。对每个商品：
+ * - 若已存在 → 跳过（skippedCount++）
+ * - 若不存在 → 插入 products 表、建立类目关联、初始化出现频率 Bitmap（四个窗口全置 1，代表首次发现日出现）
+ *
+ * 返回值中的 `newProductIds` 可用于后续触发异步任务（如 AI 分析）。
+ *
+ * @param productsData - 待保存的商品列表
+ * @param discoveredFrom - 数据来源渠道（默认 REDDIT）
  */
 export async function saveCrawledProducts(
   productsData: CrawledProduct[],
@@ -175,7 +182,26 @@ export async function saveCrawledProducts(
 
 /**
  * 更新所有商品的 Bitmap 统计（滑动窗口）
- * 每天调用一次，更新近7/15/30/60天的出现记录
+ *
+ * 每天在数据清理任务中调用一次，维护四个时间窗口的出现位图。
+ *
+ * ## 滑动窗口算法
+ * 每个商品各有 4 个 BigInt 位图（7 / 15 / 30 / 60 位），最低位（bit 0）代表今天。
+ * 每次调用时：
+ * 1. 计算距上次更新的天数差 `daysDiff`
+ * 2. 将位图左移 `daysDiff` 位（旧数据向高位滑动，低位空出）
+ * 3. 超出窗口大小的高位通过 mask 截断
+ * 4. 若今天在某类目有爬取记录（`checkProductAppearedToday`），将 bit 0 置 1
+ *
+ * 示例（7 天窗口，daysDiff=1，今天出现）：
+ * ```
+ * 原始:  0b 0 0 1 1 0 1 0  (第6天=今天-6出现)
+ * 左移1: 0b 0 1 1 0 1 0 0
+ * 置1:   0b 0 1 1 0 1 0 1  ← bit 0 = 今天出现
+ * ```
+ *
+ * @param date - 统计基准日期，默认今天
+ * @returns 成功更新的商品数量
  */
 export async function updateAllProductsBitmap(date: Date = new Date()): Promise<number> {
   const today = formatDate(date);

@@ -1,6 +1,48 @@
 /**
- * Good-Trending Scheduler
- * BullMQ 任务调度系统入口
+ * @package @good-trending/scheduler
+ * Good-Trending 定时任务调度系统 — 应用入口
+ *
+ * ## 系统架构
+ *
+ * ```
+ * index.ts            ← 本文件：启动 / 关闭 / 信号处理
+ *
+ * queue/              ← BullMQ 队列定义（两条独立队列）
+ *   ├── index.ts      crawler-queue + trending-queue
+ *   └── redis.ts      ioredis 单例连接工厂
+ *
+ * processors/         ← BullMQ Worker（消费队列任务）
+ *   ├── crawler/      策略路由 → jobs/ 各爬虫处理器
+ *   └── trending/     策略路由 → jobs/trending-{calculate,update}
+ *
+ * scheduler/          ← node-cron 定时注册（往队列投递任务）
+ *   └── index.ts      动态读取 CRAWLER_JOBS + TRENDING_JOBS 注册 cron
+ *
+ * jobs/               ← 任务实现（五文件结构）
+ *   ├── index.ts      注册中心：CRAWLER_JOBS / TRENDING_JOBS
+ *   ├── ai-product-discovery/
+ *   ├── category-heat/
+ *   ├── data-cleanup/
+ *   ├── product-discovery/
+ *   ├── product-mentions/
+ *   ├── yesterday-stats/
+ *   ├── trending-calculate/  计算今日 TODAY 趋势分数
+ *   └── trending-update/     生成全周期榜单并清除缓存
+ *
+ * utils/              ← 工具函数
+ * constants/          ← 集中常量（无魔法数字）
+ * types/              ← 应用类型
+ * ```
+ *
+ * ## 启动流程
+ * 1. 加载 .env 环境变量
+ * 2. `initialize()` → Redis ping / 创建队列 / 启动 Worker / 注册 cron
+ * 3. 启动心跳（60s 打印运行状态）
+ * 4. 监听 SIGTERM / SIGINT → `shutdown()` 优雅退出
+ *
+ * ## 两条队列的分工
+ * - `crawler-queue`：所有爬虫任务（IO 密集，并发限制 1，60s 限流窗口）
+ * - `trending-queue`：趋势计算 / 更新（纯 DB 操作，无浏览器，并发可独立控制）
  */
 import { config } from "dotenv";
 import { resolve, dirname } from "node:path";

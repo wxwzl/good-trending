@@ -54,7 +54,14 @@ interface RankedProduct {
 }
 
 /**
- * 根据周期获取对应的社交统计数字
+ * 根据周期类型从社交统计数据中取出对应时间段的提及数
+ *
+ * `productSocialStats` 表存储了同一条记录内 8 个时间维度的聚合值，
+ * 此函数通过 `period` 映射到正确的字段，避免调用方写 switch 逻辑。
+ *
+ * @param period - 周期类型（TODAY / YESTERDAY / THIS_WEEK 等）
+ * @param stat - 完整的社交统计记录
+ * @returns `{ redditCount, xCount }` 对应时间段的提及数
  */
 export function getSocialCountsByPeriod(
   period: PeriodType,
@@ -121,7 +128,18 @@ async function saveTrendRanks(
 }
 
 /**
- * 为指定周期生成趋势榜单
+ * 为指定周期生成趋势榜单（内部函数）
+ *
+ * 流程：
+ * 1. 按 `statDate` 从 `product_social_stats` 查当日社交数据
+ * 2. 根据 `period` 从数据中取对应时间段的提及数
+ * 3. 并行获取商品创建时间（时间衰减用）和出现频率 Bitmap（加成用）
+ * 4. 调用 `calculateTrendingScore()` 计算分数并降序排列
+ * 5. 截断到 `TRENDING_CONFIG.MAX_RANKS` 条
+ *
+ * @param period - 要生成的周期类型
+ * @param statDate - 统计日期（YYYY-MM-DD），一般传今天
+ * @returns 降序排列的商品分数列表（最多 MAX_RANKS 条）
  */
 async function generateRanksForPeriod(
   period: PeriodType,
@@ -185,9 +203,15 @@ export async function clearTrendingCache(): Promise<void> {
 }
 
 /**
- * 生成所有周期的趋势榜单并清除缓存
+ * 生成所有周期的趋势榜单并清除 Redis 缓存
  *
- * @returns 更新的总记录数
+ * 遍历 `PERIOD_TYPES`（TODAY / YESTERDAY / THIS_WEEK / THIS_MONTH / LAST_7/15/30/60_DAYS），
+ * 依次调用 `generateRanksForPeriod()` 写入 `trend_ranks` 表，最后统一清除
+ * `trending:*` 缓存键，让 API 在下次请求时重新从 DB 加载最新榜单。
+ *
+ * 单个周期失败不影响其他周期，错误会记录 warn 日志后继续。
+ *
+ * @returns 本次写入 `trend_ranks` 的总行数
  */
 export async function updateTrendingData(): Promise<number> {
   logger.info("Starting trending ranks generation...");

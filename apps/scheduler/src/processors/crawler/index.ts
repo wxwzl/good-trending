@@ -1,6 +1,21 @@
 /**
- * 爬虫任务处理器入口
- * 使用策略模式路由任务到不同的处理器
+ * 爬虫队列处理器（crawler-queue 的消费端）
+ *
+ * 使用**策略路由模式**：BullMQ Worker 监听 `crawler-queue`，接收到任务后
+ * 根据 `job.data.source`（任务类型标识）从 `jobHandlers` 映射表中查找对应的
+ * 处理函数并执行，而不是通过 if/else 分支。
+ *
+ * 新增任务类型只需：
+ * 1. 在 `jobs/` 目录创建五文件结构模块
+ * 2. 在 `jobHandlers` 中添加一行映射
+ *
+ * 当前注册的处理器：
+ * - `ai-product-discovery`  → AI 驱动的 Reddit → Amazon 商品发现
+ * - `category-heat`         → 类目搜索热度统计
+ * - `product-discovery`     → 传统商品发现（无 AI）
+ * - `yesterday-stats`       → 昨天数据综合统计
+ * - `product-mentions`      → 商品社交提及数统计
+ * - `data-cleanup`          → 过期数据清理 + 创建分区表
  */
 import { Worker, Job } from "bullmq";
 import { CrawlerJobData, CrawlerJobResult, QUEUE_NAMES } from "../../queue/index.js";

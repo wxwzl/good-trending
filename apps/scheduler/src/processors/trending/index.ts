@@ -1,6 +1,18 @@
 /**
- * 趋势任务处理器入口
- * 使用策略模式路由任务到 jobs/ 目录中的处理器
+ * 趋势队列处理器（trending-queue 的消费端）
+ *
+ * 与爬虫处理器相同的**策略路由模式**，但监听独立的 `trending-queue`。
+ * 趋势队列与爬虫队列分离的原因：
+ * - 趋势计算属于纯 DB 运算，不需要启动浏览器，资源消耗模型不同
+ * - 可以独立设置并发数和限流策略
+ * - 任务失败互不影响
+ *
+ * 任务路由依据 `job.name`（而非 `job.data.type`），
+ * 因为 BullMQ 的 job name 在队列中更具语义性。
+ *
+ * 当前注册的处理器：
+ * - `trending-calculate`  → 计算 TODAY 周期趋势分数（03:00 执行）
+ * - `trending-update`     → 生成全部 8 个周期榜单 + 清缓存（04:00 执行）
  */
 import { Worker, Job } from "bullmq";
 import { TrendingJobData, TrendingJobResult, QUEUE_NAMES } from "../../queue/index.js";

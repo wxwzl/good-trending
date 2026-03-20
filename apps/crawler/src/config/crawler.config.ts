@@ -1,6 +1,22 @@
 /**
  * 爬虫实现配置
- * 支持在 Legacy 和 Crawlee 实现间切换
+ *
+ * 通过环境变量在两种实现之间切换，无需修改代码：
+ * - `legacy`（默认）：原生 Playwright，直接控制浏览器，稳定性好
+ * - `crawlee`：基于 crawlee 框架，内置队列/重试/并发管理
+ *
+ * 环境变量优先级（从低到高）：
+ * 1. 全局：`CRAWLER_IMPLEMENTATION=legacy|crawlee`
+ * 2. 模块级（覆盖全局）：
+ *    - `GOOGLE_SEARCH_IMPLEMENTATION=legacy|crawlee`
+ *    - `REDDIT_IMPLEMENTATION=legacy|crawlee`
+ *    - `AMAZON_SEARCH_IMPLEMENTATION=legacy|crawlee`
+ *
+ * 示例：全局用 legacy，只让 Google 搜索用 crawlee：
+ * ```env
+ * CRAWLER_IMPLEMENTATION=legacy
+ * GOOGLE_SEARCH_IMPLEMENTATION=crawlee
+ * ```
  */
 
 /**

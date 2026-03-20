@@ -39,13 +39,27 @@ interface RankedProduct {
 }
 
 /**
- * 计算趋势分数
+ * 计算商品趋势分数
  *
- * 基于社交提及数据和出现频率计算综合热门度分数：
- * 1. Reddit 提及数（权重 1.0）
- * 2. X 平台提及数（权重 0.8）
- * 3. 出现频率加成（最高 50%）
- * 4. 时间衰减（越新的商品权重越高）
+ * 公式：
+ * ```
+ * baseScore      = redditCount + xCount × 0.8
+ * appearanceBonus = 1 + appearanceScore × 0.5   // 出现频率加成，最高 +50%
+ * score          = baseScore × appearanceBonus
+ * timeDecay      = max(0.5, 1 - daysSinceCreated / 60)  // 最低保留 50% 权重
+ * finalScore     = max(0, score × timeDecay)
+ * ```
+ *
+ * 参数说明：
+ * - `appearanceScore`：由 `calculateAppearanceScore()` 返回的 0~1 频率值，
+ *   代表该商品在对应时间窗口内出现的天数占比
+ * - 时间衰减：商品超过 60 天后固定以 50% 权重计算，防止老商品被彻底压制
+ *
+ * @param redditCount - Reddit 提及次数
+ * @param xCount - X 平台提及次数
+ * @param createdAt - 商品入库时间（用于时间衰减）
+ * @param appearanceScore - 出现频率得分 (0~1)，默认 0
+ * @returns 最终趋势分数（非负浮点数）
  */
 export function calculateTrendingScore(
   redditCount: number,
@@ -104,9 +118,19 @@ async function saveTrendRanks(
 }
 
 /**
- * 计算今日趋势分数并生成榜单
+ * 计算 TODAY 周期的趋势分数并写入榜单（每日凌晨 03:00 执行）
  *
- * @returns 计算的商品数量
+ * 与 `updateTrendingData()` 的区别：
+ * - 本函数只计算 **TODAY** 一个周期，专注"今日实时热度"
+ * - `updateTrendingData()` 遍历所有 8 个周期，生成完整多维度榜单（04:00 执行）
+ *
+ * 流程：
+ * 1. 查最近 30 天内入库的商品（作为候选池）
+ * 2. 并行获取今日社交统计 + 各商品出现频率 Bitmap
+ * 3. 对每个商品调用 `calculateTrendingScore()` 计算分数
+ * 4. 降序排列后全量写入 `trend_ranks`（先 DELETE 当日 TODAY 数据，再 INSERT）
+ *
+ * @returns 写入 `trend_ranks` 的商品数量
  */
 export async function calculateAllTrendingScores(): Promise<number> {
   logger.info("Starting TODAY trending score calculation...");

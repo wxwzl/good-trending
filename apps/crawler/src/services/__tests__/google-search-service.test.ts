@@ -3,7 +3,7 @@
  * 测试 Google 搜索服务的核心功能
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { GoogleSearchService } from "../google-search-service.js";
+import { GoogleSearchService } from "../../adapters/legacy/google/index.js";
 
 describe("GoogleSearchService", () => {
   let service: GoogleSearchService;

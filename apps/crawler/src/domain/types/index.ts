@@ -7,4 +7,5 @@ export type {
   AIAnalysisResult,
   SearchResult,
   SearchResponse,
+  AmazonProduct,
 } from "./crawler.types.js";

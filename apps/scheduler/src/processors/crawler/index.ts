@@ -14,6 +14,7 @@ import { processCategoryHeatJob } from "../../jobs/category-heat/processor.js";
 import { processProductDiscoveryJob } from "../../jobs/product-discovery/processor.js";
 import { processYesterdayStatsJob } from "../../jobs/yesterday-stats/processor.js";
 import { processProductMentionsJob } from "../../jobs/product-mentions/processor.js";
+import { processDataCleanupJob } from "../../jobs/data-cleanup/processor.js";
 
 const logger = createSchedulerLogger("crawler-processor");
 
@@ -32,6 +33,7 @@ const jobHandlers: Record<string, (job: Job<CrawlerJobData>) => Promise<CrawlerJ
   "product-discovery": processProductDiscoveryJob,
   "yesterday-stats": processYesterdayStatsJob,
   "product-mentions": processProductMentionsJob,
+  "data-cleanup": processDataCleanupJob,
 };
 
 /**

@@ -111,7 +111,8 @@ export class GoogleSearchCrawler extends BaseCrawleeCrawler implements IGoogleSe
    * @param query 搜索关键词
    * @returns 搜索结果
    */
-  async search(query: string): Promise<SearchResponse> {
+
+  async search(query: string, _externalPage?: import("playwright").Page): Promise<SearchResponse> {
     // 清空之前的数据
     this.searchResults = [];
 

@@ -78,6 +78,9 @@ describe("Scheduler", () => {
       expect(status.running).toBe(true);
       expect(status.jobs).toContain("category-heat");
       expect(status.jobs).toContain("product-discovery");
+      // 新架构的趋势任务名称
+      expect(status.jobs).toContain("trending-calculate");
+      expect(status.jobs).toContain("trending-update");
     });
   });
 
@@ -86,15 +89,16 @@ describe("Scheduler", () => {
       await expect(triggerJob("unknown-job")).rejects.toThrow("Unknown job");
     });
 
-    it("应该接受已知的任务名称", async () => {
-      // 这些不应该抛出错误
+    it("应该接受已知的新架构任务名称", async () => {
+      // 新架构任务名称
       const validJobs = [
-        "crawl-category-heat",
-        "crawl-product-discovery",
-        "crawl-product-mentions",
-        "crawl-yesterday-stats",
-        "update-trending",
-        "calculate-trending",
+        "category-heat",
+        "product-discovery",
+        "product-mentions",
+        "yesterday-stats",
+        "data-cleanup",
+        "trending-calculate",
+        "trending-update",
       ];
 
       for (const jobName of validJobs) {

@@ -3,7 +3,7 @@
  * 测试 Reddit 内容提取功能
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { RedditService, createRedditService } from "../reddit-service.js";
+import { RedditService, createRedditService } from "../../adapters/legacy/reddit/index.js";
 
 describe("RedditService", () => {
   beforeEach(() => {

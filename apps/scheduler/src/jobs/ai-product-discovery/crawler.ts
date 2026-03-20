@@ -9,7 +9,7 @@ import { createLoggerInstance } from "@good-trending/shared";
 import {
   createAIAnalyzer,
   createAmazonSearchService,
-  createRedditService,
+  createRedditServiceWithPage,
   createGoogleSearch,
   type IGoogleSearch,
 } from "@good-trending/crawler";
@@ -28,7 +28,6 @@ export class AIProductDiscoveryCrawler {
   // 服务（延迟初始化）
   private aiAnalyzer: ReturnType<typeof createAIAnalyzer> | null = null;
   private amazonSearch = createAmazonSearchService();
-  private redditService = createRedditService();
   private googleSearch: IGoogleSearch = createGoogleSearch();
 
   constructor(config: Partial<AIProductDiscoveryConfig> = {}) {
@@ -192,7 +191,13 @@ export class AIProductDiscoveryCrawler {
     if (!this.page) {
       throw new Error("浏览器页面未初始化");
     }
-    const post = await this.redditService.fetchPost(this.page, postUrl);
+    const redditService = createRedditServiceWithPage(this.page);
+    const post = await redditService.fetchPost(postUrl);
+
+    if (!post) {
+      logger.warn(`无法获取帖子内容: ${postUrl}`);
+      return { url: postUrl, title: "", keywords: [], products: [] };
+    }
 
     // 2. AI 分析提取关键词
     const analysis = await this.getAIAnalyzer().analyze({

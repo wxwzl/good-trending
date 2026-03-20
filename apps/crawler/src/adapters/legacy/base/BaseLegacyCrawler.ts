@@ -51,7 +51,7 @@ export enum CrawlerStatus {
  * 基础爬虫类
  * 所有爬虫实现都应继承此类
  */
-export abstract class BaseCrawler<T> {
+export abstract class BaseLegacyCrawler<T> {
   protected browser: Browser | null = null;
   protected context: BrowserContext | null = null;
   protected page: Page | null = null;
@@ -75,7 +75,7 @@ export abstract class BaseCrawler<T> {
 
   constructor(config: CrawlerConfig = {}) {
     this.config = {
-      ...BaseCrawler.DEFAULT_CONFIG,
+      ...BaseLegacyCrawler.DEFAULT_CONFIG,
       ...config,
     };
   }

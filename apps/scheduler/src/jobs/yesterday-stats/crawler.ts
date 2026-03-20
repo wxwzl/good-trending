@@ -11,6 +11,7 @@ import {
   createAmazonSearchService,
   createAIAnalyzer,
   createRedditService,
+  createRedditServiceWithPage,
   type IGoogleSearch,
 } from "@good-trending/crawler";
 import type {
@@ -354,7 +355,13 @@ export class YesterdayStatsCrawler {
           continue;
         }
 
-        const post = await this.redditService.fetchPost(this.page, link.url);
+        const redditSvc = createRedditServiceWithPage(this.page);
+        const post = await redditSvc.fetchPost(link.url);
+
+        if (!post) {
+          logger.debug(`无法获取帖子内容: ${link.url}`);
+          continue;
+        }
 
         // AI分析提取关键词
         const aiAnalyzer = this.getAIAnalyzer();

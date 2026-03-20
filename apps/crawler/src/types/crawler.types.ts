@@ -14,10 +14,7 @@ export type CrawlerTaskType =
   | "PRODUCT_MENTION" // 商品社交提及统计
   | "YESTERDAY_STATS"; // 昨天数据统计
 
-// Note: CrawlerStatus 枚举已定义在 ../crawlers/BaseCrawler.ts
-// 使用时请导入: import { CrawlerStatus } from "../crawlers/BaseCrawler";
-
-import type { CrawlerStatus } from "../crawlers/BaseCrawler";
+import type { CrawlerStatus } from "../adapters/legacy/base/BaseLegacyCrawler.js";
 
 /**
  * 周期类型

@@ -24,22 +24,14 @@ export const QUEUE_NAMES = {
  * 任务类型常量
  */
 export const JOB_TYPES = {
-  /** Amazon 商品爬取 (旧版，已废弃) */
-  CRAWL_AMAZON: "crawl-amazon",
-  /** Twitter/X 商品爬取 (旧版，已废弃) */
-  CRAWL_TWITTER: "crawl-twitter",
-  /** 类目热度统计爬取 (新版 Google Search) */
+  /** 类目热度统计爬取 */
   CRAWL_CATEGORY_HEAT: "crawl-category-heat",
-  /** 商品发现爬取 (新版 Google Search) */
+  /** 商品发现爬取 */
   CRAWL_PRODUCT_DISCOVERY: "crawl-product-discovery",
-  /** 商品社交提及统计爬取 (新版 Google Search) */
+  /** 商品社交提及统计爬取 */
   CRAWL_PRODUCT_MENTIONS: "crawl-product-mentions",
-  /** 昨天数据统计爬取 (新版 Google Search) */
+  /** 昨天数据统计爬取 */
   CRAWL_YESTERDAY_STATS: "crawl-yesterday-stats",
-  /** 趋势数据更新 */
-  UPDATE_TRENDING: "update-trending",
-  /** 趋势分数计算 */
-  CALCULATE_TRENDING_SCORE: "calculate-trending-score",
 } as const;
 
 /**
@@ -48,12 +40,12 @@ export const JOB_TYPES = {
 export interface CrawlerJobData {
   /** 爬虫类型 */
   source:
-    | "amazon"
-    | "twitter"
     | "category-heat"
     | "product-discovery"
     | "product-mentions"
-    | "yesterday-stats";
+    | "yesterday-stats"
+    | "data-cleanup"
+    | "ai-product-discovery";
   /** 最大商品数量 */
   maxProducts?: number;
   /** 是否使用无头模式 */

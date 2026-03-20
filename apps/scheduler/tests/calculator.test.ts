@@ -2,10 +2,8 @@
  * 趋势计算器测试
  */
 import { describe, it, expect } from "vitest";
-import {
-  calculateTrendingScore,
-  getSocialCountsByPeriod,
-} from "../src/processors/trending/calculator.js";
+import { calculateTrendingScore } from "../src/jobs/trending-calculate/calculator.js";
+import { getSocialCountsByPeriod } from "../src/jobs/trending-update/updater.js";
 import type { PeriodType } from "../src/types/index.js";
 
 describe("Trending Calculator", () => {

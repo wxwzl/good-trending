@@ -3,7 +3,10 @@
  * 测试亚马逊商品搜索和提取功能
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { AmazonSearchService, createAmazonSearchService } from "../amazon-search-service.js";
+import {
+  AmazonSearchService,
+  createAmazonSearchService,
+} from "../../adapters/legacy/amazon/index.js";
 
 describe("AmazonSearchService", () => {
   let service: AmazonSearchService;

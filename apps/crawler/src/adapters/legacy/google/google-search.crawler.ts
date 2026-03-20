@@ -11,6 +11,7 @@
 import { getJson } from "serpapi";
 import { createLoggerInstance } from "@good-trending/shared";
 import { chromium, Browser, BrowserContext, Page } from "playwright";
+import type { IGoogleSearch } from "../../../domain/interfaces/index.js";
 
 // 创建日志记录器
 const logger = createLoggerInstance("google-search-service");
@@ -191,7 +192,7 @@ const STEALTH_SCRIPT = () => {
  * Google 搜索服务
  * 优先使用 SerpAPI，失败时回退到浏览器
  */
-export class GoogleSearchService {
+export class GoogleSearchService implements IGoogleSearch {
   private config: GoogleSearchServiceConfig;
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;

@@ -3,30 +3,14 @@
  * 提供爬取相关的公共服务
  */
 
-// 导出公共服务（供 scheduler 使用）
+// AI 分析服务
 export {
-  // AI 分析服务
   createAIAnalyzer,
   AIAnalyzerFactory,
   type AIAnalyzer,
   type AIConfig,
   type AIProvider,
-  // 注意：AIAnalysisResult 和 RedditPost 从 domain/types/ 重新导出
 } from "./services/ai/index.js";
-
-// Amazon 搜索服务
-export {
-  AmazonSearchService,
-  createAmazonSearchService,
-  type AmazonSearchConfig,
-} from "./services/amazon-search-service.js";
-
-// Reddit 服务
-export {
-  RedditService,
-  createRedditService,
-  type RedditServiceConfig,
-} from "./services/reddit-service.js";
 
 // 社交提及统计服务
 export {
@@ -35,12 +19,6 @@ export {
   type ProductMentionStats,
   type PlatformMentions,
 } from "./services/social-mention-service.js";
-
-// Google 搜索服务
-export {
-  GoogleSearchService,
-  // 注意：SearchResult 和 SearchResponse 从 domain/types/ 重新导出
-} from "./services/google-search-service.js";
 
 // 数据处理器
 export {
@@ -60,15 +38,12 @@ export type {
   ProductMentionStat,
 } from "./types/crawler.types.js";
 
-// 基础爬虫类
-export { BaseCrawler, CrawlerStatus } from "./crawlers/BaseCrawler.js";
-
 // 工具函数
 export { formatDate } from "./utils/date.js";
 
 /**
  * ============================================
- * 【新增】领域层导出 - 接口、类型与错误
+ * 领域层导出 - 接口、类型与错误
  * ============================================
  */
 
@@ -98,19 +73,17 @@ export {
 
 /**
  * ============================================
- * 【新增】基础设施层导出 - 公共工具
+ * 基础设施层导出 - 公共工具
  * ============================================
  */
 
 export {
-  // Browser
   getStealthInitFunction,
   getStealthScriptString,
   STEALTH_SCRIPTS,
   DESKTOP_USER_AGENTS,
   getRandomUserAgent,
   getChromeUserAgent,
-  // Utils
   DELAY_RANGES,
   randomDelay,
   requestDelay,
@@ -121,26 +94,44 @@ export {
 
 /**
  * ============================================
- * 【新增】Crawlee 适配器导出
+ * Legacy 适配器导出（旧实现，效果更好）
+ * ============================================
+ */
+
+export { BaseLegacyCrawler, CrawlerStatus } from "./adapters/legacy/base/index.js";
+export type { CrawlerConfig, CrawlResult } from "./adapters/legacy/base/index.js";
+
+export { GoogleSearchService } from "./adapters/legacy/google/index.js";
+export type { GoogleSearchServiceConfig } from "./adapters/legacy/google/index.js";
+
+export {
+  RedditService,
+  createRedditService,
+  createRedditServiceWithPage,
+} from "./adapters/legacy/reddit/index.js";
+export type { RedditServiceConfig } from "./adapters/legacy/reddit/index.js";
+
+export { AmazonSearchService, createAmazonSearchService } from "./adapters/legacy/amazon/index.js";
+export type { AmazonSearchConfig } from "./adapters/legacy/amazon/index.js";
+
+/**
+ * ============================================
+ * Crawlee 适配器导出
  * ============================================
  */
 
 export {
-  // Base
   BaseCrawleeCrawler,
   type BaseCrawleeConfig,
   type CrawleeRequestContext,
-  // Google
   GoogleSearchCrawler,
   createGoogleSearchCrawler,
   type GoogleSearchResult,
   type GoogleSearchOptions,
-  // Reddit
   RedditCrawler,
   createRedditCrawler,
   type RedditPostData,
   type RedditCrawlOptions,
-  // Amazon
   AmazonCrawler,
   createAmazonCrawler,
   type AmazonSearchResult,
@@ -149,7 +140,7 @@ export {
 
 /**
  * ============================================
- * 【新增】工厂层导出 - 创建爬虫实例
+ * 工厂层导出 - 创建爬虫实例
  * ============================================
  */
 
@@ -165,7 +156,7 @@ export {
 
 /**
  * ============================================
- * 【新增】配置导出
+ * 配置导出
  * ============================================
  */
 

@@ -1,32 +1,15 @@
 /**
- * Reddit 服务
- * 提供 Reddit 内容爬取和链接提取能力
+ * Reddit Legacy 爬虫
+ * 基于 Playwright Page 实例的 Reddit 内容爬取实现
+ * 实现 IReddit 接口，page 通过构造函数注入
  */
 
 import { createLoggerInstance } from "@good-trending/shared";
 import type { Page } from "playwright";
+import type { IReddit } from "../../../domain/interfaces/index.js";
+import type { RedditPost } from "../../../domain/types/index.js";
 
-const logger = createLoggerInstance("reddit-service");
-
-/**
- * Reddit 帖子数据
- */
-export interface RedditPost {
-  /** 帖子标题 */
-  title: string;
-  /** 帖子内容 */
-  content?: string;
-  /** 评论列表 */
-  comments: string[];
-  /** 帖子URL */
-  url: string;
-  /** 作者 */
-  author?: string;
-  /** 发布时间 */
-  postedAt?: string;
-  /** 点赞数 */
-  upvotes?: number;
-}
+const logger = createLoggerInstance("reddit-legacy-crawler");
 
 /**
  * Reddit 服务配置
@@ -44,25 +27,25 @@ const DEFAULT_CONFIG: RedditServiceConfig = {
 };
 
 /**
- * Reddit 服务
- * 提供 Reddit 内容提取和链接分析能力
+ * Reddit Legacy 爬虫
+ * page 通过构造函数注入，实现 IReddit 接口
  */
-export class RedditService {
+export class RedditService implements IReddit {
   private config: RedditServiceConfig;
+  private page: Page | null;
 
-  constructor(config: Partial<RedditServiceConfig> = {}) {
+  constructor(page: Page | null = null, config: Partial<RedditServiceConfig> = {}) {
+    this.page = page;
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   /**
    * 展开 Reddit 帖子内容
-   * 点击 "Read more" 和 "View more comments" 按钮
    */
   async expandContent(page: Page): Promise<void> {
     logger.info("展开 Reddit 帖子内容...");
 
     try {
-      // 点击所有 "Read more" 按钮
       const readMoreButtons = await page
         .locator('button[data-click-id="text"], button:has-text("Read more")')
         .all();
@@ -79,7 +62,6 @@ export class RedditService {
         }
       }
 
-      // 点击 "View more comments" / "Continue this thread"
       let attempts = 0;
       while (attempts < 3) {
         try {
@@ -108,27 +90,23 @@ export class RedditService {
   }
 
   /**
-   * 从 Reddit 帖子中提取亚马逊链接
-   * @param page - Playwright 页面实例
-   * @returns 亚马逊链接列表
+   * 从 Reddit 帖子中提取亚马逊链接（需要传入 Playwright Page 实例）
+   * 注意：此方法不在 IReddit 接口中，是 RedditService 特有的扩展方法
    */
-  async extractAmazonLinks(page: Page): Promise<string[]> {
+  async extractAmazonLinksFromPage(page: Page): Promise<string[]> {
     logger.info("提取亚马逊链接...");
 
     const amazonLinks: string[] = [];
 
     try {
-      // 展开内容
       await this.expandContent(page);
 
-      // 提取所有链接
       const links = await page.locator('a[href*="amazon"], a[href*="amzn"]').all();
 
       for (const link of links) {
         try {
           const href = await link.getAttribute("href");
           if (href && this.isAmazonLink(href)) {
-            // 解析短链接
             const resolvedUrl = await this.resolveShortLink(page, href);
             const finalUrl = resolvedUrl || href;
 
@@ -144,7 +122,6 @@ export class RedditService {
       logger.error(`提取链接失败: ${error}`);
     }
 
-    // 去重
     const uniqueLinks = [...new Set(amazonLinks)];
     logger.info(`提取到 ${uniqueLinks.length} 个亚马逊链接`);
 
@@ -172,7 +149,6 @@ export class RedditService {
    * 判断是否为亚马逊商品链接
    */
   private isAmazonProductLink(url: string): boolean {
-    // 商品链接包含 /dp/ 或 /gp/product/
     return /\/dp\/[A-Z0-9]{10}/.test(url) || /\/gp\/product\/[A-Z0-9]{10}/.test(url);
   }
 
@@ -212,25 +188,19 @@ export class RedditService {
 
   /**
    * 提取 Reddit 帖子内容
-   * @param page - Playwright 页面实例
-   * @returns 帖子数据
    */
   async extractPostContent(page: Page): Promise<RedditPost> {
     logger.info("提取帖子内容...");
 
     try {
-      // 展开内容
       await this.expandContent(page);
 
-      // 提取标题
       const titleElement = await page.$('h1, [data-testid="post-title"]');
       const title = titleElement ? (await titleElement.textContent()) || "" : "";
 
-      // 提取正文
       const contentElement = await page.$('[data-testid="post-content"], .Post');
       const content = contentElement ? (await contentElement.textContent()) || "" : "";
 
-      // 提取评论
       const commentElements = await page.locator('[data-testid="comment"], .Comment').all();
       const comments: string[] = [];
 
@@ -245,7 +215,6 @@ export class RedditService {
         }
       }
 
-      // 获取当前URL
       const url = page.url();
 
       return {
@@ -265,29 +234,48 @@ export class RedditService {
   }
 
   /**
-   * 访问并提取 Reddit 帖子
-   * @param page - Playwright 页面实例
-   * @param url - Reddit 帖子 URL
-   * @returns 帖子数据
+   * 实现 IReddit 接口：fetchPost(url)
+   * 使用构造函数注入的 page 实例
    */
-  async fetchPost(page: Page, url: string): Promise<RedditPost> {
+  async fetchPost(url: string): Promise<RedditPost | null> {
+    if (!this.page) {
+      throw new Error(
+        "RedditService requires a Playwright Page instance. " +
+          "Pass page to the constructor: new RedditService(page)"
+      );
+    }
+
     logger.info(`访问 Reddit 帖子: ${url}`);
 
     try {
-      await page.goto(url, { waitUntil: "networkidle" });
-      await page.waitForTimeout(this.config.waitTime);
+      await this.page.goto(url, { waitUntil: "networkidle" });
+      await this.page.waitForTimeout(this.config.waitTime);
 
-      return await this.extractPostContent(page);
+      return await this.extractPostContent(this.page);
     } catch (error) {
       logger.error(`访问帖子失败: ${error}`);
       throw error;
     }
   }
+
+  async close(): Promise<void> {
+    // page 生命周期由外部管理，这里不关闭
+  }
 }
 
 /**
- * 创建 Reddit 服务实例
+ * 创建 Reddit 服务实例（无 page，用于提取功能）
  */
 export function createRedditService(config?: Partial<RedditServiceConfig>): RedditService {
-  return new RedditService(config);
+  return new RedditService(null, config);
+}
+
+/**
+ * 创建带 page 的 Reddit 服务实例（用于 fetchPost）
+ */
+export function createRedditServiceWithPage(
+  page: Page,
+  config?: Partial<RedditServiceConfig>
+): RedditService {
+  return new RedditService(page, config);
 }

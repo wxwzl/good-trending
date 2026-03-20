@@ -3,6 +3,7 @@
  * 抽象 Google 搜索功能，与具体实现解耦
  */
 
+import type { Page } from "playwright";
 import type { SearchResponse } from "../types/index.js";
 
 /**
@@ -13,9 +14,10 @@ export interface IGoogleSearch {
   /**
    * 执行搜索
    * @param query 搜索关键词
+   * @param externalPage 可选的外部 Playwright Page 实例（用于复用浏览器）
    * @returns 搜索结果
    */
-  search(query: string): Promise<SearchResponse>;
+  search(query: string, externalPage?: Page): Promise<SearchResponse>;
 
   /**
    * 关闭资源

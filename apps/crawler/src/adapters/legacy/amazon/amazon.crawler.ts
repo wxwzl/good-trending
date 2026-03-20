@@ -4,10 +4,11 @@
  * 用于 AI 分析后的商品发现
  */
 
-import { AmazonProduct } from "@/domain/types/crawler.types";
 import { createLoggerInstance } from "@good-trending/shared";
 import type { Browser, Page, ElementHandle } from "playwright";
 import { chromium } from "playwright";
+import type { IAmazonSearch } from "../../../domain/interfaces/index.js";
+import type { AmazonProduct } from "../../../domain/types/index.js";
 
 const logger = createLoggerInstance("amazon-search-service");
 
@@ -39,7 +40,7 @@ const DEFAULT_CONFIG: AmazonSearchConfig = {
  * Amazon 搜索服务
  * 提供基于关键词的商品搜索能力
  */
-export class AmazonSearchService {
+export class AmazonSearchService implements IAmazonSearch {
   private config: AmazonSearchConfig;
   private browser: Browser | null = null;
   private page: Page | null = null;
@@ -353,6 +354,13 @@ export class AmazonSearchService {
     }
 
     return allProducts;
+  }
+
+  /**
+   * 实现 IAmazonSearch 接口：close()
+   */
+  async close(): Promise<void> {
+    await this.closeBrowser();
   }
 }
 

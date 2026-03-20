@@ -3,8 +3,12 @@
  * 提供通用配置和工具方法
  */
 
-import { PlaywrightCrawler, type PlaywrightCrawlerOptions } from "crawlee";
-import type { Browser, Page } from "playwright";
+import {
+  PlaywrightCrawler,
+  type PlaywrightCrawlerOptions,
+  type PlaywrightCrawlingContext,
+} from "crawlee";
+import type { Page } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
 import { getStealthInitFunction } from "../../../infrastructure/index.js";
 
@@ -30,15 +34,9 @@ export interface BaseCrawleeConfig {
 
 /**
  * Crawlee 请求上下文
+ * 使用 Crawlee 原生的 PlaywrightCrawlingContext 类型
  */
-export interface CrawleeRequestContext {
-  /** 请求对象 */
-  request: { url: string; label?: string };
-  /** Playwright 页面对象 */
-  page: Page;
-  /** 浏览器对象 */
-  browser: Browser;
-}
+export type CrawleeRequestContext = PlaywrightCrawlingContext;
 
 /**
  * Crawlee 爬虫基类

@@ -12,7 +12,7 @@ const envFile = env === "production" ? ".env" : `.env.${env}`;
 config({ path: resolve(__dirname, "../../../.env") });
 config({ path: resolve(__dirname, "../../../", envFile), override: true });
 
-import { GoogleSearchService } from "./services/google-search-service";
+import { GoogleSearchService } from "./adapters/legacy/google/index.js";
 
 async function testSerpApi() {
   console.log("=== SerpAPI 搜索测试 ===\n");

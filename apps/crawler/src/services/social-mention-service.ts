@@ -4,7 +4,7 @@
  */
 
 import { createLoggerInstance } from "@good-trending/shared";
-import { GoogleSearchService } from "./google-search-service.js";
+import { GoogleSearchService } from "../adapters/legacy/google/index.js";
 
 const logger = createLoggerInstance("social-mention-service");
 

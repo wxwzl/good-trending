@@ -4,7 +4,12 @@
  */
 
 import type { Job } from "bullmq";
-import type { CrawlerJobData, CrawlerJobResult } from "../queue/index.js";
+import type {
+  CrawlerJobData,
+  CrawlerJobResult,
+  TrendingJobData,
+  TrendingJobResult,
+} from "../queue/index.js";
 
 // 导入 AI 商品发现任务
 import {
@@ -32,11 +37,17 @@ import { PRODUCT_MENTIONS_SCHEDULE, processProductMentionsJob } from "./product-
 // 导入数据清理任务
 import { DATA_CLEANUP_SCHEDULE, processDataCleanupJob } from "./data-cleanup/index.js";
 
+// 导入趋势任务
+import {
+  TRENDING_CALCULATE_SCHEDULE,
+  processTrendingCalculateJob,
+} from "./trending-calculate/index.js";
+import { TRENDING_UPDATE_SCHEDULE, processTrendingUpdateJob } from "./trending-update/index.js";
+
 /**
- * 注册的任务列表
- * 新增任务时在这里添加
+ * 爬虫队列任务列表（走 crawler-queue）
  */
-export const REGISTERED_JOBS = [
+export const CRAWLER_JOBS = [
   {
     name: AI_PRODUCT_DISCOVERY_JOB_NAME,
     cron: AI_PRODUCT_DISCOVERY_CRON,
@@ -76,28 +87,78 @@ export const REGISTERED_JOBS = [
 ] as const;
 
 /**
- * 获取任务处理器
+ * 趋势队列任务列表（走 trending-queue）
  */
-export function getJobProcessor(
+export const TRENDING_JOBS = [
+  {
+    name: TRENDING_CALCULATE_SCHEDULE.name,
+    cron: TRENDING_CALCULATE_SCHEDULE.cron,
+    enabled: TRENDING_CALCULATE_SCHEDULE.enabled,
+    processor: processTrendingCalculateJob,
+  },
+  {
+    name: TRENDING_UPDATE_SCHEDULE.name,
+    cron: TRENDING_UPDATE_SCHEDULE.cron,
+    enabled: TRENDING_UPDATE_SCHEDULE.enabled,
+    processor: processTrendingUpdateJob,
+  },
+] as const;
+
+/**
+ * @deprecated 使用 CRAWLER_JOBS 替代
+ * 保留兼容性，等同于 CRAWLER_JOBS
+ */
+export const REGISTERED_JOBS = CRAWLER_JOBS;
+
+/**
+ * 获取爬虫队列任务处理器
+ */
+export function getCrawlerJobProcessor(
   name: string
 ): ((job: Job<CrawlerJobData>) => Promise<CrawlerJobResult>) | undefined {
-  const job = REGISTERED_JOBS.find((j) => j.name === name);
+  const job = CRAWLER_JOBS.find((j) => j.name === name);
   return job?.processor;
 }
 
 /**
- * 获取所有启用的任务
+ * 获取趋势队列任务处理器
  */
-export function getEnabledJobs() {
-  return REGISTERED_JOBS.filter((j) => j.enabled);
+export function getTrendingJobProcessor(
+  name: string
+): ((job: Job<TrendingJobData>) => Promise<TrendingJobResult>) | undefined {
+  const job = TRENDING_JOBS.find((j) => j.name === name);
+  return job?.processor;
 }
 
 /**
- * 检查任务是否存在
+ * 获取所有启用的爬虫任务
+ */
+export function getEnabledCrawlerJobs() {
+  return CRAWLER_JOBS.filter((j) => j.enabled);
+}
+
+/**
+ * 获取所有启用的趋势任务
+ */
+export function getEnabledTrendingJobs() {
+  return TRENDING_JOBS.filter((j) => j.enabled);
+}
+
+/**
+ * @deprecated 使用 getEnabledCrawlerJobs 替代
+ */
+export function getEnabledJobs() {
+  return getEnabledCrawlerJobs();
+}
+
+/**
+ * 检查任务是否存在（爬虫或趋势）
  */
 export function hasJob(name: string): boolean {
-  return REGISTERED_JOBS.some((j) => j.name === name);
+  return CRAWLER_JOBS.some((j) => j.name === name) || TRENDING_JOBS.some((j) => j.name === name);
 }
 
 // 导出各个任务模块
 export * from "./ai-product-discovery/index.js";
+export * from "./trending-calculate/index.js";
+export * from "./trending-update/index.js";

@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@good-trending/shared": "workspace:*",
-    "@paralleldrive/cuid2": "^2.2.2",
+    "@paralleldrive/cuid2": "^3.3.0",
     "cross-env": "^10.1.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.44.2",

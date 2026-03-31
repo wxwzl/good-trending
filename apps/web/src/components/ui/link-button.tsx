@@ -102,39 +102,3 @@ export function LinkButton({
     </Link>
   );
 }
-
-/**
- * SmartLink 组件
- *
- * @description
- * 智能导航组件，根据 useClient 状态自动选择渲染方式：
- * - 有 onClick 或需要编程式导航时使用 LinkButton（客户端组件）
- * - 纯链接时使用普通 Link（服务端组件，更轻量）
- *
- * 由于需要处理点击事件，此组件始终为客户端组件。
- * 如果不需要自定义点击逻辑，建议直接使用 @/i18n/routing 的 Link。
- */
-export function SmartLink({
-  href,
-  children,
-  className,
-  onClick,
-  prefetch = true,
-  scroll = true,
-  replace = false,
-  locale,
-}: LinkButtonProps) {
-  return (
-    <LinkButton
-      href={href}
-      className={className}
-      onClick={onClick}
-      prefetch={prefetch}
-      scroll={scroll}
-      replace={replace}
-      locale={locale}
-    >
-      {children}
-    </LinkButton>
-  );
-}

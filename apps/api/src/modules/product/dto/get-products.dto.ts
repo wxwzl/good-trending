@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, Max, IsEnum, IsString } from 'class-validator';
+import { IsOptional, IsInt, IsEnum, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   SourceType,
@@ -33,7 +33,6 @@ export class GetProductsDto implements GetProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -46,8 +45,6 @@ export class GetProductsDto implements GetProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
   limit?: number = 10;
 
   @ApiPropertyOptional({

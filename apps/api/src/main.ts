@@ -167,7 +167,7 @@ async function bootstrap() {
   const port = process.env.API_PORT || 3001;
   await app.listen(port);
 
-  logger.log(`
+  console.log(`
   ┌─────────────────────────────────────────────┐
   │  Good-Trending API Server                   │
   │  Port: ${port}                                │

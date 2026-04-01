@@ -5,8 +5,6 @@ import {
   IsOptional,
   MaxLength,
   IsInt,
-  Min,
-  Max,
   IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -125,7 +123,6 @@ export class GetTopicsDto implements GetTopicsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -137,8 +134,6 @@ export class GetTopicsDto implements GetTopicsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
   limit?: number = 20;
 }
 
@@ -223,7 +218,6 @@ export class GetTopicProductsDto implements GetTopicProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -235,8 +229,6 @@ export class GetTopicProductsDto implements GetTopicProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
   limit?: number = 10;
 }
 

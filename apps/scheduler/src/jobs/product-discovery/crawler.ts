@@ -6,7 +6,11 @@
 import type { Page, Browser } from "playwright";
 import { chromium } from "playwright";
 import { createLoggerInstance } from "@good-trending/shared";
-import { createGoogleSearch, createAmazonSearchService, type IGoogleSearch } from "@good-trending/crawler";
+import {
+  createGoogleSearch,
+  createAmazonSearchService,
+  type IGoogleSearch,
+} from "@good-trending/crawler";
 import type {
   ProductDiscoveryConfig,
   CategoryData,

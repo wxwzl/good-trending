@@ -29,7 +29,9 @@
       "mcp__chrome-devtools__wait_for",
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_click",
-      "Bash(chmod +x:*)"
+      "Bash(chmod +x:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(tasklist)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { db } from '@good-trending/database';
 import {
   trendRanks,
@@ -404,13 +404,7 @@ export class TrendingService {
       .limit(1);
 
     if (!category[0]) {
-      return {
-        items: [],
-        total: 0,
-        page: query.page ?? 1,
-        limit: query.limit ?? 20,
-        totalPages: 0,
-      };
+      throw new NotFoundException(`Topic with slug "${topicSlug}" not found`);
     }
 
     return this.getTrending({ ...query, categoryId: category[0].id });

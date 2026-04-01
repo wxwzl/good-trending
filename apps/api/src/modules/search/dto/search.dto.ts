@@ -4,8 +4,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsInt,
-  Min,
-  Max,
   MinLength,
   IsEnum,
 } from 'class-validator';
@@ -41,7 +39,6 @@ export class SearchQueryDto implements SearchProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -53,8 +50,6 @@ export class SearchQueryDto implements SearchProductsRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
   limit?: number = 10;
 
   @ApiPropertyOptional({

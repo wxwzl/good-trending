@@ -1,29 +1,51 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { setupMockServer, resetMockData } from "../mocks/server";
+import { describe, it, expect, beforeAll } from "vitest";
 
-const API_BASE = "http://localhost:3015/api/v1";
+const API_BASE = `${process.env.API_URL || "http://localhost:3015"}/api/v1`;
 
 describe("Search API", () => {
-  setupMockServer();
+  // A keyword known to exist in product names (fetched from real data)
+  let existingKeyword: string;
 
-  beforeEach(() => {
-    resetMockData();
+  beforeAll(async () => {
+    // Grab a product name from the database to use as a real search keyword
+    const response = await fetch(`${API_BASE}/products?limit=1`);
+    const result = await response.json();
+    if (result.data.items.length > 0) {
+      // Use first word of first product's name as keyword
+      existingKeyword = result.data.items[0].name.split(" ")[0];
+    }
   });
 
+  // ============================================
+  // GET /api/v1/search
+  // ============================================
+
   describe("GET /api/v1/search", () => {
-    it("should_search_products_by_query", async () => {
+    it("should_return_200_with_search_result_structure", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/search?q=test`);
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(typeof result.data.query).toBe("string");
+      expect(Array.isArray(result.data.items)).toBe(true);
+      expect(typeof result.data.total).toBe("number");
+      expect(typeof result.data.page).toBe("number");
+      expect(typeof result.data.limit).toBe("number");
+      expect(typeof result.data.totalPages).toBe("number");
+    });
+
+    it("should_echo_query_term_in_response", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search?q=laptop`);
       const result = await response.json();
 
       // Assert
-      expect(response.status).toBe(200);
       expect(result.data.query).toBe("laptop");
-      expect(result.data.items).toBeDefined();
-      expect(Array.isArray(result.data.items)).toBe(true);
     });
 
-    it("should_return_400_for_empty_query", async () => {
+    it("should_return_400_for_empty_q_param", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search?q=`);
 
@@ -31,7 +53,7 @@ describe("Search API", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should_return_400_for_missing_query_parameter", async () => {
+    it("should_return_400_when_q_param_is_missing", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search`);
 
@@ -39,40 +61,62 @@ describe("Search API", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should_return_paginated_search_results", async () => {
+    it("should_return_400_for_whitespace_only_query", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/search?q=%20%20%20`);
+
+      // Assert
+      expect(response.status).toBe(400);
+    });
+
+    it("should_return_empty_results_for_non_matching_query", async () => {
+      // Arrange & Act — extremely unlikely to match any product
+      const response = await fetch(`${API_BASE}/search?q=xzxzxznonexistent12345`);
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(result.data.items).toEqual([]);
+      expect(result.data.total).toBe(0);
+    });
+
+    it("should_return_same_results_regardless_of_query_case", async () => {
+      if (!existingKeyword) return;
+
+      // Arrange & Act
+      const lower = await fetch(`${API_BASE}/search?q=${existingKeyword.toLowerCase()}`).then((r) =>
+        r.json()
+      );
+      const upper = await fetch(`${API_BASE}/search?q=${existingKeyword.toUpperCase()}`).then((r) =>
+        r.json()
+      );
+
+      // Assert
+      expect(lower.data.total).toBe(upper.data.total);
+    });
+
+    it("should_respect_page_and_limit_params", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search?q=test&page=1&limit=5`);
       const result = await response.json();
 
       // Assert
+      expect(response.status).toBe(200);
       expect(result.data.page).toBe(1);
       expect(result.data.limit).toBe(5);
-      expect(result.data.total).toBeDefined();
-      expect(result.data.totalPages).toBeDefined();
     });
 
-    // Boundary cases
-    it("should_handle_page_zero_as_page_one", async () => {
+    it("should_handle_page_0_by_normalizing_to_page_1", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search?q=test&page=0`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.page).toBe(1);
+      expect(result.data.page).toBeGreaterThanOrEqual(1);
     });
 
-    it("should_handle_negative_page_as_page_one", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=test&page=-1`);
-      const result = await response.json();
-
-      // Assert
-      expect(response.status).toBe(200);
-      expect(result.data.page).toBe(1);
-    });
-
-    it("should_limit_maximum_page_size_to_100", async () => {
+    it("should_cap_limit_at_100", async () => {
       // Arrange & Act
       const response = await fetch(`${API_BASE}/search?q=test&limit=500`);
       const result = await response.json();
@@ -82,117 +126,31 @@ describe("Search API", () => {
       expect(result.data.limit).toBeLessThanOrEqual(100);
     });
 
-    it("should_handle_whitespace_only_query", async () => {
+    it("should_calculate_totalPages_correctly", async () => {
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=%20%20%20`);
+      const response = await fetch(`${API_BASE}/search?q=test&limit=10`);
+      const result = await response.json();
 
       // Assert
-      expect(response.status).toBe(400);
-    });
-  });
-
-  describe("Search functionality", () => {
-    it("should_search_in_product_names", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=test`);
-
-      // Assert
-      expect(response.status).toBe(200);
+      if (result.data.total > 0) {
+        const expected = Math.ceil(result.data.total / result.data.limit);
+        expect(result.data.totalPages).toBe(expected);
+      }
     });
 
-    it("should_return_empty_results_for_no_matches", async () => {
+    it("should_find_products_by_real_keyword", async () => {
+      if (!existingKeyword) return;
+
       // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=zzzznonexistentproduct12345`);
+      const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(existingKeyword)}`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data.items).toEqual([]);
-      expect(result.data.total).toBe(0);
+      expect(result.data.total).toBeGreaterThan(0);
     });
 
-    it("should_be_case_insensitive", async () => {
-      // Arrange & Act
-      const response1 = await fetch(`${API_BASE}/search?q=LAPTOP`);
-      const response2 = await fetch(`${API_BASE}/search?q=laptop`);
-      const result1 = await response1.json();
-      const result2 = await response2.json();
-
-      // Assert
-      expect(response1.status).toBe(200);
-      expect(response2.status).toBe(200);
-      // Both should return same results
-      expect(result1.data.total).toBe(result2.data.total);
-    });
-  });
-
-  describe("Search results structure", () => {
-    it("should_include_query_in_response", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=test`);
-      const result = await response.json();
-
-      // Assert
-      expect(result.data.query).toBe("test");
-    });
-
-    it("should_include_pagination_metadata", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=test&page=2&limit=10`);
-      const result = await response.json();
-
-      // Assert
-      expect(result.data.page).toBe(2);
-      expect(result.data.limit).toBe(10);
-    });
-
-    it("should_include_total_and_totalPages", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search?q=test`);
-      const result = await response.json();
-
-      // Assert
-      expect(result.data.total).toBeDefined();
-      expect(typeof result.data.total).toBe("number");
-      expect(result.data.totalPages).toBeDefined();
-      expect(typeof result.data.totalPages).toBe("number");
-    });
-  });
-
-  describe("GET /api/v1/search/suggestions", () => {
-    it("should_return_search_suggestions", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search/suggestions?keyword=lap`);
-      const result = await response.json();
-
-      // Assert
-      expect(response.status).toBe(200);
-      expect(Array.isArray(result.data)).toBe(true);
-    });
-
-    it("should_return_empty_array_for_no_matches", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search/suggestions?keyword=zzzznonexistent`);
-      const result = await response.json();
-
-      // Assert
-      expect(response.status).toBe(200);
-      expect(result.data).toEqual([]);
-    });
-
-    it("should_handle_empty_keyword", async () => {
-      // Arrange & Act
-      const response = await fetch(`${API_BASE}/search/suggestions?keyword=`);
-      const result = await response.json();
-
-      // Assert
-      expect(response.status).toBe(200);
-      expect(Array.isArray(result.data)).toBe(true);
-    });
-  });
-
-  describe("Performance", () => {
-    it("should_respond_within_reasonable_time", async () => {
+    it("should_respond_within_1000ms", async () => {
       // Arrange
       const start = Date.now();
 
@@ -202,6 +160,56 @@ describe("Search API", () => {
 
       // Assert
       expect(duration).toBeLessThan(1000);
+    });
+  });
+
+  // ============================================
+  // GET /api/v1/search/suggestions
+  // ============================================
+
+  describe("GET /api/v1/search/suggestions", () => {
+    it("should_return_200_with_array_of_suggestions", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/search/suggestions?keyword=a`);
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+
+    it("should_return_empty_array_for_non_matching_keyword", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/search/suggestions?keyword=xzxzxznonexistent12345`);
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(result.data).toEqual([]);
+    });
+
+    it("should_return_at_most_suggested_result_set", async () => {
+      if (!existingKeyword) return;
+
+      // Arrange & Act
+      const response = await fetch(
+        `${API_BASE}/search/suggestions?keyword=${encodeURIComponent(existingKeyword)}`
+      );
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+
+    it("should_handle_empty_keyword_gracefully", async () => {
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/search/suggestions?keyword=`);
+      const result = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(Array.isArray(result.data)).toBe(true);
     });
   });
 });

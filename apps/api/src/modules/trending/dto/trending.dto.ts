@@ -1,12 +1,5 @@
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsInt,
-  Min,
-  Max,
-  IsString,
-  IsDateString,
-} from 'class-validator';
+import { IsOptional, IsInt, IsString, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   type GetTrendingRequest,
@@ -27,7 +20,6 @@ export class GetTrendingDto implements GetTrendingRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -39,8 +31,6 @@ export class GetTrendingDto implements GetTrendingRequest {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  @Max(100)
   limit?: number = 20;
 
   @ApiPropertyOptional({

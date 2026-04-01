@@ -273,9 +273,7 @@ export class TopicService {
     }
 
     // 更新数据
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
+    const updateData: Record<string, unknown> = {};
 
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.description !== undefined) updateData.description = dto.description;
@@ -283,23 +281,36 @@ export class TopicService {
     if (dto.searchKeywords !== undefined)
       updateData.searchKeywords = dto.searchKeywords;
 
-    const result = await db
+    // 执行更新（不手动设置 updatedAt，让数据库默认值处理）
+    await db
       .update(categories)
       .set(updateData)
+      .where(eq(categories.id, category[0].id));
+
+    // 查询更新后的数据
+    const updatedCategory = await db
+      .select()
+      .from(categories)
       .where(eq(categories.id, category[0].id))
-      .returning();
+      .limit(1);
+
+    if (!updatedCategory[0]) {
+      throw new NotFoundException(
+        `Topic with slug ${slug} not found after update`,
+      );
+    }
 
     // 获取商品数量
     const productCountResult = await db
       .select({ count: count() })
       .from(productCategories)
-      .where(eq(productCategories.categoryId, result[0].id));
+      .where(eq(productCategories.categoryId, updatedCategory[0].id));
 
     return {
-      ...result[0],
+      ...updatedCategory[0],
       productCount: productCountResult[0]?.count ?? 0,
-      createdAt: result[0].createdAt.toISOString(),
-      updatedAt: result[0].updatedAt.toISOString(),
+      createdAt: updatedCategory[0].createdAt.toISOString(),
+      updatedAt: updatedCategory[0].updatedAt.toISOString(),
     };
   }
 

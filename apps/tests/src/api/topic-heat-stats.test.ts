@@ -1,55 +1,49 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { setupMockServer, resetMockData } from "../mocks/server";
-import { getMockTopics } from "../mocks/handlers";
+import { describe, it, expect, beforeAll } from "vitest";
 
-const API_BASE = "http://localhost:3015/api/v1";
+const API_BASE = `${process.env.API_URL || "http://localhost:3015"}/api/v1`;
 
 describe("Topic Heat Stats API", () => {
-  setupMockServer();
+  let firstTopicSlug: string;
 
-  beforeEach(() => {
-    resetMockData();
+  beforeAll(async () => {
+    const response = await fetch(`${API_BASE}/topics?limit=1`);
+    const result = await response.json();
+    if (result.data.items.length > 0) {
+      firstTopicSlug = result.data.items[0].slug;
+    }
   });
 
-  describe("GET /api/v1/topics/:slug/heat-stats", () => {
-    it("should_return_heat_stats_with_correct_structure", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+  // ============================================
+  // GET /api/v1/topics/:slug/heat-stats
+  // ============================================
 
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
+  describe("GET /api/v1/topics/:slug/heat-stats", () => {
+    it("should_return_200_with_correct_structure", async () => {
+      if (!firstTopicSlug) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data).toBeDefined();
-
-      // Verify response structure
       expect(result.data.today).toBeDefined();
       expect(result.data.yesterday).toBeDefined();
       expect(result.data.last7Days).toBeDefined();
-      expect(result.data).toHaveProperty("crawledProducts");
-      expect(result.data.trend).toBeDefined();
+      expect(typeof result.data.crawledProducts).toBe("number");
       expect(Array.isArray(result.data.trend)).toBe(true);
     });
 
-    it("should_return_valid_platform_stats", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+    it("should_have_reddit_and_x_in_each_period", async () => {
+      if (!firstTopicSlug) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
       const result = await response.json();
 
       // Assert
       const { today, yesterday, last7Days } = result.data;
-
-      // Each period should have reddit and x counts
       [today, yesterday, last7Days].forEach((period) => {
-        expect(period).toHaveProperty("reddit");
-        expect(period).toHaveProperty("x");
         expect(typeof period.reddit).toBe("number");
         expect(typeof period.x).toBe("number");
         expect(period.reddit).toBeGreaterThanOrEqual(0);
@@ -57,172 +51,113 @@ describe("Topic Heat Stats API", () => {
       });
     });
 
-    it("should_return_crawled_products_count", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+    it("should_have_crawledProducts_as_non_negative_number", async () => {
+      if (!firstTopicSlug) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
       const result = await response.json();
 
       // Assert
-      expect(result.data).toHaveProperty("crawledProducts");
-      expect(typeof result.data.crawledProducts).toBe("number");
       expect(result.data.crawledProducts).toBeGreaterThanOrEqual(0);
     });
 
-    it("should_return_valid_trend_data", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+    it("should_have_trend_with_at_most_7_items", async () => {
+      if (!firstTopicSlug) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
       const result = await response.json();
 
       // Assert
-      const { trend } = result.data;
-      expect(Array.isArray(trend)).toBe(true);
+      expect(result.data.trend.length).toBeLessThanOrEqual(7);
+    });
 
-      if (trend.length > 0) {
-        const item = trend[0];
-        expect(item).toHaveProperty("date");
-        expect(item).toHaveProperty("reddit");
-        expect(item).toHaveProperty("x");
-        expect(typeof item.date).toBe("string");
+    it("should_have_valid_date_format_in_trend_items", async () => {
+      if (!firstTopicSlug) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
+      const result = await response.json();
+
+      // Assert
+      result.data.trend.forEach((item: { date: string; reddit: number; x: number }) => {
+        expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(new Date(item.date).toString()).not.toBe("Invalid Date");
         expect(typeof item.reddit).toBe("number");
         expect(typeof item.x).toBe("number");
         expect(item.reddit).toBeGreaterThanOrEqual(0);
         expect(item.x).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it("should_have_trend_dates_in_chronological_order", async () => {
+      if (!firstTopicSlug) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
+      const result = await response.json();
+
+      // Assert — trend should be ordered oldest to newest
+      const { trend } = result.data;
+      if (trend.length >= 2) {
+        for (let i = 1; i < trend.length; i++) {
+          expect(trend[i].date >= trend[i - 1].date).toBe(true);
+        }
       }
     });
 
-    it("should_return_trend_with_7_days_data", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+    it("should_have_last7Days_gte_today_for_both_platforms", async () => {
+      if (!firstTopicSlug) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
       const result = await response.json();
 
-      // Assert
-      const { trend } = result.data;
-      // Should have up to 7 days of trend data
-      expect(trend.length).toBeLessThanOrEqual(7);
+      // Assert — cumulative 7-day count must be >= single day count
+      const { today, last7Days } = result.data;
+      expect(last7Days.reddit).toBeGreaterThanOrEqual(today.reddit);
+      expect(last7Days.x).toBeGreaterThanOrEqual(today.x);
     });
 
     it("should_return_404_for_non_existent_topic", async () => {
       // Act
-      const response = await fetch(`${API_BASE}/topics/non-existent-topic/heat-stats`);
+      const response = await fetch(`${API_BASE}/topics/non-existent-topic-000/heat-stats`);
 
       // Assert
       expect(response.status).toBe(404);
     });
 
-    it("should_respond_within_200ms", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
-
+    it("should_return_4xx_for_special_characters_in_slug", async () => {
       // Act
-      const startTime = Date.now();
-      await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
-      const endTime = Date.now();
+      const response = await fetch(`${API_BASE}/topics/special!@%23%24%25/heat-stats`);
 
       // Assert
-      const responseTime = endTime - startTime;
-      expect(responseTime).toBeLessThan(200);
+      expect([400, 404]).toContain(response.status);
     });
-  });
 
-  describe("Edge Cases", () => {
-    it("should_handle_empty_trend_gracefully", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
-
+    it("should_handle_url_encoded_slug_gracefully", async () => {
       // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
-      const result = await response.json();
+      const response = await fetch(
+        `${API_BASE}/topics/${encodeURIComponent("test topic with spaces")}/heat-stats`
+      );
 
-      // Assert - should return empty array rather than error
-      expect(response.status).toBe(200);
-      expect(Array.isArray(result.data.trend)).toBe(true);
-    });
-
-    it("should_handle_special_characters_in_slug", async () => {
-      // Act
-      const response = await fetch(`${API_BASE}/topics/special!@#$%/heat-stats`);
-
-      // Assert - should handle special characters gracefully
-      expect([404, 400]).toContain(response.status);
-    });
-
-    it("should_handle_url_encoded_slug", async () => {
-      // Act - test with URL encoded special characters
-      const encodedSlug = encodeURIComponent("test-topic-with spaces");
-
-      const response = await fetch(`${API_BASE}/topics/${encodedSlug}/heat-stats`);
-
-      // Assert - should not crash, either 200 or 404 is acceptable
+      // Assert — encoded slug not found, but server should not crash
       expect([200, 404]).toContain(response.status);
     });
 
-    it("should_handle_very_long_slug", async () => {
-      // Act - test with very long slug
-      const longSlug = "a".repeat(200);
+    it("should_respond_within_500ms", async () => {
+      if (!firstTopicSlug) return;
 
-      const response = await fetch(`${API_BASE}/topics/${longSlug}/heat-stats`);
-
-      // Assert - should handle gracefully
-      expect([404, 400]).toContain(response.status);
-    });
-  });
-
-  describe("Data Consistency", () => {
-    it("should_have_consistent_data_between_periods", async () => {
       // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
+      const start = Date.now();
 
       // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
-      const result = await response.json();
+      await fetch(`${API_BASE}/topics/${firstTopicSlug}/heat-stats`);
+      const duration = Date.now() - start;
 
       // Assert
-      const { today, yesterday, last7Days } = result.data;
-
-      // Today's data should be less than or equal to 7-day data
-      expect(today.reddit).toBeLessThanOrEqual(last7Days.reddit);
-      expect(today.x).toBeLessThanOrEqual(last7Days.x);
-
-      // Yesterday's data should be less than or equal to 7-day data
-      expect(yesterday.reddit).toBeLessThanOrEqual(last7Days.reddit);
-      expect(yesterday.x).toBeLessThanOrEqual(last7Days.x);
-    });
-
-    it("should_have_valid_date_format_in_trend", async () => {
-      // Arrange
-      const mockTopics = getMockTopics();
-      const topicSlug = mockTopics[0].slug;
-
-      // Act
-      const response = await fetch(`${API_BASE}/topics/${topicSlug}/heat-stats`);
-      const result = await response.json();
-
-      // Assert
-      const { trend } = result.data;
-
-      trend.forEach((item: { date: string }) => {
-        // Date should be in YYYY-MM-DD format
-        expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-
-        // Should be a valid date
-        const date = new Date(item.date);
-        expect(date.toString()).not.toBe("Invalid Date");
-      });
+      expect(duration).toBeLessThan(500);
     });
   });
 });

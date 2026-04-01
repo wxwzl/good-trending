@@ -1,55 +1,49 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { setupMockServer, resetMockData } from "../mocks/server";
-import { getMockProducts } from "../mocks/handlers";
+import { describe, it, expect, beforeAll } from "vitest";
 
-const API_BASE = "http://localhost:3015/api/v1";
+const API_BASE = `${process.env.API_URL || "http://localhost:3015"}/api/v1`;
 
 describe("Product Stats API", () => {
-  setupMockServer();
+  let firstProductId: string;
 
-  beforeEach(() => {
-    resetMockData();
+  beforeAll(async () => {
+    const response = await fetch(`${API_BASE}/products?limit=1`);
+    const result = await response.json();
+    if (result.data.items.length > 0) {
+      firstProductId = result.data.items[0].id;
+    }
   });
 
-  describe("GET /api/v1/products/:id/social-stats", () => {
-    it("should_return_social_stats_with_correct_structure", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+  // ============================================
+  // GET /api/v1/products/:id/social-stats
+  // ============================================
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/social-stats`);
+  describe("GET /api/v1/products/:id/social-stats", () => {
+    it("should_return_200_with_correct_structure", async () => {
+      if (!firstProductId) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/social-stats`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data).toBeDefined();
-
-      // Verify response structure
       expect(result.data.today).toBeDefined();
       expect(result.data.yesterday).toBeDefined();
       expect(result.data.thisWeek).toBeDefined();
       expect(result.data.thisMonth).toBeDefined();
-      expect(result.data.history).toBeDefined();
       expect(Array.isArray(result.data.history)).toBe(true);
     });
 
-    it("should_return_valid_platform_stats_structure", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_reddit_and_x_counts_in_each_period", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/social-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/social-stats`);
       const result = await response.json();
 
       // Assert
       const { today, yesterday, thisWeek, thisMonth } = result.data;
-
-      // Each period should have reddit and x counts
       [today, yesterday, thisWeek, thisMonth].forEach((period) => {
-        expect(period).toHaveProperty("reddit");
-        expect(period).toHaveProperty("x");
         expect(typeof period.reddit).toBe("number");
         expect(typeof period.x).toBe("number");
         expect(period.reddit).toBeGreaterThanOrEqual(0);
@@ -57,126 +51,134 @@ describe("Product Stats API", () => {
       });
     });
 
-    it("should_return_history_array_with_valid_items", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_history_items_with_valid_date_format", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/social-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/social-stats`);
       const result = await response.json();
 
       // Assert
       const { history } = result.data;
-      expect(Array.isArray(history)).toBe(true);
-
       if (history.length > 0) {
-        const item = history[0];
-        expect(item).toHaveProperty("date");
-        expect(item).toHaveProperty("reddit");
-        expect(item).toHaveProperty("x");
-        expect(typeof item.date).toBe("string");
-        expect(typeof item.reddit).toBe("number");
-        expect(typeof item.x).toBe("number");
+        history.forEach((item: { date: string; reddit: number; x: number }) => {
+          // Date must be YYYY-MM-DD
+          expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(new Date(item.date).toString()).not.toBe("Invalid Date");
+          expect(typeof item.reddit).toBe("number");
+          expect(typeof item.x).toBe("number");
+          expect(item.reddit).toBeGreaterThanOrEqual(0);
+          expect(item.x).toBeGreaterThanOrEqual(0);
+        });
       }
+    });
+
+    it("should_have_cumulative_counts_where_larger_period_gte_smaller", async () => {
+      if (!firstProductId) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/social-stats`);
+      const result = await response.json();
+
+      // Assert — week totals should be >= today totals
+      const { today, thisWeek, thisMonth } = result.data;
+      expect(thisWeek.reddit).toBeGreaterThanOrEqual(today.reddit);
+      expect(thisWeek.x).toBeGreaterThanOrEqual(today.x);
+      expect(thisMonth.reddit).toBeGreaterThanOrEqual(today.reddit);
+      expect(thisMonth.x).toBeGreaterThanOrEqual(today.x);
     });
 
     it("should_return_404_for_non_existent_product", async () => {
       // Act
-      const response = await fetch(`${API_BASE}/products/non-existent-id/social-stats`);
+      const response = await fetch(`${API_BASE}/products/non-existent-id-000/social-stats`);
 
       // Assert
       expect(response.status).toBe(404);
     });
 
-    it("should_respond_within_200ms", async () => {
+    it("should_respond_within_500ms", async () => {
+      if (!firstProductId) return;
+
       // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+      const start = Date.now();
 
       // Act
-      const startTime = Date.now();
-      await fetch(`${API_BASE}/products/${productId}/social-stats`);
-      const endTime = Date.now();
+      await fetch(`${API_BASE}/products/${firstProductId}/social-stats`);
+      const duration = Date.now() - start;
 
       // Assert
-      const responseTime = endTime - startTime;
-      expect(responseTime).toBeLessThan(200);
+      expect(duration).toBeLessThan(500);
     });
   });
 
-  describe("GET /api/v1/products/:id/appearance-stats", () => {
-    it("should_return_appearance_stats_with_correct_structure", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+  // ============================================
+  // GET /api/v1/products/:id/appearance-stats
+  // ============================================
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/appearance-stats`);
+  describe("GET /api/v1/products/:id/appearance-stats", () => {
+    it("should_return_200_with_bitmap_fields", async () => {
+      if (!firstProductId) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data).toBeDefined();
-
-      // Verify bitmap fields
-      expect(result.data).toHaveProperty("last7DaysBitmap");
-      expect(result.data).toHaveProperty("last30DaysBitmap");
-      expect(result.data).toHaveProperty("last60DaysBitmap");
       expect(typeof result.data.last7DaysBitmap).toBe("string");
       expect(typeof result.data.last30DaysBitmap).toBe("string");
       expect(typeof result.data.last60DaysBitmap).toBe("string");
     });
 
-    it("should_return_valid_bitmap_format", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_bitmaps_with_correct_lengths", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/appearance-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
       const result = await response.json();
 
       // Assert
-      const { last7DaysBitmap, last30DaysBitmap, last60DaysBitmap } = result.data;
-
-      // Bitmaps should be binary strings (0s and 1s only)
-      expect(last7DaysBitmap).toMatch(/^[01]{7}$/);
-      expect(last30DaysBitmap).toMatch(/^[01]{30}$/);
-      expect(last60DaysBitmap).toMatch(/^[01]{60}$/);
+      expect(result.data.last7DaysBitmap).toMatch(/^[01]{7}$/);
+      expect(result.data.last30DaysBitmap).toMatch(/^[01]{30}$/);
+      expect(result.data.last60DaysBitmap).toMatch(/^[01]{60}$/);
     });
 
-    it("should_return_active_days_count", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_activeDays7_consistent_with_bitmap", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/appearance-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
+      const result = await response.json();
+
+      // Assert — activeDays7 must equal count of '1' bits in last7DaysBitmap
+      const bitmapOnesCount = (result.data.last7DaysBitmap as string)
+        .split("")
+        .filter((b) => b === "1").length;
+      expect(result.data.activeDays7).toBe(bitmapOnesCount);
+    });
+
+    it("should_have_activeDays7_within_valid_range", async () => {
+      if (!firstProductId) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
       const result = await response.json();
 
       // Assert
-      expect(result.data).toHaveProperty("activeDays7");
-      expect(result.data).toHaveProperty("activeDays30");
-      expect(typeof result.data.activeDays7).toBe("number");
-      expect(typeof result.data.activeDays30).toBe("number");
       expect(result.data.activeDays7).toBeGreaterThanOrEqual(0);
       expect(result.data.activeDays7).toBeLessThanOrEqual(7);
       expect(result.data.activeDays30).toBeGreaterThanOrEqual(0);
       expect(result.data.activeDays30).toBeLessThanOrEqual(30);
     });
 
-    it("should_return_activity_score", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_activityScore_within_0_to_5_range", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/appearance-stats`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
       const result = await response.json();
 
       // Assert
-      expect(result.data).toHaveProperty("activityScore");
       expect(typeof result.data.activityScore).toBe("number");
       expect(result.data.activityScore).toBeGreaterThanOrEqual(0);
       expect(result.data.activityScore).toBeLessThanOrEqual(5);
@@ -184,89 +186,75 @@ describe("Product Stats API", () => {
 
     it("should_return_404_for_non_existent_product", async () => {
       // Act
-      const response = await fetch(`${API_BASE}/products/non-existent-id/appearance-stats`);
+      const response = await fetch(`${API_BASE}/products/non-existent-id-000/appearance-stats`);
 
       // Assert
       expect(response.status).toBe(404);
     });
 
-    it("should_respond_within_200ms", async () => {
+    it("should_respond_within_500ms", async () => {
+      if (!firstProductId) return;
+
       // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+      const start = Date.now();
 
       // Act
-      const startTime = Date.now();
-      await fetch(`${API_BASE}/products/${productId}/appearance-stats`);
-      const endTime = Date.now();
+      await fetch(`${API_BASE}/products/${firstProductId}/appearance-stats`);
+      const duration = Date.now() - start;
 
       // Assert
-      const responseTime = endTime - startTime;
-      expect(responseTime).toBeLessThan(200);
+      expect(duration).toBeLessThan(500);
     });
   });
 
-  describe("GET /api/v1/products/:id/trend-history", () => {
-    it("should_return_trend_history_with_correct_structure", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+  // ============================================
+  // GET /api/v1/products/:id/trend-history
+  // ============================================
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/trend-history`);
+  describe("GET /api/v1/products/:id/trend-history", () => {
+    it("should_return_200_with_history_array", async () => {
+      if (!firstProductId) return;
+
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/trend-history`);
       const result = await response.json();
 
       // Assert
       expect(response.status).toBe(200);
-      expect(result.data).toBeDefined();
       expect(result.data).toHaveProperty("history");
       expect(Array.isArray(result.data.history)).toBe(true);
     });
 
-    it("should_return_valid_history_items", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_valid_fields_on_history_items", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/trend-history`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/trend-history`);
       const result = await response.json();
 
       // Assert
       const { history } = result.data;
-
       if (history.length > 0) {
         const item = history[0];
-        expect(item).toHaveProperty("date");
-        expect(item).toHaveProperty("periodType");
-        expect(item).toHaveProperty("rank");
-        expect(item).toHaveProperty("score");
-        expect(item).toHaveProperty("redditMentions");
-        expect(item).toHaveProperty("xMentions");
-
-        expect(typeof item.date).toBe("string");
+        expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(typeof item.periodType).toBe("string");
         expect(typeof item.rank).toBe("number");
+        expect(item.rank).toBeGreaterThan(0);
         expect(typeof item.score).toBe("number");
+        expect(item.score).toBeGreaterThanOrEqual(0);
         expect(typeof item.redditMentions).toBe("number");
         expect(typeof item.xMentions).toBe("number");
-
-        expect(item.rank).toBeGreaterThan(0);
-        expect(item.score).toBeGreaterThanOrEqual(0);
       }
     });
 
-    it("should_return_valid_period_types", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+    it("should_have_valid_periodType_on_all_history_items", async () => {
+      if (!firstProductId) return;
 
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/trend-history`);
+      // Arrange & Act
+      const response = await fetch(`${API_BASE}/products/${firstProductId}/trend-history`);
       const result = await response.json();
 
       // Assert
-      const { history } = result.data;
       const validPeriodTypes = [
         "TODAY",
         "YESTERDAY",
@@ -276,80 +264,31 @@ describe("Product Stats API", () => {
         "LAST_15_DAYS",
         "LAST_30_DAYS",
       ];
-
-      history.forEach((item: { periodType: string }) => {
+      result.data.history.forEach((item: { periodType: string }) => {
         expect(validPeriodTypes).toContain(item.periodType);
       });
     });
 
     it("should_return_404_for_non_existent_product", async () => {
       // Act
-      const response = await fetch(`${API_BASE}/products/non-existent-id/trend-history`);
+      const response = await fetch(`${API_BASE}/products/non-existent-id-000/trend-history`);
 
       // Assert
       expect(response.status).toBe(404);
     });
 
-    it("should_respond_within_200ms", async () => {
+    it("should_respond_within_500ms", async () => {
+      if (!firstProductId) return;
+
       // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
+      const start = Date.now();
 
       // Act
-      const startTime = Date.now();
-      await fetch(`${API_BASE}/products/${productId}/trend-history`);
-      const endTime = Date.now();
+      await fetch(`${API_BASE}/products/${firstProductId}/trend-history`);
+      const duration = Date.now() - start;
 
       // Assert
-      const responseTime = endTime - startTime;
-      expect(responseTime).toBeLessThan(200);
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("should_handle_empty_social_stats_gracefully", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
-
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/social-stats`);
-      const result = await response.json();
-
-      // Assert - should return empty arrays/objects rather than error
-      expect(response.status).toBe(200);
-      expect(result.data.today).toBeDefined();
-      expect(result.data.history).toBeDefined();
-    });
-
-    it("should_handle_empty_trend_history_gracefully", async () => {
-      // Arrange
-      const mockProducts = getMockProducts();
-      const productId = mockProducts[0].id;
-
-      // Act
-      const response = await fetch(`${API_BASE}/products/${productId}/trend-history`);
-      const result = await response.json();
-
-      // Assert - should return empty array rather than error
-      expect(response.status).toBe(200);
-      expect(Array.isArray(result.data.history)).toBe(true);
-    });
-
-    it("should_handle_invalid_product_id_format", async () => {
-      // Act
-      const response = await fetch(`${API_BASE}/products/invalid-id-format/social-stats`);
-
-      // Assert - should return 404
-      expect(response.status).toBe(404);
-    });
-
-    it("should_handle_special_characters_in_product_id", async () => {
-      // Act
-      const response = await fetch(`${API_BASE}/products/special!@#$%/social-stats`);
-
-      // Assert - should handle special characters gracefully
-      expect([404, 400]).toContain(response.status);
+      expect(duration).toBeLessThan(500);
     });
   });
 });

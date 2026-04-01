@@ -338,7 +338,9 @@ export const handlers = [
       url.searchParams.get("limit") || undefined
     );
     const start = (page - 1) * limit;
-    const paginatedTrends = mockTrends.filter(t => t.periodType === "TODAY").slice(start, start + limit);
+    const paginatedTrends = mockTrends
+      .filter((t) => t.periodType === "TODAY")
+      .slice(start, start + limit);
 
     return HttpResponse.json({
       data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
@@ -354,7 +356,9 @@ export const handlers = [
       url.searchParams.get("limit") || undefined
     );
     const start = (page - 1) * limit;
-    const paginatedTrends = mockTrends.filter(t => t.periodType === "THIS_WEEK").slice(start, start + limit);
+    const paginatedTrends = mockTrends
+      .filter((t) => t.periodType === "THIS_WEEK")
+      .slice(start, start + limit);
 
     return HttpResponse.json({
       data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
@@ -370,7 +374,9 @@ export const handlers = [
       url.searchParams.get("limit") || undefined
     );
     const start = (page - 1) * limit;
-    const paginatedTrends = mockTrends.filter(t => t.periodType === "THIS_MONTH").slice(start, start + limit);
+    const paginatedTrends = mockTrends
+      .filter((t) => t.periodType === "THIS_MONTH")
+      .slice(start, start + limit);
 
     return HttpResponse.json({
       data: createPaginatedResponse(paginatedTrends, mockTrends.length, page, limit),
@@ -530,8 +536,8 @@ export const handlers = [
     return HttpResponse.json({ data: newTopic }, { status: 201 });
   }),
 
-  // PUT /api/v1/topics/:slug - Update topic
-  http.put("*/api/v1/topics/:slug", async ({ params, request }) => {
+  // PATCH /api/v1/topics/:slug - Update topic (actual API method)
+  http.patch("*/api/v1/topics/:slug", async ({ params, request }) => {
     await delay(100);
     const topicIndex = mockTopics.findIndex((t) => t.slug === params.slug);
 
@@ -666,9 +672,15 @@ export const handlers = [
     }
 
     // Generate random bitmaps (1 = appeared, 0 = not appeared)
-    const last7DaysBitmap = Array.from({ length: 7 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
-    const last30DaysBitmap = Array.from({ length: 30 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
-    const last60DaysBitmap = Array.from({ length: 60 }, () => (Math.random() > 0.3 ? "1" : "0")).join("");
+    const last7DaysBitmap = Array.from({ length: 7 }, () => (Math.random() > 0.3 ? "1" : "0")).join(
+      ""
+    );
+    const last30DaysBitmap = Array.from({ length: 30 }, () =>
+      Math.random() > 0.3 ? "1" : "0"
+    ).join("");
+    const last60DaysBitmap = Array.from({ length: 60 }, () =>
+      Math.random() > 0.3 ? "1" : "0"
+    ).join("");
 
     const activeDays7 = last7DaysBitmap.split("1").length - 1;
     const activeDays30 = last30DaysBitmap.split("1").length - 1;
@@ -702,7 +714,15 @@ export const handlers = [
       );
     }
 
-    const periodTypes = ["TODAY", "YESTERDAY", "THIS_WEEK", "THIS_MONTH", "LAST_7_DAYS", "LAST_15_DAYS", "LAST_30_DAYS"];
+    const periodTypes = [
+      "TODAY",
+      "YESTERDAY",
+      "THIS_WEEK",
+      "THIS_MONTH",
+      "LAST_7_DAYS",
+      "LAST_15_DAYS",
+      "LAST_30_DAYS",
+    ];
 
     return HttpResponse.json({
       data: {

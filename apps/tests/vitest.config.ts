@@ -27,14 +27,14 @@ export default defineConfig({
         statements: 70,
       },
     },
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    // Real API tests need longer timeouts
+    testTimeout: 15000,
+    hookTimeout: 15000,
     pool: "threads",
     poolOptions: {
       threads: {
-        singleThread: false,
-        minThreads: 1,
-        maxThreads: 4,
+        // Use single thread to avoid create/delete race conditions across test files
+        singleThread: true,
       },
     },
   },
